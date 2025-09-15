@@ -1,0 +1,28 @@
+/*
+This CSS file will be included with your plugin, and
+available in the app when your plugin is enabled.
+*/
+
+.in-memory-note-container {
+	width: 100%;
+	height: 100%;
+}
+
+.in-memory-inline-editor {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+.in-memory-inline-editor .view-content {
+	flex-grow: 1;
+}
+.in-memory-inline-editor .view-header,
+.in-memory-inline-editor .inline-title,
+.in-memory-inline-editor .embedded-backlinks,
+.in-memory-inline-editor .cm-gutters {
+	display: none !important;
+}
+.in-memory-inline-editor .cm-editor .cm-scroller {
+	padding: var(--size-4-4) !important;
+}

@@ -1,0 +1,30 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "node",
+		"esModuleInterop": true,
+		"strict": true,
+		"noEmit": true,
+		"baseUrl": ".",
+		"verbatimModuleSyntax": true,
+		"downlevelIteration": true,
+		"resolveJsonModule": true,
+		"lib": [
+			"DOM",
+			"ESNext"
+		],
+		"types": [
+			"node",
+			"obsidian-typings"
+		]
+	},
+	"include": [
+		"src/**/*",
+		"src/*",
+		"**/*.ts"
+	],
+	"exclude": [
+		"node_modules/*"
+	]
+}

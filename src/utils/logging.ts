@@ -126,6 +126,10 @@ export class DirectLogger {
 export const INITIAL_LOG_LEVEL = getInitialLogLevel();
 
 function getInitialLogLevel(): LogLevel {
+	// for mobile
+	if (typeof process === "undefined") {
+		return "info";
+	}
 	const envLevel = process.env.NEXT_PUBLIC_LOG_LEVEL || process.env.LOG_LEVEL;
 	// Check if envLevel is a valid log level.
 	if (envLevel && Object.values(LOG_LEVEL).includes(envLevel as any)) {

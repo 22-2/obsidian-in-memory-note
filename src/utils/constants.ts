@@ -2,7 +2,7 @@ import { type InMemoryNotePluginSettings } from "../settings";
 import manifest from "../../manifest.json";
 
 export const DEFAULT_SETTINGS: InMemoryNotePluginSettings = {
-	logLevel: "debug",
+	logLevel: "info",
 };
 
 export const APP_NAME = manifest.name || "InMemoryNote";

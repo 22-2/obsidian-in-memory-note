@@ -59,10 +59,6 @@ export class InlineEditor {
 	load(target: HTMLElement) {
 		// Set content from the temporary store
 		this.setContent(this.content);
-
-		const virtualFile = createVirtualFile(this.view.app);
-		this.inlineView.file = virtualFile as TFile;
-
 		target.append(this.containerEl);
 		this.focus();
 		this.target = target;
@@ -106,8 +102,8 @@ export class InlineEditor {
 		} as any) as InlineMarkdownView;
 
 		// Workaround for Templater plugin and to prevent saving operations
-		// @ts-expect-error
-		this.inlineView.file = {};
+		// const virtualFile = createVirtualFile(this.view.app);
+		// this.inlineView.file = virtualFile as TFile;
 		this.inlineView.save = noop;
 		this.inlineView.requestSave = () => {};
 		this.inlineView.__setViewData__ = this.inlineView.setViewData;

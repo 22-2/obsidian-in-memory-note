@@ -1,12 +1,20 @@
 # In-Memory Note
 
-A simple scratchpad for Obsidian. Notes are temporary and exist only in the current tab.
+A simple scratchpad for Obsidian for temporary thoughts and quick notes. Content exists only in the current tab and is never saved to your vault.
+
+## Demo
+
+![Demo Image](assets/demo.png)
 
 ## Features
 
--   **Temporary Notes**: Provides a scratchpad for jotting down thoughts, ideas, or temporary information.
--   **Volatile Storage**: The content is stored only in memory and is discarded when the tab is closed. No files are created in your vault.
--   **Simple Interface**: A clean, distraction-free editor for quick note-taking.
+-   **Ephemeral Content**: Jot down ideas without creating files in your vault. Notes reside solely in memory and are discarded when the tab closes.
+-   **Native Editing Experience**: Enjoy the full power and familiarity of Obsidian's built-in Markdown editor for a rich and consistent writing experience.
+-   **Session Resilience**: Your in-memory note content is preserved within your Obsidian session history. If a tab is accidentally closed, you can easily restore its content by reopening the view.
+
+### Acknowledgements / Inspiration
+
+This plugin's concept and some implementation ideas were partly inspired by the excellent [obsidian-lineage](https://github.com/ycnmhd/obsidian-lineage) plugin by ycnmhd. We appreciate their work in demonstrating innovative ways to interact with Obsidian notes.
 
 ## How to Use
 

@@ -39,7 +39,6 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   INPUT_TAG: ${{ github.event.inputs.tag }}
-              working-directory: ./apps/nobi
               run: |
                   if [ "${{ github.event_name }}" = "push" ]; then
                     tag="${GITHUB_REF#refs/tags/}"

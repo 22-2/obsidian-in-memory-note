@@ -1,6 +1,11 @@
 name: Release Obsidian plugin
 
 on:
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: "The tag to create a release for (e.g., obsidian-nobi@1.0.1)"
+                required: true
     push:
         tags:
             - "*"
@@ -12,23 +17,36 @@ jobs:
             contents: write
         steps:
             - uses: actions/checkout@v3
-            - name: Use Node.js
-              uses: actions/setup-node@v3
+
+            - name: Use Node.js and pnpm
+              uses: actions/setup-node@v4
               with:
                   node-version: "18.x"
-                  package-manager: "pnpm"
+                  pnpm-version: 8
                   cache: "pnpm"
 
+            - name: Install dependencies
+              run: pnpm install --no-frozen-lockfile
+
             - name: Build plugin
-              run: |
-                  pnpm install
-                  pnpm run build
+              run: pnpm run build
 
             - name: Create release
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  INPUT_TAG: ${{ github.event.inputs.tag }}
+              working-directory: ./apps/nobi
               run: |
-                  tag="${GITHUB_REF#refs/tags/}"
+                  if [ "${{ github.event_name }}" = "push" ]; then
+                    tag="${GITHUB_REF#refs/tags/}"
+                  else
+                    tag="$INPUT_TAG"
+                  fi
+
+                  if [ -z "$tag" ]; then
+                    echo "Tag is not set. Exiting."
+                    exit 1
+                  fi
 
                   gh release create "$tag" \
                     --title="$tag" \

@@ -9,7 +9,7 @@ import {
 	VIEW_TYPE,
 } from "./utils/constants";
 import { DirectLogger } from "./utils/logging";
-import { activateView } from "./utils/obsidian";
+import { activateView, getAllWorkspaceWindows } from "./utils/obsidian";
 import { InMemoryNoteView } from "./view";
 
 /**
@@ -44,7 +44,69 @@ export default class InMemoryNotePlugin extends Plugin {
 				this.activateView();
 			},
 		});
+
+		this.registerDomEventHandlers(window);
+
+		this.registerEvent(
+			this.app.workspace.on("window-open", (win) => {
+				this.registerDomEventHandlers(win.win);
+			})
+		);
+
+		this.registerEvent(
+			this.app.workspace.on("window-close", (win) => {
+				this.removeDomEventHandlers(win.win);
+			})
+		);
+
+		getAllWorkspaceWindows(this.app).forEach((win) => {
+			this.registerDomEventHandlers(win.win);
+		});
 	}
+
+	onunload() {
+		getAllWorkspaceWindows(this.app).forEach((win) => {
+			this.removeDomEventHandlers(win.win);
+		});
+	}
+
+	private removeDomEventHandlers = (target: Window) => {
+		target.removeEventListener("mousedown", this.handleClick);
+		target.removeEventListener("contextmenu", this.handleContextMenu);
+	};
+
+	private handleContextMenu = async (e: MouseEvent) => {
+		const target = e.target;
+		if (!(target instanceof HTMLElement)) return;
+
+		if (!target.matches(".view-content")) return;
+		this.app.commands.executeCommandById("editor:context-menu");
+
+		try {
+			const menu = await waitForElement(".menu", document);
+			Object.assign(menu.style, {
+				top: `${e.y}px`,
+				left: `${e.x}px`,
+			});
+		} catch (error) {
+			console.log(
+				"Focus Canvas Plugin: Menu element not found within timeout."
+			);
+		}
+	};
+
+	private handleClick = (e: MouseEvent) => {
+		const target = e.target;
+		if (!(target instanceof HTMLElement)) return;
+		if (!target.matches(".view-content")) return;
+		let editor = this.app.workspace.activeEditor?.editor;
+		const pos = editor.posAtMouse(e);
+		setTimeout(() => {
+			editor.setCursor(pos);
+			editor.setSelection(pos, pos);
+			editor.focus();
+		}, 0);
+	};
 
 	/**
 	 * This method is called when the plugin is unloaded.
@@ -91,4 +153,36 @@ export default class InMemoryNotePlugin extends Plugin {
 	async saveSettings() {
 		await this.saveData(this.settings);
 	}
+}
+
+/**
+ * 指定されたセレクタのDOM要素が見つかるまで待機する
+ */
+function waitForElement(
+	cssSelector: string,
+	doc: Document = document,
+	timeout = 10 * 1000
+): Promise<HTMLElement> {
+	return new Promise((resolve, reject) => {
+		const element = doc.querySelector(cssSelector) as HTMLElement;
+		if (element) {
+			resolve(element);
+			return;
+		}
+		const observer = new MutationObserver(() => {
+			const element = doc.querySelector(cssSelector) as HTMLElement;
+			if (element) {
+				observer.disconnect();
+				resolve(element);
+			}
+		});
+		observer.observe(doc.documentElement, {
+			childList: true,
+			subtree: true,
+		});
+		setTimeout(() => {
+			observer.disconnect();
+			reject(new Error(`Timeout: ${timeout} ms`));
+		}, timeout);
+	});
 }

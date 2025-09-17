@@ -33,3 +33,8 @@
 @media (max-width: 768px) {
 	/* 必要に応じてモバイル固有の調整を追加 */
 }
+
+[data-type="in-memory-note-view"] .view-content {
+	display: flex;
+	flex-direction: column;
+}

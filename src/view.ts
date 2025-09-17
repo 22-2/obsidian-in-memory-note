@@ -1,7 +1,7 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
-import type InMemoryNotePlugin from "./main";
-import { IN_MEMORY_NOTE_ICON, VIEW_TYPE } from "src/utils/constants";
 import { InlineEditor } from "src/inline-editor";
+import { IN_MEMORY_NOTE_ICON, VIEW_TYPE } from "src/utils/constants";
+import type InMemoryNotePlugin from "./main";
 
 /**
  * Represents the view for an in-memory note.

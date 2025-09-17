@@ -10,7 +10,7 @@ const obsidianPluginsPath = process.env.OBSIDIAN_PLUGINS_PATH;
 
 if (!obsidianPluginsPath) {
 	console.log(
-		"OBSIDIAN_PLUGINS_PATH is not defined in your .env file. Skipping symlink creation."
+		"OBSIDIAN_PLUGINS_PATH is not defined in your .env file. Skipping symlink creation.",
 	);
 	process.exit(0);
 }
@@ -20,7 +20,7 @@ const pluginName = packageJson.name;
 
 if (!pluginName) {
 	console.error(
-		'Could not find "name" in package.json. Cannot create symlink.'
+		'Could not find "name" in package.json. Cannot create symlink.',
 	);
 	process.exit(1);
 }
@@ -35,13 +35,13 @@ if (fs.existsSync(symlinkPath)) {
 try {
 	fs.symlinkSync(process.cwd(), symlinkPath, "dir");
 	console.log(
-		`Successfully created symlink for ${pluginName} at ${symlinkPath}`
+		`Successfully created symlink for ${pluginName} at ${symlinkPath}`,
 	);
 } catch (error) {
 	console.error(`Failed to create symlink: ${error.message}`);
 	if (error.code === "EPERM") {
 		console.error(
-			"You may need to run this script with administrator privileges."
+			"You may need to run this script with administrator privileges.",
 		);
 	}
 	process.exit(1);

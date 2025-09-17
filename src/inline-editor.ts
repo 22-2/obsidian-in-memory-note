@@ -110,10 +110,7 @@ export class InlineEditor {
 		this.inlineView.setViewData = noop;
 
 		if (this.inlineView.getMode() === "preview") {
-			await this.inlineView.setState(
-				{ mode: "source" },
-				{ history: false }
-			);
+			await this.inlineView.setState({ mode: "source" }, { history: false });
 		}
 	}
 }

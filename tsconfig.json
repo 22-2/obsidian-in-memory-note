@@ -10,21 +10,9 @@
 		"verbatimModuleSyntax": true,
 		"downlevelIteration": true,
 		"resolveJsonModule": true,
-		"lib": [
-			"DOM",
-			"ESNext"
-		],
-		"types": [
-			"node",
-			"obsidian-typings"
-		]
+		"lib": ["DOM", "ESNext"],
+		"types": ["node", "obsidian-typings"]
 	},
-	"include": [
-		"src/**/*",
-		"src/*",
-		"**/*.ts"
-	],
-	"exclude": [
-		"node_modules/*"
-	]
+	"include": ["src/**/*", "src/*", "**/*.ts"],
+	"exclude": ["node_modules/*"]
 }

@@ -11,7 +11,7 @@ import { App } from "obsidian";
 function waitForElement(
 	cssSelector: string,
 	doc: Document = document,
-	timeout = 10 * 1000
+	timeout = 10 * 1000,
 ): Promise<HTMLElement> {
 	return new Promise((resolve, reject) => {
 		const element = doc.querySelector(cssSelector) as HTMLElement;
@@ -57,9 +57,7 @@ const handleContextMenu = async (app: App, e: MouseEvent) => {
 			left: `${e.x}px`,
 		});
 	} catch (error) {
-		console.log(
-			"Focus Canvas Plugin: Menu element not found within timeout."
-		);
+		console.log("Focus Canvas Plugin: Menu element not found within timeout.");
 	}
 };
 
@@ -74,7 +72,7 @@ const handleClick = (app: App, e: MouseEvent) => {
 	if (!(target instanceof HTMLElement)) return;
 	if (!target.matches(".view-content")) return;
 	let editor = app.workspace.activeEditor?.editor;
-    if (!editor) return;
+	if (!editor) return;
 	const pos = editor.posAtMouse(e);
 	setTimeout(() => {
 		editor.setCursor(pos);
@@ -93,8 +91,8 @@ let boundHandleContextMenu: (e: MouseEvent) => void;
  * @param target The window to register the handlers on.
  */
 export const registerClickHandlers = (app: App, target: Window) => {
-    boundHandleClick = handleClick.bind(null, app);
-    boundHandleContextMenu = handleContextMenu.bind(null, app);
+	boundHandleClick = handleClick.bind(null, app);
+	boundHandleContextMenu = handleContextMenu.bind(null, app);
 	target.addEventListener("mousedown", boundHandleClick);
 	target.addEventListener("contextmenu", boundHandleContextMenu);
 };

@@ -37,7 +37,7 @@ export function createVirtualFile(app: App) {
 export async function activateView<T = any, U = any>(
 	app: App,
 	viewState: UViewState,
-	eState?: U
+	eState?: U,
 ): Promise<T> {
 	const leaf: WorkspaceLeaf = app.workspace.getLeaf("tab");
 
@@ -74,7 +74,7 @@ export function getAllLeaves(app: App): WorkspaceLeaf[] {
  */
 function getWorkspaceItems<T extends WorkspaceWindow | WorkspaceParent>(
 	app: App,
-	getItem: (leaf: WorkspaceLeaf) => T | null | undefined
+	getItem: (leaf: WorkspaceLeaf) => T | null | undefined,
 ): T[] {
 	const itemMap = new Map<string, T>();
 	getAllLeaves(app).forEach((leaf) => {
@@ -92,7 +92,5 @@ function getWorkspaceItems<T extends WorkspaceWindow | WorkspaceParent>(
  * @returns An array of all workspace windows
  */
 export function getAllWorkspaceWindows(app: App): WorkspaceWindow[] {
-	return getWorkspaceItems<WorkspaceWindow>(app, (leaf) =>
-		leaf.getContainer()
-	);
+	return getWorkspaceItems<WorkspaceWindow>(app, (leaf) => leaf.getContainer());
 }

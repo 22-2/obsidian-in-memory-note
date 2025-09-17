@@ -64,9 +64,7 @@ export class DirectLogger {
 	 * @private
 	 */
 	private regenerateLogFunctions(): void {
-		const createLogFunction = (
-			level: LogLevel
-		): ((...args: any[]) => void) => {
+		const createLogFunction = (level: LogLevel): ((...args: any[]) => void) => {
 			if (logLevelPriorities[level] >= this.settingLevelPriority) {
 				// The core of this logger: binding the console method.
 				// 1. **Preserves Caller Information**: Binding returns a function that, when executed,
@@ -99,9 +97,7 @@ export class DirectLogger {
 		this.regenerateLogFunctions();
 
 		// Use console.info directly to announce the change, regardless of the new level.
-		console.info(
-			`${this.prefix} Logging level set to: ${this.settings.level}`
-		);
+		console.info(`${this.prefix} Logging level set to: ${this.settings.level}`);
 	}
 
 	/**

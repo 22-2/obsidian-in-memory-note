@@ -24,5 +24,5 @@ const titleCaseName = newName
 manifestJson.name = titleCaseName;
 writeJsonFile("manifest.json", manifestJson);
 console.log(
-	`Updated id to ${newName} and name to ${titleCaseName} in manifest.json`
+	`Updated id to ${newName} and name to ${titleCaseName} in manifest.json`,
 );

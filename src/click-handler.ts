@@ -1,4 +1,5 @@
-import { App } from "obsidian";
+import { Editor, Plugin } from "obsidian";
+import type { Commands } from "obsidian-typings";
 
 /**
  * Waits for a DOM element matching the specified selector to become available.
@@ -11,7 +12,7 @@ import { App } from "obsidian";
 function waitForElement(
 	cssSelector: string,
 	doc: Document = document,
-	timeout = 10 * 1000,
+	timeout = 10 * 1000
 ): Promise<HTMLElement> {
 	return new Promise((resolve, reject) => {
 		const element = doc.querySelector(cssSelector) as HTMLElement;
@@ -40,15 +41,15 @@ function waitForElement(
 /**
  * Handles the context menu event on the view content.
  * It opens the editor's context menu at the right-click position.
- * @param app The Obsidian App instance.
+ * @param commands The Obsidian Commands instance.
  * @param e The mouse event.
  */
-const handleContextMenu = async (app: App, e: MouseEvent) => {
+const handleContextMenu = async (commands: Commands, e: MouseEvent) => {
 	const target = e.target;
 	if (!(target instanceof HTMLElement)) return;
 
 	if (!target.matches(".view-content")) return;
-	app.commands.executeCommandById("editor:context-menu");
+	commands.executeCommandById("editor:context-menu");
 
 	try {
 		const menu = await waitForElement(".menu", document);
@@ -57,22 +58,23 @@ const handleContextMenu = async (app: App, e: MouseEvent) => {
 			left: `${e.x}px`,
 		});
 	} catch (error) {
-		console.log("Focus Canvas Plugin: Menu element not found within timeout.");
+		console.log(
+			"Focus Canvas Plugin: Menu element not found within timeout."
+		);
 	}
 };
 
 /**
  * Handles the click event on the view content.
  * It sets the cursor position and focuses the editor.
- * @param app The Obsidian App instance.
+ * @param app The Obsidian Editor instance.
  * @param e The mouse event.
  */
-const handleClick = (app: App, e: MouseEvent) => {
+const handleClick = (editor: Editor, e: MouseEvent) => {
 	const target = e.target;
 	if (!(target instanceof HTMLElement)) return;
-	if (!target.matches(".view-content")) return;
-	let editor = app.workspace.activeEditor?.editor;
-	if (!editor) return;
+	if (!(target.matches(".view-content") || !target.matches(".cm-sizer")))
+		return;
 	const pos = editor.posAtMouse(e);
 	setTimeout(() => {
 		editor.setCursor(pos);
@@ -86,22 +88,24 @@ let boundHandleClick: (e: MouseEvent) => void;
 let boundHandleContextMenu: (e: MouseEvent) => void;
 
 /**
- * Registers the DOM event handlers for a given window.
+ * Registers the DOM event handlers for a given container element.
  * @param app The Obsidian App instance.
- * @param target The window to register the handlers on.
+ * @param target The container element to register the handlers on.
  */
-export const registerClickHandlers = (app: App, target: Window) => {
-	boundHandleClick = handleClick.bind(null, app);
-	boundHandleContextMenu = handleContextMenu.bind(null, app);
-	target.addEventListener("mousedown", boundHandleClick);
-	target.addEventListener("contextmenu", boundHandleContextMenu);
+export const registerClickHandlers = (plugin: Plugin, target: HTMLElement) => {
+	const editor = plugin.app.workspace.activeEditor?.editor;
+	if (!editor) return;
+	boundHandleClick = handleClick.bind(null, editor);
+	boundHandleContextMenu = handleContextMenu.bind(null, plugin.app.commands);
+	plugin.registerDomEvent(target, "mousedown", boundHandleClick);
+	plugin.registerDomEvent(target, "contextmenu", boundHandleContextMenu);
 };
 
 /**
- * Removes the DOM event handlers from a given window.
- * @param target The window to remove the handlers from.
+ * Removes the DOM event handlers from a given container element.
+ * @param target The container element to remove the handlers from.
  */
-export const removeClickHandlers = (target: Window) => {
+export const removeClickHandlers = (target: HTMLElement) => {
 	target.removeEventListener("mousedown", boundHandleClick);
 	target.removeEventListener("contextmenu", boundHandleContextMenu);
 };

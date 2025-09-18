@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { Plugin, Workspace, WorkspaceLeaf } from "obsidian";
 import { removeClickHandlers, registerClickHandlers } from "./click-handler";
 import {
 	type InMemoryNotePluginSettings,
@@ -29,7 +29,10 @@ export default class InMemoryNotePlugin extends Plugin {
 		this.addSettingTab(new InMemoryNoteSettingTab(this));
 		this.initializeLogger();
 
-		this.registerView(VIEW_TYPE, (leaf) => new InMemoryNoteView(leaf, this));
+		this.registerView(
+			VIEW_TYPE,
+			(leaf) => new InMemoryNoteView(leaf, this)
+		);
 
 		this.addRibbonIcon(IN_MEMORY_NOTE_ICON, "Open in-memory note", () => {
 			this.activateView();
@@ -44,30 +47,21 @@ export default class InMemoryNotePlugin extends Plugin {
 		});
 
 		this.registerEvent(
-			this.app.workspace.on("window-open", (win) => {
-				registerClickHandlers(this.app, win.win);
-			}),
+			this.app.workspace.on("active-leaf-change", this.handleRegister)
 		);
-
-		this.registerEvent(
-			this.app.workspace.on("window-close", (win) => {
-				removeClickHandlers(win.win);
-			}),
-		);
-
-		getAllWorkspaceWindows(this.app).forEach((win) => {
-			registerClickHandlers(this.app, win.win);
-		});
 	}
+
+	handleRegister = (leaf: WorkspaceLeaf | null) => {
+		if (leaf?.view.getViewType() === VIEW_TYPE) {
+			registerClickHandlers(this, leaf.containerEl);
+		}
+	};
 
 	/**
 	 * This method is called when the plugin is unloaded.
 	 */
 	onunload() {
 		this.logger.debug("Plugin unloaded");
-		getAllWorkspaceWindows(this.app).forEach((win) => {
-			removeClickHandlers(win.win);
-		});
 	}
 
 	/**
@@ -95,7 +89,11 @@ export default class InMemoryNotePlugin extends Plugin {
 	 * Loads plugin settings from storage.
 	 */
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData()
+		);
 	}
 
 	/**

@@ -2,6 +2,9 @@ name: Nightly Release
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - nightly
 
 jobs:
   create-nightly-release:
@@ -35,6 +38,7 @@ jobs:
           # The jq package is not installed by default on github runners.
           # We can use node instead to parse the package.json file.
           current_version=$(node -p "require('./package.json').version")
+          echo "BASE_VERSION=$current_version" >> $GITHUB_ENV
           date_stamp=$(date +'%Y%m%d')
           commit_hash=$(git rev-parse --short HEAD)
           nightly_version_tag="$current_version-nightly.$date_stamp.$commit_hash"
@@ -53,13 +57,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Get the current base version from package.json
-          BASE_VERSION=$(node -p "require('./package.json').version")
-
           # Find the tag of the latest pre-release that matches the nightly pattern
           # We use jq to parse the JSON output from the gh cli.
           TAG_TO_DELETE=$(gh release list --json tagName,isPrerelease --limit 50 | \
-            jq -r --arg PREFIX "${BASE_VERSION}-nightly" \
+            jq -r --arg PREFIX "${{ env.BASE_VERSION }}-nightly" \
             '.[] | select(.isPrerelease and (.tagName | startswith($PREFIX))) | .tagName' | \
             head -n 1)
 
@@ -68,7 +69,7 @@ jobs:
             gh release delete "$TAG_TO_DELETE" -y --cleanup-tag
             echo "Previous nightly release and tag deleted."
           else
-            echo "No previous nightly release found for base version $BASE_VERSION."
+            echo "No previous nightly release found for base version ${{ env.BASE_VERSION }}."
           fi
 
       - name: Create Release

@@ -1,4 +1,4 @@
-import { Editor } from "obsidian";
+import { Editor, MarkdownView } from "obsidian";
 import type { Commands } from "obsidian-typings";
 
 /**
@@ -44,12 +44,18 @@ function waitForElement(
  * @param commands The Obsidian Commands instance.
  * @param e The mouse event.
  */
-export const handleContextMenu = async (commands: Commands, e: MouseEvent) => {
+export const handleContextMenu = async (
+	commands: Commands,
+	view: MarkdownView,
+	e: MouseEvent
+) => {
 	const target = e.target;
 	if (!(target instanceof HTMLElement)) return;
 
 	if (!target.matches(".view-content")) return;
-	commands.executeCommandById("editor:context-menu");
+	commands
+		.findCommand("editor:context-menu")
+		?.editorCallback?.(view.editor, view);
 
 	try {
 		const menu = await waitForElement(".menu", document);

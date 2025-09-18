@@ -9,16 +9,16 @@ import { InMemoryNoteView } from "./view";
 
 const noop = async () => {};
 
-export type InlineMarkdownView = MarkdownView & {
+export interface InlineMarkdownView extends MarkdownView {
 	__setViewData__: MarkdownView["setViewData"];
-};
+}
 
 /**
  * Manages an inline MarkdownView instance within a custom view.
  * This class provides an editor interface that is not tied to a physical file.
  */
 export class InlineEditor {
-	private inlineView!: InlineMarkdownView;
+	public inlineView!: InlineMarkdownView;
 	private containerEl!: HTMLElement;
 	target: HTMLElement | null = null;
 	/**
@@ -111,7 +111,10 @@ export class InlineEditor {
 		this.inlineView.setViewData = noop;
 
 		if (this.inlineView.getMode() === "preview") {
-			await this.inlineView.setState({ mode: "source" }, { history: false });
+			await this.inlineView.setState(
+				{ mode: "source" },
+				{ history: false }
+			);
 		}
 	}
 }

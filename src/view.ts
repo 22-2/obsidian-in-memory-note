@@ -95,7 +95,11 @@ export class InMemoryNoteView extends ItemView {
 			this.registerDomEvent(
 				this.contentEl,
 				"contextmenu",
-				handleContextMenu.bind(null, this.plugin.app.commands)
+				handleContextMenu.bind(
+					null,
+					this.app.commands,
+					this.inlineEditor.inlineView
+				)
 			);
 		}
 	}

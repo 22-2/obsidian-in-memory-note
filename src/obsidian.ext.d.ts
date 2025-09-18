@@ -12,7 +12,6 @@ declare module "obsidian" {
 		popstate?: boolean; // Whether this is from a browser history navigation.
 		sync?: boolean; // Whether state synchronization is needed.
 	}
-	// [画面表示と状態更新機能 | Google AI Studio](https://aistudio.google.com/prompts/1BgQr6pov--L2jayg-Vi0TiFMtZ85ku4K?save=true)
 
 	interface WorkspaceLeaf {
 		setViewState(state: UViewState): Promise<void>;

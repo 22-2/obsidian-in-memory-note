@@ -6,8 +6,7 @@ import {
 } from "obsidian";
 import { createVirtualFile } from "./utils/obsidian";
 import { InMemoryNoteView } from "./view";
-
-const noop = async () => {};
+import { noop } from "./utils";
 
 export interface InlineMarkdownView extends MarkdownView {
 	__setViewData__: MarkdownView["setViewData"];

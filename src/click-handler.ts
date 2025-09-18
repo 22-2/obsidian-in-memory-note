@@ -21,17 +21,11 @@ export const handleContextMenu = async (
 		.findCommand("editor:context-menu")
 		?.editorCallback?.(view.editor, view);
 
-	try {
-		const menu = await waitForElement(".menu", document);
-		Object.assign(menu.style, {
-			top: `${e.y}px`,
-			left: `${e.x}px`,
-		});
-	} catch (error) {
-		console.log(
-			"Focus Canvas Plugin: Menu element not found within timeout."
-		);
-	}
+	const menu = await waitForElement(".menu", document);
+	Object.assign(menu.style, {
+		top: `${e.y}px`,
+		left: `${e.x}px`,
+	});
 };
 
 /**

@@ -73,7 +73,7 @@ export const handleContextMenu = async (commands: Commands, e: MouseEvent) => {
 export const handleClick = (editor: Editor, e: MouseEvent) => {
 	const target = e.target;
 	if (!(target instanceof HTMLElement)) return;
-	if (!(target.matches(".view-content") || !target.matches(".cm-sizer")))
+	if (!(target.matches(".view-content") || target.matches(".cm-sizer")))
 		return;
 	const pos = editor.posAtMouse(e);
 	setTimeout(() => {

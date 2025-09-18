@@ -39,8 +39,8 @@ function waitForElement(
 }
 
 /**
- * Handles the context menu event on the view content.
- * It opens the editor's context menu at the right-click position.
+ * Handles the context menu event on the view content, allowing it to be shown
+ * in blank areas. It opens the editor's context menu at the right-click position.
  * @param commands The Obsidian Commands instance.
  * @param e The mouse event.
  */

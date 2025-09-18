@@ -1,4 +1,5 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
+import { handleClick, handleContextMenu } from "src/click-handler";
 import { InlineEditor } from "src/inline-editor";
 import { IN_MEMORY_NOTE_ICON, VIEW_TYPE } from "src/utils/constants";
 import type InMemoryNotePlugin from "./main";
@@ -84,6 +85,19 @@ export class InMemoryNoteView extends ItemView {
 		});
 
 		this.inlineEditor.load(container);
+
+		if (this.editor) {
+			this.registerDomEvent(
+				this.contentEl,
+				"mousedown",
+				handleClick.bind(null, this.editor)
+			);
+			this.registerDomEvent(
+				this.contentEl,
+				"contextmenu",
+				handleContextMenu.bind(null, this.plugin.app.commands)
+			);
+		}
 	}
 
 	/**

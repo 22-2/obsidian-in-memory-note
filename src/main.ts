@@ -1,5 +1,4 @@
-import { Plugin, Workspace, WorkspaceLeaf } from "obsidian";
-import { removeClickHandlers, registerClickHandlers } from "./click-handler";
+import { Plugin } from "obsidian";
 import {
 	type InMemoryNotePluginSettings,
 	InMemoryNoteSettingTab,
@@ -10,7 +9,7 @@ import {
 	VIEW_TYPE,
 } from "./utils/constants";
 import { DirectLogger } from "./utils/logging";
-import { activateView, getAllWorkspaceWindows } from "./utils/obsidian";
+import { activateView } from "./utils/obsidian";
 import { InMemoryNoteView } from "./view";
 
 /**
@@ -45,17 +44,7 @@ export default class InMemoryNotePlugin extends Plugin {
 				this.activateView();
 			},
 		});
-
-		this.registerEvent(
-			this.app.workspace.on("active-leaf-change", this.handleRegister)
-		);
 	}
-
-	handleRegister = (leaf: WorkspaceLeaf | null) => {
-		if (leaf?.view.getViewType() === VIEW_TYPE) {
-			registerClickHandlers(this, leaf.containerEl);
-		}
-	};
 
 	/**
 	 * This method is called when the plugin is unloaded.

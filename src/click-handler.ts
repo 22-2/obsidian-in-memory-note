@@ -1,4 +1,4 @@
-import { Editor, Plugin } from "obsidian";
+import { Editor } from "obsidian";
 import type { Commands } from "obsidian-typings";
 
 /**
@@ -44,7 +44,7 @@ function waitForElement(
  * @param commands The Obsidian Commands instance.
  * @param e The mouse event.
  */
-const handleContextMenu = async (commands: Commands, e: MouseEvent) => {
+export const handleContextMenu = async (commands: Commands, e: MouseEvent) => {
 	const target = e.target;
 	if (!(target instanceof HTMLElement)) return;
 
@@ -70,7 +70,7 @@ const handleContextMenu = async (commands: Commands, e: MouseEvent) => {
  * @param app The Obsidian Editor instance.
  * @param e The mouse event.
  */
-const handleClick = (editor: Editor, e: MouseEvent) => {
+export const handleClick = (editor: Editor, e: MouseEvent) => {
 	const target = e.target;
 	if (!(target instanceof HTMLElement)) return;
 	if (!(target.matches(".view-content") || !target.matches(".cm-sizer")))
@@ -81,31 +81,4 @@ const handleClick = (editor: Editor, e: MouseEvent) => {
 		editor.setSelection(pos, pos);
 		editor.focus();
 	}, 0);
-};
-
-// Bound handlers to be used for event listeners
-let boundHandleClick: (e: MouseEvent) => void;
-let boundHandleContextMenu: (e: MouseEvent) => void;
-
-/**
- * Registers the DOM event handlers for a given container element.
- * @param app The Obsidian App instance.
- * @param target The container element to register the handlers on.
- */
-export const registerClickHandlers = (plugin: Plugin, target: HTMLElement) => {
-	const editor = plugin.app.workspace.activeEditor?.editor;
-	if (!editor) return;
-	boundHandleClick = handleClick.bind(null, editor);
-	boundHandleContextMenu = handleContextMenu.bind(null, plugin.app.commands);
-	plugin.registerDomEvent(target, "mousedown", boundHandleClick);
-	plugin.registerDomEvent(target, "contextmenu", boundHandleContextMenu);
-};
-
-/**
- * Removes the DOM event handlers from a given container element.
- * @param target The container element to remove the handlers from.
- */
-export const removeClickHandlers = (target: HTMLElement) => {
-	target.removeEventListener("mousedown", boundHandleClick);
-	target.removeEventListener("contextmenu", boundHandleContextMenu);
 };

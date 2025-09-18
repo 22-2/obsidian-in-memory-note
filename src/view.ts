@@ -98,7 +98,7 @@ export class InMemoryNoteView extends ItemView {
 				handleContextMenu.bind(
 					null,
 					this.app.commands,
-					this.inlineEditor.inlineView
+					this.inlineEditor.inlineView.editMode
 				)
 			);
 		}

@@ -1,4 +1,4 @@
-import { Editor, MarkdownView } from "obsidian";
+import { Editor, MarkdownEditView, MarkdownView } from "obsidian";
 import type { Commands } from "obsidian-typings";
 import { waitForElement } from "./utils/dom";
 
@@ -10,22 +10,14 @@ import { waitForElement } from "./utils/dom";
  */
 export const handleContextMenu = async (
 	commands: Commands,
-	view: MarkdownView,
-	e: MouseEvent
+	editMode: MarkdownEditView,
+	e: PointerEvent
 ) => {
 	const target = e.target;
 	if (!(target instanceof HTMLElement)) return;
 
 	if (!target.matches(".view-content")) return;
-	commands
-		.findCommand("editor:context-menu")
-		?.editorCallback?.(view.editor, view);
-
-	const menu = await waitForElement(".menu", document);
-	Object.assign(menu.style, {
-		top: `${e.y}px`,
-		left: `${e.x}px`,
-	});
+	editMode.onContextMenu(e, true);
 };
 
 /**

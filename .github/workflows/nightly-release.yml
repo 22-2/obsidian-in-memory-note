@@ -1,0 +1,90 @@
+name: Nightly Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-nightly-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to create releases
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # required for git log
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate nightly version
+        id: nightly_version
+        run: |
+          # The jq package is not installed by default on github runners.
+          # We can use node instead to parse the package.json file.
+          current_version=$(node -p "require('./package.json').version")
+          date_stamp=$(date +'%Y%m%d')
+          commit_hash=$(git rev-parse --short HEAD)
+          nightly_version_tag="$current_version-nightly.$date_stamp.$commit_hash"
+          echo "NIGHTLY_VERSION=$nightly_version_tag" >> $GITHUB_ENV
+          echo "tag=$nightly_version_tag" >> $GITHUB_OUTPUT
+
+      - name: Update version
+        # --no-git-tag-version is used to prevent npm from creating a git tag
+        # we will let the release action do that.
+        run: npm --no-git-tag-version version ${{ env.NIGHTLY_VERSION }}
+
+      - name: Build plugin
+        run: pnpm build
+
+      - name: Delete previous nightly release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Get the current base version from package.json
+          BASE_VERSION=$(node -p "require('./package.json').version")
+
+          # Find the tag of the latest pre-release that matches the nightly pattern
+          # We use jq to parse the JSON output from the gh cli.
+          TAG_TO_DELETE=$(gh release list --json tagName,isPrerelease --limit 50 | \
+            jq -r --arg PREFIX "${BASE_VERSION}-nightly" \
+            '.[] | select(.isPrerelease and (.tagName | startswith($PREFIX))) | .tagName' | \
+            head -n 1)
+
+          if [ -n "$TAG_TO_DELETE" ]; then
+            echo "Found previous nightly release to delete: $TAG_TO_DELETE"
+            gh release delete "$TAG_TO_DELETE" -y --cleanup-tag
+            echo "Previous nightly release and tag deleted."
+          else
+            echo "No previous nightly release found for base version $BASE_VERSION."
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.nightly_version.outputs.tag }}
+          name: 'Nightly ${{ steps.nightly_version.outputs.tag }}'
+          body: |
+            **This is a pre-release build and may be unstable.**
+
+            **Commits since last release:**
+            ```
+            ${{ github.event.head_commit.message }}
+            ```
+          files: |
+            main.js
+            manifest.json
+            styles.css
+          prerelease: true

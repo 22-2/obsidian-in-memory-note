@@ -1,7 +1,7 @@
 {
 	"id": "in-memory-note",
 	"name": "In-Memory Note",
-	"version": "1.0.3",
+	"version": "1.0.5",
 	"minAppVersion": "0.15.0",
 	"description": "Provides a scratchpad for temporary notes that are discarded when the tab is closed.",
 	"author": "22-2",

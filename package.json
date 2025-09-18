@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-in-memory-note",
-	"version": "1.0.3",
+	"version": "1.0.5",
 	"description": "A minimal in-memory note-taking plugin for Obsidian.",
 	"main": "main.js",
 	"scripts": {

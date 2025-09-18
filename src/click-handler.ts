@@ -71,8 +71,8 @@ export const handleContextMenu = async (
 };
 
 /**
- * Handles the click event on the view content.
- * It sets the cursor position and focuses the editor.
+ * Handles the click event on the view content, focusing the editor even when clicking
+ * in a blank area. It sets the cursor position and focuses the editor.
  * @param app The Obsidian Editor instance.
  * @param e The mouse event.
  */

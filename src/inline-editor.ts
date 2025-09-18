@@ -105,6 +105,7 @@ export class InlineEditor {
 		// const virtualFile = createVirtualFile(this.view.app);
 		// this.inlineView.file = virtualFile as TFile;
 		this.inlineView.save = noop;
+		this.inlineView.saveTitle = noop;
 		this.inlineView.requestSave = () => {};
 		this.inlineView.__setViewData__ = this.inlineView.setViewData;
 		this.inlineView.setViewData = noop;

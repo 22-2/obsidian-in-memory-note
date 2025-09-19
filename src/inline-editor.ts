@@ -67,7 +67,17 @@ export class InlineEditor {
 			this.setActiveEditor
 		);
 		this.setActiveEditor();
+
+		this.inlineView.editor.on("change", this.handleEditorChange);
 	}
+
+	/**
+	 * Handles the change event from the editor and propagates it to the plugin.
+	 */
+	private handleEditorChange = () => {
+		const newContent = this.getContent();
+		this.view.plugin.updateNoteContent(newContent, this.view);
+	};
 
 	/**
 	 * Focuses the editor.
@@ -88,6 +98,7 @@ export class InlineEditor {
 	 * Detaches the editor from the DOM and stores its content.
 	 */
 	unload() {
+		this.inlineView.editor.off("change", this.handleEditorChange);
 		// Store current content before unloading
 		this.content = this.getContent();
 		if (this.target) {

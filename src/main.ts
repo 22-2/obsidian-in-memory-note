@@ -19,6 +19,8 @@ import { InMemoryNoteView } from "./view";
 export default class InMemoryNotePlugin extends Plugin {
 	settings: InMemoryNotePluginSettings = DEFAULT_SETTINGS;
 	logger!: DirectLogger;
+	noteContent = "";
+	activeViews: Set<InMemoryNoteView> = new Set();
 
 	/**
 	 * This method is called when the plugin is loaded.
@@ -47,6 +49,20 @@ export default class InMemoryNotePlugin extends Plugin {
 	}
 
 	/**
+	 * Updates the shared note content and propagates the change to other views.
+	 * @param content The new content of the note.
+	 * @param sourceView The view instance that initiated the change.
+	 */
+	updateNoteContent(content: string, sourceView: InMemoryNoteView) {
+		this.noteContent = content;
+		for (const view of this.activeViews) {
+			if (view !== sourceView) {
+				view.setContent(content);
+			}
+		}
+	}
+
+	/**
 	 * This method is called when the plugin is unloaded.
 	 */
 	onunload() {
@@ -54,9 +70,17 @@ export default class InMemoryNotePlugin extends Plugin {
 	}
 
 	/**
-	 * Activates and opens the In-Memory Note view in a new tab.
+	 * Activates and opens the In-Memory Note view.
+	 * If a view is already present, it reveals and focuses it.
+	 * Otherwise, it opens the view in a new tab.
 	 */
 	async activateView() {
+		const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE);
+		if (leaves.length > 0) {
+			this.app.workspace.revealLeaf(leaves[0]);
+			return;
+		}
+
 		return activateView(this.app, {
 			type: VIEW_TYPE,
 			active: true,

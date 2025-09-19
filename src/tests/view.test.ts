@@ -79,6 +79,9 @@ describe("SandboxNoteView", () => {
 		view.contentEl = mockContentEl as any;
 		view.sandboxEditor = mockSandboxEditor as unknown as SandboxEditor;
 
+		// Mock the addAction method on the view instance since it's not available in the test environment
+		view.addAction = vi.fn();
+
 		// Spy on console.error
 		vi.spyOn(console, "error").mockImplementation(() => {});
 	});

@@ -37,6 +37,11 @@ export class EditorWatchPlugin implements PluginValue {
 		// Only process actual document changes
 		if (update.docChanged) {
 			const updatedContent = update.state.doc.toString();
+			
+			// Update the unsaved state for the current view
+			this.connectedView.updateUnsavedState(updatedContent);
+			
+			// Propagate content changes to other views
 			this.propagateContentChange(updatedContent);
 		}
 	}

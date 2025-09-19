@@ -11,6 +11,8 @@ import type InMemoryNotePlugin from "./main";
 export class InMemoryNoteView extends ItemView {
 	plugin: InMemoryNotePlugin;
 	inlineEditor: InlineEditor;
+	private hasUnsavedChanges = false;
+	private initialContent = "";
 
 	constructor(leaf: WorkspaceLeaf, plugin: InMemoryNotePlugin) {
 		super(leaf);
@@ -34,9 +36,13 @@ export class InMemoryNoteView extends ItemView {
 
 	/**
 	 * Returns the display text for the view tab.
+	 * Shows an asterisk (*) prefix when there are unsaved changes and save setting is enabled.
 	 */
 	getDisplayText() {
-		return "In-memory note";
+		const baseTitle = "In-memory note";
+		// Only show asterisk if save setting is enabled and there are unsaved changes
+		const shouldShowUnsaved = this.plugin.settings.enableSaveNoteContent && this.hasUnsavedChanges;
+		return shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
 	}
 
 	/**
@@ -62,6 +68,7 @@ export class InMemoryNoteView extends ItemView {
 		if (state && typeof state.content === "string") {
 			// Set initial content for the inline editor
 			this.inlineEditor.content = state.content;
+			this.initialContent = state.content;
 
 			// If the view is already loaded, update the editor immediately
 			if (this.inlineEditor.targetElement) {
@@ -78,6 +85,8 @@ export class InMemoryNoteView extends ItemView {
 	setContent(content: string) {
 		if (this.editor && this.editor.getValue() !== content) {
 			this.editor.setValue(content);
+			// Update unsaved state when content is synchronized from other views
+			this.updateUnsavedState(content);
 		}
 	}
 
@@ -93,6 +102,7 @@ export class InMemoryNoteView extends ItemView {
 		
 		// Initialize the inline editor with shared content
 		this.inlineEditor.content = this.plugin.sharedNoteContent;
+		this.initialContent = this.plugin.sharedNoteContent;
 		await this.inlineEditor.onload();
 
 		// Create and load the editor container
@@ -116,6 +126,8 @@ export class InMemoryNoteView extends ItemView {
 			const sourceView = existingViews.find(view => view !== this);
 			if (sourceView && sourceView.editor) {
 				this.plugin.sharedNoteContent = sourceView.editor.getValue();
+				// Also sync the initial content to match the existing view's state
+				this.initialContent = sourceView.initialContent;
 			}
 		}
 	}
@@ -156,6 +168,38 @@ export class InMemoryNoteView extends ItemView {
 				editorPlugin.connectToPlugin(this.plugin, this);
 			}
 		}, 100);
+	}
+
+	/**
+	 * Updates the unsaved state based on current content and refreshes the title.
+	 * Only tracks changes when save setting is enabled.
+	 * @param currentContent The current editor content to compare against initial state.
+	 */
+	updateUnsavedState(currentContent: string) {
+		// Only track unsaved state when save setting is enabled
+		if (!this.plugin.settings.enableSaveNoteContent) {
+			this.hasUnsavedChanges = false;
+			return;
+		}
+
+		const wasUnsaved = this.hasUnsavedChanges;
+		this.hasUnsavedChanges = currentContent !== this.initialContent;
+		
+		// Update the tab title if the unsaved state changed
+		if (wasUnsaved !== this.hasUnsavedChanges) {
+			this.leaf.updateHeader();
+		}
+	}
+
+	/**
+	 * Marks the current content as saved by updating the initial content reference.
+	 * This removes the unsaved state indicator.
+	 */
+	markAsSaved() {
+		if (this.editor) {
+			this.initialContent = this.editor.getValue();
+			this.updateUnsavedState(this.initialContent);
+		}
 	}
 
 	/**

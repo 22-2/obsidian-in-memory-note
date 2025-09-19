@@ -160,6 +160,9 @@ export default class InMemoryNotePlugin extends Plugin {
 			const file = await this.app.vault.create(fileName, content);
 			this.currentSavedNoteFile = file.path;
 			
+			// Mark the view as saved since content was written to file
+			view.markAsSaved();
+			
 			this.logger.debug(`Auto-saved note content to: ${file.path}`);
 		} catch (error) {
 			this.logger.error(`Failed to auto-save note content: ${error}`);
@@ -231,5 +234,17 @@ export default class InMemoryNotePlugin extends Plugin {
 	 */
 	async saveSettings() {
 		await this.saveData(this.settings);
+		// Refresh all view titles when settings change
+		this.refreshAllViewTitles();
+	}
+
+	/**
+	 * Refreshes the titles of all active views to reflect current settings.
+	 * This is called when the save setting is toggled.
+	 */
+	private refreshAllViewTitles() {
+		for (const view of this.activeViews) {
+			view.leaf.updateHeader();
+		}
 	}
 }

@@ -88,7 +88,18 @@ export class InMemoryNoteView extends ItemView {
 	 */
 	async onOpen() {
 		this.plugin.activeViews.add(this);
-		// Set initial content from the shared state.
+		
+		// Sync content from existing views if available, otherwise use shared state
+		const existingViews = Array.from(this.plugin.activeViews);
+		if (existingViews.length > 1) {
+			// Get content from the first existing view (excluding this one)
+			const sourceView = existingViews.find(view => view !== this);
+			if (sourceView && sourceView.editor) {
+				this.plugin.noteContent = sourceView.editor.getValue();
+			}
+		}
+		
+		// Set initial content from the shared state
 		this.inlineEditor.content = this.plugin.noteContent;
 
 		await this.inlineEditor.onload();
@@ -114,6 +125,14 @@ export class InMemoryNoteView extends ItemView {
 					this.inlineEditor.inlineView.editMode
 				)
 			);
+
+			// Connect watchEditorPlugin
+			setTimeout(() => {
+				const editorPlugin = this.editor.cm.plugin(this.plugin.watchEditorPlugin);
+				if (editorPlugin) {
+					editorPlugin.connectToPlugin(this.plugin, this);
+				}
+			}, 100);
 		}
 	}
 

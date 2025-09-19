@@ -11,6 +11,7 @@ import {
 import { DirectLogger } from "./utils/logging";
 import { activateView } from "./utils/obsidian";
 import { InMemoryNoteView } from "./view";
+import { watchEditorPlugin } from "./watchEditorPlugin";
 
 /**
  * The main plugin class for In-Memory Note.
@@ -21,6 +22,7 @@ export default class InMemoryNotePlugin extends Plugin {
 	logger!: DirectLogger;
 	noteContent = "";
 	activeViews: Set<InMemoryNoteView> = new Set();
+	watchEditorPlugin = watchEditorPlugin;
 
 	/**
 	 * This method is called when the plugin is loaded.
@@ -29,6 +31,22 @@ export default class InMemoryNotePlugin extends Plugin {
 		await this.loadSettings();
 		this.addSettingTab(new InMemoryNoteSettingTab(this));
 		this.initializeLogger();
+		this.registerEditorExtension(watchEditorPlugin);
+
+		// Connect watchEditorPlugin when active leaf changes
+		this.app.workspace.on("active-leaf-change", () => {
+			const activeView =
+				this.app.workspace.getActiveViewOfType(InMemoryNoteView);
+			if (activeView instanceof InMemoryNoteView) {
+				const editorPlugin =
+					activeView.inlineEditor.inlineView.editor.cm.plugin(
+						watchEditorPlugin
+					);
+				if (editorPlugin) {
+					editorPlugin.connectToPlugin(this, activeView);
+				}
+			}
+		});
 
 		this.registerView(
 			VIEW_TYPE,
@@ -71,20 +89,17 @@ export default class InMemoryNotePlugin extends Plugin {
 
 	/**
 	 * Activates and opens the In-Memory Note view.
-	 * If a view is already present, it reveals and focuses it.
-	 * Otherwise, it opens the view in a new tab.
+	 * Creates a new view in a new tab. Multiple views can be open simultaneously
+	 * and will be synchronized through the watchEditorPlugin.
 	 */
 	async activateView() {
-		const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE);
-		if (leaves.length > 0) {
-			this.app.workspace.revealLeaf(leaves[0]);
-			return;
-		}
-
-		return activateView(this.app, {
+		// Always create a new view
+		const leaf = await activateView(this.app, {
 			type: VIEW_TYPE,
 			active: true,
 		});
+
+		return leaf;
 	}
 
 	/**

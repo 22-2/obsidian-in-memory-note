@@ -35,9 +35,9 @@ export class SaveManager {
 			const content = view.inlineEditor.getContent();
 
 			// Skip saving if content is empty
-			if (!content || content.trim() === "") {
+			if (typeof content !== "string") {
 				this.logger.debug(
-					"Skipping save: In-memory note content is empty."
+					"Skipping save: In-memory note content is invalid."
 				);
 				return;
 			}

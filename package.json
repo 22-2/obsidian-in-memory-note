@@ -7,7 +7,8 @@
 		"dev": "pnpm dlx tsx esbuild.config.mts",
 		"build": "pnpm dlx tsx esbuild.config.mts production",
 		"check-types": "tsc -noEmit -skipLibCheck",
-		"repomix": "pnpm dlx repomix && code ./repomix-output.md"
+		"repomix": "pnpm dlx repomix && code ./repomix-output.md",
+		"version:full": "node version-bump.ext.mjs all"
 	},
 	"keywords": [],
 	"author": "22-2",

@@ -148,5 +148,32 @@ describe("CommandManager", () => {
 			).not.toHaveBeenCalled();
 			expect(originalCheckCallbackSpy).toHaveBeenCalledWith(checking);
 		});
+
+		it("should call original save logic if custom save logic throws an error", () => {
+			const mockView = {} as InMemoryNoteView;
+			mockApp.workspace.getActiveViewOfType.mockReturnValue(mockView);
+			mockPlugin.settings.enableSaveNoteContent = true;
+			const testError = new Error("Test error");
+			mockSaveManager.saveNoteContentToFile.mockImplementation(() => {
+				throw testError;
+			});
+			const consoleErrorSpy = vi
+				.spyOn(console, "error")
+				.mockImplementation(() => {});
+
+			const checking = false;
+			mockOriginalSaveCommand.checkCallback(checking);
+
+			expect(
+				mockSaveManager.saveNoteContentToFile
+			).toHaveBeenCalledOnce();
+			expect(consoleErrorSpy).toHaveBeenCalledWith(
+				"In-memory-note: monkey patch for save command failed.",
+				testError
+			);
+			expect(originalCheckCallbackSpy).toHaveBeenCalledWith(checking);
+
+			consoleErrorSpy.mockRestore();
+		});
 	});
 });

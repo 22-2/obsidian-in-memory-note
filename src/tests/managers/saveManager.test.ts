@@ -70,7 +70,7 @@ describe("SaveManager", () => {
 			expect(mockPlugin.saveData).not.toHaveBeenCalled();
 			expect(view.markAsSaved).not.toHaveBeenCalled();
 			expect(mockLogger.debug).toHaveBeenCalledWith(
-				"Skipping save: In-memory note content is empty."
+				"Skipping save: In-memory note content is empty or invalid."
 			);
 		});
 

@@ -22,32 +22,43 @@ export class CommandManager {
 					checkCallback: (orig) => {
 						// Return a new checkCallback function that acts as our interceptor
 						return (checking: boolean) => {
-							if (checking) {
-								// If Obsidian is just checking if the command is available,
-								// we should always allow it, or delegate to the original for more complex checks.
-								// For our purpose, we want the save command to always appear if Obsidian normally allows it.
-								return orig?.call(this, checking) ?? true;
-							}
+							try {
+								if (checking) {
+									// If Obsidian is just checking if the command is available,
+									// we should always allow it, or delegate to the original for more complex checks.
+									// For our purpose, we want the save command to always appear if Obsidian normally allows it.
+									return (
+										orig?.call(this, checking) ?? true
+									);
+								}
 
-							// When the command is actually executed (checking is false)
-							const activeView =
-								this.plugin.app.workspace.getActiveViewOfType(
-									InMemoryNoteView
-								);
+								// When the command is actually executed (checking is false)
+								const activeView =
+									this.plugin.app.workspace.getActiveViewOfType(
+										InMemoryNoteView
+									);
 
-							if (
-								activeView &&
-								this.plugin.settings.enableSaveNoteContent
-							) {
-								// If it's an InMemoryNoteView and saving is enabled,
-								// execute our custom save logic.
-								this.plugin.saveManager.saveNoteContentToFile(
-									activeView
+								if (
+									activeView &&
+									this.plugin.settings.enableSaveNoteContent
+								) {
+									// If it's an InMemoryNoteView and saving is enabled,
+									// execute our custom save logic.
+									this.plugin.saveManager.saveNoteContentToFile(
+										activeView
+									);
+									return true; // Indicate that the command was handled.
+								} else {
+									// Otherwise, call the original save command's logic.
+									// It's important to call 'orig' with 'this' context if it depends on it.
+									return orig?.call(this, checking);
+								}
+							} catch (error) {
+								console.error(
+									"In-memory-note: monkey patch for save command failed.",
+									error
 								);
-								return true; // Indicate that the command was handled.
-							} else {
-								// Otherwise, call the original save command's logic.
-								// It's important to call 'orig' with 'this' context if it depends on it.
+								// Fallback to original command if our patch fails
 								return orig?.call(this, checking);
 							}
 						};

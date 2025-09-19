@@ -1,10 +1,7 @@
 import {
 	type Editor,
-	type EditorPosition,
 	MarkdownView,
-	TFile,
 } from "obsidian";
-import { createVirtualFile } from "./utils/obsidian";
 import { InMemoryNoteView } from "./view";
 import { noop } from "./utils";
 
@@ -67,7 +64,11 @@ export class InlineEditor {
 			this.setActiveEditor
 		);
 		this.setActiveEditor();
+
+		this.inlineView.editor;
 	}
+
+
 
 	/**
 	 * Focuses the editor.

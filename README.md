@@ -2,6 +2,8 @@
 
 A simple scratchpad for Obsidian for temporary thoughts and quick notes. Content exists only in the current tab and is never saved to your vault.
 
+> **Note**: Only one note can be edited at a time. All open in-memory note tabs share the same content.
+
 ## Demo
 
 ![Demo Image](assets/demo.png)

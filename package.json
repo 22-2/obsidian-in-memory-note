@@ -15,9 +15,9 @@
 	"keywords": [],
 	"author": "22-2",
 	"license": "MIT",
-	"dependencies": {},
 	"devDependencies": {
 		"@biomejs/biome": "2.2.4",
+		"@codemirror/view": "^6.38.2",
 		"@types/node": "24.3.1",
 		"builtin-modules": "5.0.0",
 		"dotenv": "^17.2.2",

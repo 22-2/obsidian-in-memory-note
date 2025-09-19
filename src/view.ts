@@ -92,8 +92,16 @@ export class SandboxNoteView extends ItemView {
 
 		this.addAction("save", "Save sandbox", () => {
 			this.save();
-			new Notice("Sandbox saved!");
 		});
+
+		// Focus editor when switching back to this view
+		this.plugin.registerEvent(
+			this.plugin.app.workspace.on("active-leaf-change", () => {
+				if (this.leaf.id === this.leaf.id) {
+					this.editor.focus();
+				}
+			})
+		);
 
 		try {
 			// Load the inline editor, which relies on private APIs

@@ -59,7 +59,7 @@ export class InlineEditor {
 		// Set content from the temporary store
 		this.setContent(this.content);
 		target.append(this.containerEl);
-		this.focus();
+		setTimeout(() => this.focus());
 		this.target = target;
 	}
 

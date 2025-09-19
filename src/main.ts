@@ -12,6 +12,7 @@ import { DirectLogger } from "./utils/logging";
 import { activateView } from "./utils/obsidian";
 import { InMemoryNoteView } from "./view";
 import { watchEditorPlugin } from "./watchEditorPlugin";
+import { around } from "monkey-around";
 
 /**
  * Main plugin class for In-Memory Note functionality.
@@ -20,18 +21,23 @@ import { watchEditorPlugin } from "./watchEditorPlugin";
 export default class InMemoryNotePlugin extends Plugin {
 	settings: InMemoryNotePluginSettings = DEFAULT_SETTINGS;
 	logger!: DirectLogger;
-	
+
 	/** Shared content across all in-memory note views */
 	sharedNoteContent = "";
-	
+
 	/** Set of currently active in-memory note views */
 	activeViews: Set<InMemoryNoteView> = new Set();
-	
+
 	/** CodeMirror plugin for watching editor changes */
 	watchEditorPlugin = watchEditorPlugin;
-	
+
 	private previousActiveView: InMemoryNoteView | null = null;
 	private currentSavedNoteFile: string | null = null;
+
+	// Store the original checkCallback for 'editor:save-file'
+	private originalSaveCheckCallback:
+		| ((checking: boolean) => boolean | void)
+		| null = null;
 
 	/**
 	 * Initializes the plugin when loaded.
@@ -44,6 +50,7 @@ export default class InMemoryNotePlugin extends Plugin {
 		this.setupWorkspaceEventHandlers();
 		this.registerViewType();
 		this.setupUserInterface();
+		this.setupSaveCommandMonkeyPatch(); // Call the new setup method here
 	}
 
 	/**
@@ -74,7 +81,8 @@ export default class InMemoryNotePlugin extends Plugin {
 	 * Always saves content when switching away from an in-memory note view if save setting is enabled.
 	 */
 	private handleActiveLeafChange() {
-		const activeView = this.app.workspace.getActiveViewOfType(InMemoryNoteView);
+		const activeView =
+			this.app.workspace.getActiveViewOfType(InMemoryNoteView);
 
 		// Auto-save content from previous view when save setting is enabled
 		if (this.settings.enableSaveNoteContent && this.previousActiveView) {
@@ -93,7 +101,8 @@ export default class InMemoryNotePlugin extends Plugin {
 	 * Connects the watch editor plugin to a specific view.
 	 */
 	private connectEditorPluginToView(view: InMemoryNoteView) {
-		const editorPlugin = view.inlineEditor.inlineView.editor.cm.plugin(watchEditorPlugin);
+		const editorPlugin =
+			view.inlineEditor.inlineView.editor.cm.plugin(watchEditorPlugin);
 		if (editorPlugin) {
 			editorPlugin.connectToPlugin(this, view);
 		}
@@ -103,7 +112,10 @@ export default class InMemoryNotePlugin extends Plugin {
 	 * Registers the custom view type with Obsidian.
 	 */
 	private registerViewType() {
-		this.registerView(VIEW_TYPE, (leaf) => new InMemoryNoteView(leaf, this));
+		this.registerView(
+			VIEW_TYPE,
+			(leaf) => new InMemoryNoteView(leaf, this)
+		);
 	}
 
 	/**
@@ -124,13 +136,68 @@ export default class InMemoryNotePlugin extends Plugin {
 	}
 
 	/**
+	 * Sets up the monkey patch for the 'editor:save-file' command.
+	 * This ensures that when the command is triggered:
+	 * 1. If the active view is an InMemoryNoteView and `enableSaveNoteContent` is true,
+	 *    it will save the in-memory note content.
+	 * 2. Otherwise, it will defer to the original save command behavior.
+	 */
+	private setupSaveCommandMonkeyPatch() {
+		const saveCommandDefinition =
+			this.app.commands?.commands?.["editor:save-file"];
+
+		if (saveCommandDefinition?.checkCallback) {
+			// Store the original checkCallback to be able to call it later
+			this.originalSaveCheckCallback =
+				saveCommandDefinition.checkCallback;
+
+			// Apply the monkey-patch using 'around'
+			this.register(
+				around(saveCommandDefinition, {
+					checkCallback: (orig) => {
+						// Return a new checkCallback function that acts as our interceptor
+						return (checking: boolean) => {
+							if (checking) {
+								// If Obsidian is just checking if the command is available,
+								// we should always allow it, or delegate to the original for more complex checks.
+								// For our purpose, we want the save command to always appear if Obsidian normally allows it.
+								return orig?.call(this, checking) ?? true;
+							}
+
+							// When the command is actually executed (checking is false)
+							const activeView =
+								this.app.workspace.getActiveViewOfType(
+									InMemoryNoteView
+								);
+
+							if (
+								activeView &&
+								this.settings.enableSaveNoteContent
+							) {
+								// If it's an InMemoryNoteView and saving is enabled,
+								// execute our custom save logic.
+								this.saveNoteContentToFile(activeView);
+								return true; // Indicate that the command was handled.
+							} else {
+								// Otherwise, call the original save command's logic.
+								// It's important to call 'orig' with 'this' context if it depends on it.
+								return orig?.call(this, checking);
+							}
+						};
+					},
+				})
+			);
+		}
+	}
+
+	/**
 	 * Updates the shared note content and synchronizes it across all active views.
 	 * @param content The new content to propagate.
 	 * @param sourceView The view that initiated the content change.
 	 */
 	updateNoteContent(content: string, sourceView: InMemoryNoteView) {
 		this.sharedNoteContent = content;
-		
+
 		// Synchronize content to all other active views
 		for (const view of this.activeViews) {
 			if (view !== sourceView) {
@@ -140,16 +207,19 @@ export default class InMemoryNotePlugin extends Plugin {
 	}
 
 	/**
-	 * Automatically saves note content to a file when switching away from a view.
+	 * Automatically saves note content to a file when switching away from a view or explicitly by command.
 	 * Only saves non-empty content and maintains a single saved note file.
 	 * @param view The view instance to save content from.
 	 */
 	private async saveNoteContentToFile(view: InMemoryNoteView) {
 		try {
 			const content = view.inlineEditor.getContent();
-			
+
 			// Skip saving if content is empty
 			if (!content || content.trim() === "") {
+				this.logger.debug(
+					"Skipping save: In-memory note content is empty."
+				);
 				return;
 			}
 
@@ -160,10 +230,10 @@ export default class InMemoryNotePlugin extends Plugin {
 			const fileName = `in-memory-note-${Date.now()}.md`;
 			const file = await this.app.vault.create(fileName, content);
 			this.currentSavedNoteFile = file.path;
-			
+
 			// Mark the view as saved since content was written to file
 			view.markAsSaved();
-			
+
 			this.logger.debug(`Auto-saved note content to: ${file.path}`);
 		} catch (error) {
 			this.logger.error(`Failed to auto-save note content: ${error}`);
@@ -178,12 +248,17 @@ export default class InMemoryNotePlugin extends Plugin {
 			return;
 		}
 
-		const existingFile = this.app.vault.getAbstractFileByPath(this.currentSavedNoteFile);
-		if (existingFile) {
+		const existingFile = this.app.vault.getAbstractFileByPath(
+			this.currentSavedNoteFile
+		);
+		if (existingFile instanceof TFile) {
+			// Ensure it's a TFile before deleting
 			await this.app.vault.delete(existingFile);
-			this.logger.debug(`Cleaned up previous saved note: ${this.currentSavedNoteFile}`);
+			this.logger.debug(
+				`Cleaned up previous saved note: ${this.currentSavedNoteFile}`
+			);
 		}
-		
+
 		this.currentSavedNoteFile = null;
 	}
 
@@ -192,6 +267,9 @@ export default class InMemoryNotePlugin extends Plugin {
 	 */
 	onunload() {
 		this.logger.debug("In-Memory Note plugin unloaded");
+		// The `around` utility automatically registers a cleanup function
+		// that reverts the monkey patch when the plugin is unloaded.
+		// No manual unpatching is required here.
 	}
 
 	/**

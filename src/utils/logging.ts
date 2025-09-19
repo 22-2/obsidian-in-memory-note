@@ -64,7 +64,9 @@ export class DirectLogger {
 	 * @private
 	 */
 	private regenerateLogFunctions(): void {
-		const createLogFunction = (level: LogLevel): ((...args: any[]) => void) => {
+		const createLogFunction = (
+			level: LogLevel
+		): ((...args: any[]) => void) => {
 			if (logLevelPriorities[level] >= this.settingLevelPriority) {
 				// The core of this logger: binding the console method.
 				// 1. **Preserves Caller Information**: Binding returns a function that, when executed,
@@ -97,7 +99,9 @@ export class DirectLogger {
 		this.regenerateLogFunctions();
 
 		// Use console.info directly to announce the change, regardless of the new level.
-		console.info(`${this.prefix} Logging level set to: ${this.settings.level}`);
+		console.info(
+			`${this.prefix} Logging level set to: ${this.settings.level}`
+		);
 	}
 
 	/**
@@ -126,9 +130,10 @@ function getInitialLogLevel(): LogLevel {
 	if (typeof process === "undefined") {
 		return "info";
 	}
-	const envLevel = process.env.NEXT_PUBLIC_LOG_LEVEL || process.env.LOG_LEVEL;
+	const envLevel = (process.env.NEXT_PUBLIC_LOG_LEVEL ||
+		process.env.LOG_LEVEL) as LogLevel;
 	// Check if envLevel is a valid log level.
-	if (envLevel && Object.values(LOG_LEVEL).includes(envLevel as any)) {
+	if (envLevel && Object.values(LOG_LEVEL).includes(envLevel)) {
 		return envLevel as LogLevel;
 	}
 	return LOG_LEVEL.INFO; // Default to INFO

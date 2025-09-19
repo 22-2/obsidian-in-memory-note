@@ -98,7 +98,7 @@ export class InlineEditor {
 				backHistory: [],
 				forwardHistory: [],
 			},
-		} as any) as InlineMarkdownView;
+		} as never) as InlineMarkdownView;
 
 		// Workaround for Templater plugin and to prevent saving operations
 		// const virtualFile = createVirtualFile(this.view.app);

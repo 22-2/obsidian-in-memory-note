@@ -7,6 +7,7 @@ export class SaveManager {
 	private plugin: InMemoryNotePlugin;
 	private logger: DirectLogger;
 	private previousActiveView: InMemoryNoteView | null = null;
+	private isSaving = false;
 
 	constructor(plugin: InMemoryNotePlugin, logger: DirectLogger) {
 		this.plugin = plugin;
@@ -32,6 +33,13 @@ export class SaveManager {
 	/** Save note content to data.json using Obsidian API */
 	async saveNoteContentToFile(view: InMemoryNoteView) {
 		try {
+			if (this.isSaving) {
+				this.logger.debug(
+					"Skipping save: A save is already in progress."
+				);
+				return;
+			}
+			this.isSaving = true;
 			const content = view.inlineEditor.getContent();
 
 			// Skip saving if content is invalid
@@ -59,6 +67,8 @@ export class SaveManager {
 			);
 		} catch (error) {
 			this.logger.error(`Failed to auto-save note content: ${error}`);
+		} finally {
+			this.isSaving = false;
 		}
 	}
 }

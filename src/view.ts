@@ -47,26 +47,24 @@ export class InMemoryNoteView extends ItemView {
 	}
 
 	/**
-	 * Gets the ephemeral (temporary) state of the view, which includes the editor content.
-	 * This state is not saved permanently but is used for operations like tab duplication.
+	 * Gets the ephemeral (temporary) state of the view for operations like tab duplication.
+	 * This state includes the current editor content but is not permanently saved.
 	 */
 	getEphemeralState(): any {
-		return { content: this.plugin.noteContent };
+		return { content: this.plugin.sharedNoteContent };
 	}
 
 	/**
-	 * Sets the ephemeral state of the view, updating the editor content.
-	 * @param state The state object containing the new content.
+	 * Restores the ephemeral state of the view, updating the editor content.
+	 * @param state The state object containing the content to restore.
 	 */
 	setEphemeralState(state: any): void {
 		if (state && typeof state.content === "string") {
-			// Set the initial content for the inline editor.
-			// This is important for when the view is first created.
+			// Set initial content for the inline editor
 			this.inlineEditor.content = state.content;
 
-			// If the view is already loaded (e.g., navigating back and forth),
-			// update the editor content immediately.
-			if (this.inlineEditor.target) {
+			// If the view is already loaded, update the editor immediately
+			if (this.inlineEditor.targetElement) {
 				this.setContent(state.content);
 			}
 		}
@@ -84,60 +82,84 @@ export class InMemoryNoteView extends ItemView {
 	}
 
 	/**
-	 * Called when the view is opened. Loads the inline editor.
+	 * Initializes the view when opened. Sets up the inline editor and event handlers.
 	 */
 	async onOpen() {
+		// Register this view as active
 		this.plugin.activeViews.add(this);
 		
-		// Sync content from existing views if available, otherwise use shared state
-		const existingViews = Array.from(this.plugin.activeViews);
-		if (existingViews.length > 1) {
-			// Get content from the first existing view (excluding this one)
-			const sourceView = existingViews.find(view => view !== this);
-			if (sourceView && sourceView.editor) {
-				this.plugin.noteContent = sourceView.editor.getValue();
-			}
-		}
+		// Synchronize content with existing views
+		this.synchronizeWithExistingViews();
 		
-		// Set initial content from the shared state
-		this.inlineEditor.content = this.plugin.noteContent;
-
+		// Initialize the inline editor with shared content
+		this.inlineEditor.content = this.plugin.sharedNoteContent;
 		await this.inlineEditor.onload();
 
-		const container = this.contentEl.createEl("div", {
+		// Create and load the editor container
+		const editorContainer = this.contentEl.createEl("div", {
 			cls: "in-memory-note-container",
 		});
+		this.inlineEditor.load(editorContainer);
 
-		this.inlineEditor.load(container);
+		// Set up event handlers and editor plugin connection
+		this.setupEventHandlers();
+		this.connectEditorPlugin();
+	}
 
-		if (this.editor) {
-			this.registerDomEvent(
-				this.contentEl,
-				"mousedown",
-				handleClick.bind(null, this.editor)
-			);
-			this.registerDomEvent(
-				this.contentEl,
-				"contextmenu",
-				handleContextMenu.bind(
-					null,
-					this.app.commands,
-					this.inlineEditor.inlineView.editMode
-				)
-			);
-
-			// Connect watchEditorPlugin
-			setTimeout(() => {
-				const editorPlugin = this.editor.cm.plugin(this.plugin.watchEditorPlugin);
-				if (editorPlugin) {
-					editorPlugin.connectToPlugin(this.plugin, this);
-				}
-			}, 100);
+	/**
+	 * Synchronizes content with existing views to ensure consistency.
+	 */
+	private synchronizeWithExistingViews() {
+		const existingViews = Array.from(this.plugin.activeViews);
+		if (existingViews.length > 1) {
+			// Get content from an existing view (excluding this one)
+			const sourceView = existingViews.find(view => view !== this);
+			if (sourceView && sourceView.editor) {
+				this.plugin.sharedNoteContent = sourceView.editor.getValue();
+			}
 		}
 	}
 
 	/**
-	 * Called when the view is closed. Unloads the inline editor.
+	 * Sets up DOM event handlers for click and context menu interactions.
+	 */
+	private setupEventHandlers() {
+		if (!this.editor) return;
+
+		this.registerDomEvent(
+			this.contentEl,
+			"mousedown",
+			handleClick.bind(null, this.editor)
+		);
+		
+		this.registerDomEvent(
+			this.contentEl,
+			"contextmenu",
+			handleContextMenu.bind(
+				null,
+				this.app.commands,
+				this.inlineEditor.inlineView.editMode
+			)
+		);
+	}
+
+	/**
+	 * Connects the watch editor plugin to enable content synchronization.
+	 */
+	private connectEditorPlugin() {
+		if (!this.editor) return;
+
+		// Delay connection to ensure editor is fully initialized
+		setTimeout(() => {
+			const editorPlugin = this.editor.cm.plugin(this.plugin.watchEditorPlugin);
+			if (editorPlugin) {
+				editorPlugin.connectToPlugin(this.plugin, this);
+			}
+		}, 100);
+	}
+
+	/**
+	 * Cleanup when the view is closed. Unloads the inline editor and removes from active views.
 	 */
 	async onClose() {
 		this.plugin.activeViews.delete(this);

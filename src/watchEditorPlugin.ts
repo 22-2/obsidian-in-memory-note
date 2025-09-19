@@ -1,47 +1,66 @@
 import {
 	ViewUpdate,
 	type PluginValue,
-	EditorView,
 	ViewPlugin,
 } from "@codemirror/view";
-import { debounce } from "obsidian";
 import type InMemoryNotePlugin from "./main";
 import type { InMemoryNoteView } from "./view";
 
-export class EditorPlugin implements PluginValue {
-	private plugin: InMemoryNotePlugin | null = null;
-	private sourceView: InMemoryNoteView | null = null;
+/**
+ * CodeMirror plugin that watches for editor changes and synchronizes content
+ * across multiple in-memory note views.
+ */
+export class EditorWatchPlugin implements PluginValue {
+	private connectedPlugin: InMemoryNotePlugin | null = null;
+	private connectedView: InMemoryNoteView | null = null;
 
-	setNoteContent(content: string) {
-		if (this.plugin && this.sourceView) {
-			this.plugin.updateNoteContent(content, this.sourceView);
+	/**
+	 * Updates the shared note content through the main plugin.
+	 * @param content The new content to propagate.
+	 */
+	private propagateContentChange(content: string) {
+		if (this.connectedPlugin && this.connectedView) {
+			this.connectedPlugin.updateNoteContent(content, this.connectedView);
 		}
 	}
 
+	/**
+	 * Handles editor updates and propagates content changes.
+	 * @param update The CodeMirror view update.
+	 */
 	update(update: ViewUpdate): void {
-		if (!this.plugin || !this.sourceView) {
+		// Only proceed if plugin and view are connected
+		if (!this.connectedPlugin || !this.connectedView) {
 			return;
 		}
 
-		// Process only when document has changed
+		// Only process actual document changes
 		if (update.docChanged) {
-			const newContent = update.state.doc.toString();
-			this.setNoteContent(newContent);
+			const updatedContent = update.state.doc.toString();
+			this.propagateContentChange(updatedContent);
 		}
 	}
 
-	connectToPlugin(
-		plugin: InMemoryNotePlugin,
-		sourceView: InMemoryNoteView
-	): void {
-		this.plugin = plugin;
-		this.sourceView = sourceView;
+	/**
+	 * Connects this editor plugin to the main plugin and view.
+	 * @param plugin The main in-memory note plugin instance.
+	 * @param view The view that owns this editor.
+	 */
+	connectToPlugin(plugin: InMemoryNotePlugin, view: InMemoryNoteView): void {
+		this.connectedPlugin = plugin;
+		this.connectedView = view;
 	}
 
+	/**
+	 * Cleanup when the plugin is destroyed.
+	 */
 	destroy(): void {
-		this.plugin = null;
-		this.sourceView = null;
+		this.connectedPlugin = null;
+		this.connectedView = null;
 	}
 }
 
-export const watchEditorPlugin = ViewPlugin.fromClass(EditorPlugin);
+/**
+ * CodeMirror ViewPlugin instance for watching editor changes.
+ */
+export const watchEditorPlugin = ViewPlugin.fromClass(EditorWatchPlugin);

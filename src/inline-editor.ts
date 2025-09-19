@@ -15,14 +15,15 @@ export interface InlineMarkdownView extends MarkdownView {
  */
 export class InlineEditor {
 	public inlineView!: InlineMarkdownView;
-	private containerEl!: HTMLElement;
-	target: HTMLElement | null = null;
+	private containerElement!: HTMLElement;
+	private targetElement: HTMLElement | null = null;
+
 	/**
-	 * Holds the editor content, especially when the editor is not loaded.
+	 * Stores the editor content when the editor is not loaded.
 	 */
 	public content = "";
 
-	constructor(private view: InMemoryNoteView) { }
+	constructor(private parentView: InMemoryNoteView) { }
 
 	/**
 	 * Gets the current content from the editor.
@@ -53,19 +54,20 @@ export class InlineEditor {
 	 * @param target The element to append the editor to.
 	 */
 	load(target: HTMLElement) {
-		// Set content from the temporary store
+		// Restore content from temporary storage
 		this.setContent(this.content);
-		target.append(this.containerEl);
-		setTimeout(() => this.focus());
-		this.target = target;
-		this.view.plugin.registerDomEvent(
-			this.target,
-			"focusin",
-			this.setActiveEditor
-		);
-		this.setActiveEditor();
+		target.append(this.containerElement);
 
-		this.inlineView.editor;
+		// Focus the editor after DOM is ready
+		setTimeout(() => this.focus());
+
+		this.targetElement = target;
+		this.parentView.plugin.registerDomEvent(
+			this.targetElement,
+			"focusin",
+			this.handleFocusIn
+		);
+		this.handleFocusIn();
 	}
 
 
@@ -78,52 +80,68 @@ export class InlineEditor {
 	}
 
 	/**
-	 * Sets the active editor to approximate standard markdown view operations.
+	 * Sets this editor as the active editor in the workspace.
+	 * This enables standard markdown view operations to work properly.
 	 */
-	private setActiveEditor = () => {
-		// @ts-ignore
-		this.view.plugin.app.workspace._activeEditor = this.inlineView;
+	private handleFocusIn = () => {
+		// @ts-ignore - Accessing private property to integrate with Obsidian's editor system
+		this.parentView.plugin.app.workspace._activeEditor = this.inlineView;
 	};
 
 	/**
-	 * Detaches the editor from the DOM and stores its content.
+	 * Detaches the editor from the DOM and preserves its content.
 	 */
 	unload() {
-		// Store current content before unloading
+		// Preserve current content before unloading
 		this.content = this.getContent();
-		if (this.target) {
-			this.target.empty();
-			this.target = null;
+		if (this.targetElement) {
+			this.targetElement.empty();
+			this.targetElement = null;
 		}
 	}
 
 	/**
 	 * Initializes the inline MarkdownView instance.
-	 * This should be called before the editor is loaded.
+	 * Must be called before loading the editor into the DOM.
 	 */
 	async onload() {
-		this.containerEl = document.createElement("div");
-		this.containerEl.addClasses(["in-memory-inline-editor"]);
+		this.containerElement = document.createElement("div");
+		this.containerElement.addClasses(["in-memory-inline-editor"]);
 
+		// Create the inline MarkdownView with necessary configuration
 		this.inlineView = new MarkdownView({
-			containerEl: this.containerEl,
-			app: this.view.plugin.app,
-			workspace: this.view.plugin.app.workspace,
+			containerEl: this.containerElement,
+			app: this.parentView.plugin.app,
+			workspace: this.parentView.plugin.app.workspace,
 			history: {
 				backHistory: [],
 				forwardHistory: [],
 			},
 		} as never) as InlineMarkdownView;
 
-		// Workaround for Templater plugin and to prevent saving operations
-		// const virtualFile = createVirtualFile(this.view.app);
-		// this.inlineView.file = virtualFile as TFile;
+		// Disable save operations to prevent file system interactions
+		this.disableSaveOperations();
+
+		// Ensure the editor starts in source mode
+		await this.ensureSourceMode();
+	}
+
+	/**
+	 * Disables all save-related operations for the inline view.
+	 * This prevents the editor from attempting to save to the file system.
+	 */
+	private disableSaveOperations() {
 		this.inlineView.save = noop;
 		this.inlineView.saveTitle = noop;
 		this.inlineView.requestSave = () => { };
 		this.inlineView.__setViewData__ = this.inlineView.setViewData;
 		this.inlineView.setViewData = noop;
+	}
 
+	/**
+	 * Ensures the editor is in source mode rather than preview mode.
+	 */
+	private async ensureSourceMode() {
 		if (this.inlineView.getMode() === "preview") {
 			await this.inlineView.setState(
 				{ mode: "source" },

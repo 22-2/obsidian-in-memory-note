@@ -3,10 +3,11 @@ import type { Commands } from "obsidian-typings";
 import { waitForElement } from "./utils/dom";
 
 /**
- * Handles the context menu event on the view content, allowing it to be shown
- * in blank areas. It opens the editor's context menu at the right-click position.
+ * Handles right-click context menu events on the view content.
+ * Enables context menu display even when clicking in blank areas of the editor.
  * @param commands The Obsidian Commands instance.
- * @param e The mouse event.
+ * @param editMode The markdown edit view mode.
+ * @param e The pointer event from the right-click.
  */
 export const handleContextMenu = async (
 	commands: Commands,
@@ -16,25 +17,34 @@ export const handleContextMenu = async (
 	const target = e.target;
 	if (!(target instanceof HTMLElement)) return;
 
+	// Only handle context menu for view content areas
 	if (!target.matches(".view-content")) return;
+	
 	editMode.onContextMenu(e, true);
 };
 
 /**
- * Handles the click event on the view content, focusing the editor even when clicking
- * in a blank area. It sets the cursor position and focuses the editor.
- * @param app The Obsidian Editor instance.
- * @param e The mouse event.
+ * Handles click events on the view content to improve editor focus behavior.
+ * Allows focusing the editor and positioning the cursor even when clicking in blank areas.
+ * @param editor The Obsidian Editor instance.
+ * @param e The mouse click event.
  */
 export const handleClick = (editor: Editor, e: MouseEvent) => {
 	const target = e.target;
 	if (!(target instanceof HTMLElement)) return;
-	if (!(target.matches(".view-content") || target.matches(".cm-sizer")))
+	
+	// Only handle clicks on view content or editor sizer areas
+	if (!(target.matches(".view-content") || target.matches(".cm-sizer"))) {
 		return;
-	const pos = editor.posAtMouse(e);
+	}
+	
+	// Calculate cursor position from mouse coordinates
+	const cursorPosition = editor.posAtMouse(e);
+	
+	// Set cursor position and focus editor after DOM updates
 	setTimeout(() => {
-		editor.setCursor(pos);
-		editor.setSelection(pos, pos);
+		editor.setCursor(cursorPosition);
+		editor.setSelection(cursorPosition, cursorPosition);
 		editor.focus();
 	}, 0);
 };

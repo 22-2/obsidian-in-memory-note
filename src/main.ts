@@ -14,58 +14,101 @@ import { InMemoryNoteView } from "./view";
 import { watchEditorPlugin } from "./watchEditorPlugin";
 
 /**
- * The main plugin class for In-Memory Note.
- * It handles the plugin's lifecycle, settings, and commands.
+ * Main plugin class for In-Memory Note functionality.
+ * Manages plugin lifecycle, settings, view synchronization, and commands.
  */
 export default class InMemoryNotePlugin extends Plugin {
 	settings: InMemoryNotePluginSettings = DEFAULT_SETTINGS;
 	logger!: DirectLogger;
-	noteContent = "";
+	
+	/** Shared content across all in-memory note views */
+	sharedNoteContent = "";
+	
+	/** Set of currently active in-memory note views */
 	activeViews: Set<InMemoryNoteView> = new Set();
+	
+	/** CodeMirror plugin for watching editor changes */
 	watchEditorPlugin = watchEditorPlugin;
+	
 	private previousActiveView: InMemoryNoteView | null = null;
-	private savedNoteFile: string | null = null;
+	private currentSavedNoteFile: string | null = null;
 
 	/**
-	 * This method is called when the plugin is loaded.
+	 * Initializes the plugin when loaded.
 	 */
 	async onload() {
 		await this.loadSettings();
-		this.addSettingTab(new InMemoryNoteSettingTab(this));
 		this.initializeLogger();
+		this.setupSettingsTab();
+		this.setupEditorExtension();
+		this.setupWorkspaceEventHandlers();
+		this.registerViewType();
+		this.setupUserInterface();
+	}
+
+	/**
+	 * Sets up the plugin settings tab.
+	 */
+	private setupSettingsTab() {
+		this.addSettingTab(new InMemoryNoteSettingTab(this));
+	}
+
+	/**
+	 * Registers the editor extension for watching changes.
+	 */
+	private setupEditorExtension() {
 		this.registerEditorExtension(watchEditorPlugin);
+	}
 
-		// Connect watchEditorPlugin when active leaf changes
+	/**
+	 * Sets up workspace event handlers for view management.
+	 */
+	private setupWorkspaceEventHandlers() {
 		this.app.workspace.on("active-leaf-change", () => {
-			const activeView =
-				this.app.workspace.getActiveViewOfType(InMemoryNoteView);
-
-			// Save content from previous view if enabled
-			if (
-				this.settings.enableSaveNoteContent &&
-				this.previousActiveView
-			) {
-				this.saveNoteContentToFile(this.previousActiveView);
-			}
-
-			if (activeView instanceof InMemoryNoteView) {
-				const editorPlugin =
-					activeView.inlineEditor.inlineView.editor.cm.plugin(
-						watchEditorPlugin
-					);
-				if (editorPlugin) {
-					editorPlugin.connectToPlugin(this, activeView);
-				}
-			}
-
-			this.previousActiveView = activeView;
+			this.handleActiveLeafChange();
 		});
+	}
 
-		this.registerView(
-			VIEW_TYPE,
-			(leaf) => new InMemoryNoteView(leaf, this)
-		);
+	/**
+	 * Handles active leaf changes to manage view synchronization and content saving.
+	 */
+	private handleActiveLeafChange() {
+		const activeView = this.app.workspace.getActiveViewOfType(InMemoryNoteView);
 
+		// Auto-save content from previous view if enabled
+		if (this.settings.enableSaveNoteContent && this.previousActiveView) {
+			this.saveNoteContentToFile(this.previousActiveView);
+		}
+
+		// Connect the editor plugin to the new active view
+		if (activeView instanceof InMemoryNoteView) {
+			this.connectEditorPluginToView(activeView);
+		}
+
+		this.previousActiveView = activeView;
+	}
+
+	/**
+	 * Connects the watch editor plugin to a specific view.
+	 */
+	private connectEditorPluginToView(view: InMemoryNoteView) {
+		const editorPlugin = view.inlineEditor.inlineView.editor.cm.plugin(watchEditorPlugin);
+		if (editorPlugin) {
+			editorPlugin.connectToPlugin(this, view);
+		}
+	}
+
+	/**
+	 * Registers the custom view type with Obsidian.
+	 */
+	private registerViewType() {
+		this.registerView(VIEW_TYPE, (leaf) => new InMemoryNoteView(leaf, this));
+	}
+
+	/**
+	 * Sets up the user interface elements (ribbon icon and commands).
+	 */
+	private setupUserInterface() {
 		this.addRibbonIcon(IN_MEMORY_NOTE_ICON, "Open in-memory note", () => {
 			this.activateView();
 		});
@@ -80,12 +123,14 @@ export default class InMemoryNotePlugin extends Plugin {
 	}
 
 	/**
-	 * Updates the shared note content and propagates the change to other views.
-	 * @param content The new content of the note.
-	 * @param sourceView The view instance that initiated the change.
+	 * Updates the shared note content and synchronizes it across all active views.
+	 * @param content The new content to propagate.
+	 * @param sourceView The view that initiated the content change.
 	 */
 	updateNoteContent(content: string, sourceView: InMemoryNoteView) {
-		this.noteContent = content;
+		this.sharedNoteContent = content;
+		
+		// Synchronize content to all other active views
 		for (const view of this.activeViews) {
 			if (view !== sourceView) {
 				view.setContent(content);
@@ -94,55 +139,63 @@ export default class InMemoryNotePlugin extends Plugin {
 	}
 
 	/**
-	 * Saves note content to a file when switching away from the view.
-	 * Only saves if content has changed and is not empty.
-	 * Maintains only one saved note file at a time.
+	 * Automatically saves note content to a file when switching away from a view.
+	 * Only saves non-empty content and maintains a single saved note file.
 	 * @param view The view instance to save content from.
 	 */
 	private async saveNoteContentToFile(view: InMemoryNoteView) {
 		try {
 			const content = view.inlineEditor.getContent();
+			
+			// Skip saving if content is empty
 			if (!content || content.trim() === "") {
 				return;
 			}
 
-			// Delete previous saved note if exists
-			if (this.savedNoteFile) {
-				const existingFile = this.app.vault.getAbstractFileByPath(
-					this.savedNoteFile
-				);
-				if (existingFile) {
-					await this.app.vault.delete(existingFile);
-					this.logger.debug(
-						`Deleted previous saved note: ${this.savedNoteFile}`
-					);
-				}
-			}
+			// Clean up previous saved note to maintain only one file
+			await this.cleanupPreviousSavedNote();
 
-			// Create new note file
+			// Create new timestamped note file
 			const fileName = `in-memory-note-${Date.now()}.md`;
 			const file = await this.app.vault.create(fileName, content);
-			this.savedNoteFile = file.path;
-			this.logger.debug(`Saved note content to: ${file.path}`);
+			this.currentSavedNoteFile = file.path;
+			
+			this.logger.debug(`Auto-saved note content to: ${file.path}`);
 		} catch (error) {
-			this.logger.debug(`Failed to save note content: ${error}`);
+			this.logger.error(`Failed to auto-save note content: ${error}`);
 		}
 	}
 
 	/**
-	 * This method is called when the plugin is unloaded.
+	 * Removes the previously saved note file if it exists.
 	 */
-	onunload() {
-		this.logger.debug("Plugin unloaded");
+	private async cleanupPreviousSavedNote() {
+		if (!this.currentSavedNoteFile) {
+			return;
+		}
+
+		const existingFile = this.app.vault.getAbstractFileByPath(this.currentSavedNoteFile);
+		if (existingFile) {
+			await this.app.vault.delete(existingFile);
+			this.logger.debug(`Cleaned up previous saved note: ${this.currentSavedNoteFile}`);
+		}
+		
+		this.currentSavedNoteFile = null;
 	}
 
 	/**
-	 * Activates and opens the In-Memory Note view.
-	 * Creates a new view in a new tab. Multiple views can be open simultaneously
-	 * and will be synchronized through the watchEditorPlugin.
+	 * Cleanup when the plugin is unloaded.
+	 */
+	onunload() {
+		this.logger.debug("In-Memory Note plugin unloaded");
+	}
+
+	/**
+	 * Creates and activates a new In-Memory Note view.
+	 * Multiple views can be open simultaneously and will stay synchronized.
+	 * @returns The newly created leaf containing the view.
 	 */
 	async activateView() {
-		// Always create a new view
 		const leaf = await activateView(this.app, {
 			type: VIEW_TYPE,
 			active: true,

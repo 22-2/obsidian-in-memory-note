@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
 import { handleClick, handleContextMenu } from "src/click-handler";
-import { InlineEditor } from "src/inline-editor";
+import { InlineEditor } from "src/inlineEditor";
 import { IN_MEMORY_NOTE_ICON, VIEW_TYPE } from "src/utils/constants";
 import type InMemoryNotePlugin from "./main";
 
@@ -31,7 +31,9 @@ export class InMemoryNoteView extends ItemView {
 	getDisplayText() {
 		const baseTitle = "In-memory note";
 		// Only show asterisk if save setting is enabled and there are unsaved changes
-		const shouldShowUnsaved = this.plugin.settings.enableSaveNoteContent && this.hasUnsavedChanges;
+		const shouldShowUnsaved =
+			this.plugin.settings.enableSaveNoteContent &&
+			this.hasUnsavedChanges;
 		return shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
 	}
 
@@ -72,12 +74,13 @@ export class InMemoryNoteView extends ItemView {
 	async onOpen() {
 		// Register this view as active
 		this.plugin.contentManager.addActiveView(this);
-		
+
 		// Synchronize content with existing views
 		this.synchronizeWithExistingViews();
-		
+
 		// Initialize the inline editor with shared content
-		this.inlineEditor.content = this.plugin.contentManager.sharedNoteContent;
+		this.inlineEditor.content =
+			this.plugin.contentManager.sharedNoteContent;
 		this.initialContent = this.plugin.contentManager.sharedNoteContent;
 		await this.inlineEditor.onload();
 
@@ -94,12 +97,15 @@ export class InMemoryNoteView extends ItemView {
 
 	/** Sync content with existing views. */
 	private synchronizeWithExistingViews() {
-		const existingViews = Array.from(this.plugin.contentManager.activeViews);
+		const existingViews = Array.from(
+			this.plugin.contentManager.activeViews
+		);
 		if (existingViews.length > 1) {
 			// Get content from an existing view (excluding this one)
-			const sourceView = existingViews.find(view => view !== this);
+			const sourceView = existingViews.find((view) => view !== this);
 			if (sourceView && sourceView.editor) {
-				this.plugin.contentManager.sharedNoteContent = sourceView.editor.getValue();
+				this.plugin.contentManager.sharedNoteContent =
+					sourceView.editor.getValue();
 				// Also sync the initial content to match the existing view's state
 				this.initialContent = sourceView.initialContent;
 			}
@@ -115,7 +121,7 @@ export class InMemoryNoteView extends ItemView {
 			"mousedown",
 			handleClick.bind(null, this.editor)
 		);
-		
+
 		this.registerDomEvent(
 			this.contentEl,
 			"contextmenu",
@@ -133,7 +139,9 @@ export class InMemoryNoteView extends ItemView {
 
 		// Delay connection to ensure editor is fully initialized
 		setTimeout(() => {
-			const editorPlugin = this.editor.cm.plugin(this.plugin.editorManager.watchEditorPlugin);
+			const editorPlugin = this.editor.cm.plugin(
+				this.plugin.editorManager.watchEditorPlugin
+			);
 			if (editorPlugin) {
 				editorPlugin.connectToPlugin(this.plugin, this);
 			}
@@ -150,7 +158,7 @@ export class InMemoryNoteView extends ItemView {
 
 		const wasUnsaved = this.hasUnsavedChanges;
 		this.hasUnsavedChanges = currentContent !== this.initialContent;
-		
+
 		// Update the tab title if the unsaved state changed
 		if (wasUnsaved !== this.hasUnsavedChanges) {
 			this.leaf.updateHeader();

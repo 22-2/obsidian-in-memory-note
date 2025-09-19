@@ -42,7 +42,7 @@ export class InMemoryNoteView extends ItemView {
 
 	/** Get ephemeral state for tab duplication. */
 	getEphemeralState(): any {
-		return { content: this.plugin.sharedNoteContent };
+		return { content: this.plugin.contentManager.sharedNoteContent };
 	}
 
 	/** Restore ephemeral state and update content. */
@@ -71,14 +71,14 @@ export class InMemoryNoteView extends ItemView {
 	/** Initialize view on open. */
 	async onOpen() {
 		// Register this view as active
-		this.plugin.activeViews.add(this);
+		this.plugin.contentManager.addActiveView(this);
 		
 		// Synchronize content with existing views
 		this.synchronizeWithExistingViews();
 		
 		// Initialize the inline editor with shared content
-		this.inlineEditor.content = this.plugin.sharedNoteContent;
-		this.initialContent = this.plugin.sharedNoteContent;
+		this.inlineEditor.content = this.plugin.contentManager.sharedNoteContent;
+		this.initialContent = this.plugin.contentManager.sharedNoteContent;
 		await this.inlineEditor.onload();
 
 		// Create and load the editor container
@@ -94,12 +94,12 @@ export class InMemoryNoteView extends ItemView {
 
 	/** Sync content with existing views. */
 	private synchronizeWithExistingViews() {
-		const existingViews = Array.from(this.plugin.activeViews);
+		const existingViews = Array.from(this.plugin.contentManager.activeViews);
 		if (existingViews.length > 1) {
 			// Get content from an existing view (excluding this one)
 			const sourceView = existingViews.find(view => view !== this);
 			if (sourceView && sourceView.editor) {
-				this.plugin.sharedNoteContent = sourceView.editor.getValue();
+				this.plugin.contentManager.sharedNoteContent = sourceView.editor.getValue();
 				// Also sync the initial content to match the existing view's state
 				this.initialContent = sourceView.initialContent;
 			}
@@ -133,7 +133,7 @@ export class InMemoryNoteView extends ItemView {
 
 		// Delay connection to ensure editor is fully initialized
 		setTimeout(() => {
-			const editorPlugin = this.editor.cm.plugin(this.plugin.watchEditorPlugin);
+			const editorPlugin = this.editor.cm.plugin(this.plugin.editorManager.watchEditorPlugin);
 			if (editorPlugin) {
 				editorPlugin.connectToPlugin(this.plugin, this);
 			}
@@ -167,7 +167,7 @@ export class InMemoryNoteView extends ItemView {
 
 	/** Cleanup on view close. */
 	async onClose() {
-		this.plugin.activeViews.delete(this);
+		this.plugin.contentManager.removeActiveView(this);
 		this.inlineEditor.unload();
 		this.contentEl.empty();
 	}

@@ -1,3 +1,4 @@
+import { SandboxNoteView } from "src/view";
 import type SandboxNotePlugin from "../main";
 import { SANDBOX_NOTE_ICON } from "../utils/constants";
 
@@ -18,12 +19,28 @@ export class UIManager {
 				this.plugin.activateView();
 			}
 		);
-
 		this.plugin.addCommand({
 			id: "open-sandbox-note-view",
 			name: "Open sandbox note",
 			callback: () => {
 				this.plugin.activateView();
+			},
+		});
+		this.plugin.addCommand({
+			id: "save-sandbox",
+			name: "Save current sandbox",
+			checkCallback: (checking) => {
+				const view =
+					this.plugin.app.workspace.getActiveViewOfType(
+						SandboxNoteView
+					);
+				if (view) {
+					if (!checking) {
+						view.save();
+					}
+					return true;
+				}
+				return false;
 			},
 		});
 	}

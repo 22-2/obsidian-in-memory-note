@@ -3,6 +3,7 @@ import { handleClick, handleContextMenu } from "src/click-handler";
 import { SandboxEditor as SandboxEditor } from "src/sandboxEditor";
 import { SANDBOX_NOTE_ICON, VIEW_TYPE } from "src/utils/constants";
 import type SandboxNotePlugin from "./main";
+import { Notice } from "./tests/obsidian";
 
 /** View for an sandbox note with inline editor. */
 export class SandboxNoteView extends ItemView {
@@ -23,6 +24,10 @@ export class SandboxNoteView extends ItemView {
 	get editor() {
 		return this.sandboxEditor.getEditor();
 	}
+
+	save = () => {
+		this.plugin.saveManager.saveNoteContentToFile(this);
+	};
 
 	/** Get view type. */
 	getViewType() {
@@ -84,17 +89,37 @@ export class SandboxNoteView extends ItemView {
 		this.sandboxEditor.content =
 			this.plugin.contentManager.sharedNoteContent;
 		this.initialContent = this.plugin.contentManager.sharedNoteContent;
-		await this.sandboxEditor.onload();
 
-		// Create and load the editor container
-		const editorContainer = this.contentEl.createEl("div", {
-			cls: "sandbox-note-container",
+		this.addAction("save", "Save sandbox", () => {
+			this.save();
+			new Notice("Sandbox saved!");
 		});
-		this.sandboxEditor.load(editorContainer);
 
-		// Set up event handlers and editor plugin connection
-		this.setupEventHandlers();
-		this.connectEditorPlugin();
+		try {
+			// Load the inline editor, which relies on private APIs
+			await this.sandboxEditor.onload();
+
+			// Create and load the editor container
+			const editorContainer = this.contentEl.createEl("div", {
+				cls: "sandbox-note-container",
+			});
+			this.sandboxEditor.load(editorContainer);
+
+			// Set up event handlers and editor plugin connection
+			this.setupEventHandlers();
+			this.connectEditorPlugin();
+		} catch (error) {
+			console.error(
+				"Sandbox Note: Failed to initialize inline editor.",
+				error
+			);
+			// Display an error message to the user
+			this.contentEl.empty();
+			this.contentEl.createEl("div", {
+				text: "Error: Could not initialize editor. This might be due to an Obsidian update.",
+				cls: "sandbox-error-message",
+			});
+		}
 	}
 
 	/** Sync content with existing views. */

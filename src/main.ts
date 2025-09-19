@@ -1,4 +1,8 @@
-import { Plugin } from "obsidian";
+import { MarkdownView, Notice, Plugin } from "obsidian";
+import { ContentManager } from "./managers/contentManager";
+import { EditorManager } from "./managers/editorManager";
+import { SaveManager } from "./managers/saveManager";
+import { UIManager } from "./managers/uiManager";
 import {
 	type SandboxNotePluginSettings,
 	SandboxNoteSettingTab,
@@ -7,11 +11,6 @@ import { DEFAULT_SETTINGS, VIEW_TYPE } from "./utils/constants";
 import { DirectLogger } from "./utils/logging";
 import { activateView } from "./utils/obsidian";
 import { SandboxNoteView } from "./view";
-import { ContentManager } from "./managers/contentManager";
-import { SaveManager } from "./managers/saveManager";
-import { UIManager } from "./managers/uiManager";
-import { CommandManager } from "./managers/commandManager";
-import { EditorManager } from "./managers/editorManager";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
@@ -22,11 +21,17 @@ export default class SandboxNotePlugin extends Plugin {
 	contentManager!: ContentManager;
 	saveManager!: SaveManager;
 	uiManager!: UIManager;
-	commandManager!: CommandManager;
 	editorManager!: EditorManager;
 
 	/** Initialize plugin on load. */
 	async onload() {
+		if (!this.checkCompatibility()) {
+			new Notice(
+				"Sandbox Note plugin: Incompatible with this version of Obsidian. The plugin has been disabled."
+			);
+			return;
+		}
+
 		await this.loadSettings();
 		this.initializeLogger();
 		this.initializeManagers();
@@ -35,7 +40,37 @@ export default class SandboxNotePlugin extends Plugin {
 		this.setupWorkspaceEventHandlers();
 		this.registerViewType();
 		this.uiManager.setupUserInterface();
-		this.commandManager.setupSaveCommandMonkeyPatch();
+	}
+
+	/**
+	 * Checks if the plugin is compatible with the current version of Obsidian.
+	 * @returns {boolean} True if compatible, false otherwise.
+	 */
+	private checkCompatibility(): boolean {
+		// This plugin relies on a specific internal structure of MarkdownView
+		// to create an editor without a file. This check attempts to create a
+		// dummy view to see if the required APIs are available.
+		try {
+			const dummyEl = document.createElement("div");
+			// @ts-ignore - We are intentionally accessing a private constructor.
+			const view = new MarkdownView({
+				containerEl: dummyEl,
+				app: this.app,
+				workspace: this.app.workspace,
+				history: { backHistory: [], forwardHistory: [] },
+			} as any);
+
+			view.unload();
+			dummyEl.remove();
+
+			return true;
+		} catch (error) {
+			console.error(
+				"Sandbox Note plugin: Compatibility check failed. This is likely due to an Obsidian update.",
+				error
+			);
+			return false;
+		}
 	}
 
 	/** Initialize all manager instances */
@@ -43,7 +78,6 @@ export default class SandboxNotePlugin extends Plugin {
 		this.contentManager = new ContentManager(this, this.logger);
 		this.saveManager = new SaveManager(this, this.logger);
 		this.uiManager = new UIManager(this);
-		this.commandManager = new CommandManager(this);
 		this.editorManager = new EditorManager(this);
 	}
 

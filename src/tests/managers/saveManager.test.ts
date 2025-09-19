@@ -63,23 +63,20 @@ describe("SaveManager", () => {
 			);
 		});
 
-		it("should skip saving if content is empty", async () => {
+		it("should save content if it is empty", async () => {
 			const view = createMockView("");
 			await saveManager.saveNoteContentToFile(view);
 
-			expect(mockPlugin.saveData).not.toHaveBeenCalled();
-			expect(view.markAsSaved).not.toHaveBeenCalled();
-			expect(mockLogger.debug).toHaveBeenCalledWith(
-				"Skipping save: In-memory note content is empty or invalid."
-			);
+			expect(mockPlugin.saveData).toHaveBeenCalledOnce();
+			expect(view.markAsSaved).toHaveBeenCalledOnce();
 		});
 
-		it("should skip saving if content is only whitespace", async () => {
+		it("should save content if it is only whitespace", async () => {
 			const view = createMockView("   \t\n   ");
 			await saveManager.saveNoteContentToFile(view);
 
-			expect(mockPlugin.saveData).not.toHaveBeenCalled();
-			expect(view.markAsSaved).not.toHaveBeenCalled();
+			expect(mockPlugin.saveData).toHaveBeenCalledOnce();
+			expect(view.markAsSaved).toHaveBeenCalledOnce();
 		});
 
 		it("should log an error if saving fails", async () => {

@@ -87,7 +87,7 @@ export default class InMemoryNotePlugin extends Plugin {
 	}
 
 	/** Cleanup on plugin unload. */
-	onunload() {
+	async onunload() {
 		this.logger.debug("In-Memory Note plugin unloaded");
 		// Save note content on unload if enabled
 		const activeView =
@@ -97,7 +97,7 @@ export default class InMemoryNotePlugin extends Plugin {
 			activeView instanceof InMemoryNoteView
 		) {
 			// Save synchronously (fire and forget)
-			this.saveManager.saveNoteContentToFile(activeView);
+			await this.saveManager.saveNoteContentToFile(activeView);
 		}
 		// The `around` utility automatically registers a cleanup function
 		// that reverts the monkey patch when the plugin is unloaded.

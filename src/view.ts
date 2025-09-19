@@ -3,6 +3,7 @@ import { handleClick, handleContextMenu } from "src/click-handler";
 import { SandboxEditor as SandboxEditor } from "src/sandboxEditor";
 import { SANDBOX_NOTE_ICON, VIEW_TYPE } from "src/utils/constants";
 import type SandboxNotePlugin from "./main";
+import { Notice } from "./tests/obsidian";
 
 /** View for an sandbox note with inline editor. */
 export class SandboxNoteView extends ItemView {
@@ -89,7 +90,10 @@ export class SandboxNoteView extends ItemView {
 			this.plugin.contentManager.sharedNoteContent;
 		this.initialContent = this.plugin.contentManager.sharedNoteContent;
 
-		this.addAction("save", "Save sandbox", this.save);
+		this.addAction("save", "Save sandbox", () => {
+			this.save();
+			new Notice("Sandbox saved!");
+		});
 
 		try {
 			// Load the inline editor, which relies on private APIs

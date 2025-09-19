@@ -100,7 +100,11 @@ describe("SaveManager", () => {
 	describe("handleActiveLeafChange", () => {
 		it("should not save if there was no previous view", () => {
 			const viewA = createMockView("View A content");
-			mockApp.workspace.getActiveViewOfType.mockReturnValue(viewA);
+			(
+				mockApp.workspace.getActiveViewOfType as ReturnType<
+					typeof vi.fn
+				>
+			).mockReturnValue(viewA);
 
 			saveManager.handleActiveLeafChange();
 
@@ -113,13 +117,21 @@ describe("SaveManager", () => {
 			mockPlugin.settings.enableSaveNoteContent = true;
 
 			// 1. Open View A
-			mockApp.workspace.getActiveViewOfType.mockReturnValue(viewA);
+			(
+				mockApp.workspace.getActiveViewOfType as ReturnType<
+					typeof vi.fn
+				>
+			).mockReturnValue(viewA);
 			saveManager.handleActiveLeafChange();
 			expect(mockPlugin.saveData).not.toHaveBeenCalled(); // No previous view
 
 			// 2. Switch to View B
 			const viewB = createMockView("View B content");
-			mockApp.workspace.getActiveViewOfType.mockReturnValue(viewB);
+			(
+				mockApp.workspace.getActiveViewOfType as ReturnType<
+					typeof vi.fn
+				>
+			).mockReturnValue(viewB);
 			saveManager.handleActiveLeafChange();
 
 			// Should save the content of the previous view (View A)
@@ -137,12 +149,20 @@ describe("SaveManager", () => {
 			mockPlugin.settings.enableSaveNoteContent = false; // Auto-save disabled
 
 			// 1. Open View A
-			mockApp.workspace.getActiveViewOfType.mockReturnValue(viewA);
+			(
+				mockApp.workspace.getActiveViewOfType as ReturnType<
+					typeof vi.fn
+				>
+			).mockReturnValue(viewA);
 			saveManager.handleActiveLeafChange();
 
 			// 2. Switch to View B
 			const viewB = createMockView("View B content");
-			mockApp.workspace.getActiveViewOfType.mockReturnValue(viewB);
+			(
+				mockApp.workspace.getActiveViewOfType as ReturnType<
+					typeof vi.fn
+				>
+			).mockReturnValue(viewB);
 			saveManager.handleActiveLeafChange();
 
 			expect(mockPlugin.saveData).not.toHaveBeenCalled();
@@ -152,11 +172,19 @@ describe("SaveManager", () => {
 			const viewA = createMockView("View A content");
 
 			// 1. Open View A
-			mockApp.workspace.getActiveViewOfType.mockReturnValue(viewA);
+			(
+				mockApp.workspace.getActiveViewOfType as ReturnType<
+					typeof vi.fn
+				>
+			).mockReturnValue(viewA);
 			saveManager.handleActiveLeafChange();
 
 			// 2. Close the view (active view is now null)
-			mockApp.workspace.getActiveViewOfType.mockReturnValue(null);
+			(
+				mockApp.workspace.getActiveViewOfType as ReturnType<
+					typeof vi.fn
+				>
+			).mockReturnValue(null);
 			saveManager.handleActiveLeafChange();
 
 			expect(mockPlugin.saveData).toHaveBeenCalledOnce();

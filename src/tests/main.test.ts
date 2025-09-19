@@ -65,9 +65,6 @@ describe("SandboxNotePlugin", () => {
 		// We need to have the managers on the plugin instance for the spies to work
 		plugin.editorManager = { setupEditorExtension: vi.fn() } as any;
 		plugin.uiManager = { setupUserInterface: vi.fn() } as any;
-		plugin.commandManager = {
-			setupSaveCommandMonkeyPatch: vi.fn(),
-		} as any;
 	});
 
 	afterEach(() => {

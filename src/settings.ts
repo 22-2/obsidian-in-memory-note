@@ -7,6 +7,7 @@ import { type LogLevel, LOG_LEVEL } from "./utils/logging";
  */
 export interface InMemoryNotePluginSettings {
 	logLevel: LogLevel;
+	enableSaveNoteContent: boolean;
 }
 /**
  * Creates the setting tab for the plugin.
@@ -34,6 +35,20 @@ export class InMemoryNoteSettingTab extends PluginSettingTab {
 							: LOG_LEVEL.INFO;
 						await this.plugin.saveSettings();
 						this.plugin.initializeLogger();
+					});
+			});
+
+		new Setting(this.containerEl)
+			.setName("Save note content")
+			.setDesc(
+				"Automatically save note content when switching away from the view. Only one saved note is kept at a time."
+			)
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this.plugin.settings.enableSaveNoteContent)
+					.onChange(async (val) => {
+						this.plugin.settings.enableSaveNoteContent = val;
+						await this.plugin.saveSettings();
 					});
 			});
 	}

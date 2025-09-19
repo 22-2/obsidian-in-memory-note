@@ -6,11 +6,8 @@
 	"scripts": {
 		"dev": "pnpm dlx tsx esbuild.config.mts",
 		"build": "pnpm dlx tsx esbuild.config.mts production",
-		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"check-types": "tsc -noEmit -skipLibCheck",
-		"repomix": "pnpm dlx repomix && code ./repomix-output.md",
-		"setup-symlink": "node scripts/setup-symlink.mjs",
-		"rename-plugin": "node scripts/rename-plugin.mjs"
+		"repomix": "pnpm dlx repomix && code ./repomix-output.md"
 	},
 	"keywords": [],
 	"author": "22-2",

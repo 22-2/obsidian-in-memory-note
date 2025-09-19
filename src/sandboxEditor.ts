@@ -7,7 +7,7 @@ export interface InlineMarkdownView extends MarkdownView {
 }
 
 /** Manages inline MarkdownView without physical file. */
-export class InlineEditor {
+export class SandboxEditor {
 	public inlineView!: InlineMarkdownView;
 	private containerElement!: HTMLElement;
 	public targetElement: HTMLElement | null = null;

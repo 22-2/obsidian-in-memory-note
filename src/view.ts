@@ -1,25 +1,25 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
 import { handleClick, handleContextMenu } from "src/click-handler";
-import { InlineEditor } from "src/inlineEditor";
+import { SandboxEditor as SandboxEditor } from "src/sandboxEditor";
 import { SANDBOX_NOTE_ICON, VIEW_TYPE } from "src/utils/constants";
 import type SandboxNotePlugin from "./main";
 
 /** View for an sandbox note with inline editor. */
 export class SandboxNoteView extends ItemView {
 	plugin: SandboxNotePlugin;
-	inlineEditor: InlineEditor;
+	sandboxEditor: SandboxEditor;
 	private hasUnsavedChanges = false;
 	private initialContent = "";
 
 	constructor(leaf: WorkspaceLeaf, plugin: SandboxNotePlugin) {
 		super(leaf);
 		this.plugin = plugin;
-		this.inlineEditor = new InlineEditor(this);
+		this.sandboxEditor = new SandboxEditor(this);
 	}
 
 	/** Get editor instance. */
 	get editor() {
-		return this.inlineEditor.getEditor();
+		return this.sandboxEditor.getEditor();
 	}
 
 	/** Get view type. */
@@ -51,11 +51,11 @@ export class SandboxNoteView extends ItemView {
 	setEphemeralState(state: any): void {
 		if (state && typeof state.content === "string") {
 			// Set initial content for the inline editor
-			this.inlineEditor.content = state.content;
+			this.sandboxEditor.content = state.content;
 			this.initialContent = state.content;
 
 			// If the view is already loaded, update the editor immediately
-			if (this.inlineEditor.targetElement) {
+			if (this.sandboxEditor.targetElement) {
 				this.setContent(state.content);
 			}
 		}
@@ -79,16 +79,16 @@ export class SandboxNoteView extends ItemView {
 		this.synchronizeWithExistingViews();
 
 		// Initialize the inline editor with shared content
-		this.inlineEditor.content =
+		this.sandboxEditor.content =
 			this.plugin.contentManager.sharedNoteContent;
 		this.initialContent = this.plugin.contentManager.sharedNoteContent;
-		await this.inlineEditor.onload();
+		await this.sandboxEditor.onload();
 
 		// Create and load the editor container
 		const editorContainer = this.contentEl.createEl("div", {
 			cls: "sandbox-note-container",
 		});
-		this.inlineEditor.load(editorContainer);
+		this.sandboxEditor.load(editorContainer);
 
 		// Set up event handlers and editor plugin connection
 		this.setupEventHandlers();
@@ -128,7 +128,7 @@ export class SandboxNoteView extends ItemView {
 			handleContextMenu.bind(
 				null,
 				this.app.commands,
-				this.inlineEditor.inlineView.editMode
+				this.sandboxEditor.inlineView.editMode
 			)
 		);
 	}
@@ -177,7 +177,7 @@ export class SandboxNoteView extends ItemView {
 	/** Cleanup on view close. */
 	async onClose() {
 		this.plugin.contentManager.removeActiveView(this);
-		this.inlineEditor.unload();
+		this.sandboxEditor.unload();
 		this.contentEl.empty();
 	}
 }

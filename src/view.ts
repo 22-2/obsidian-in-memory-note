@@ -31,7 +31,7 @@ export class SandboxNoteView extends ItemView {
 
 	/** Get display text for tab (shows * for unsaved changes). */
 	getDisplayText() {
-		const baseTitle = "SandBox note";
+		const baseTitle = "Sandbox note";
 		// Only show asterisk if save setting is enabled and there are unsaved changes
 		const shouldShowUnsaved =
 			this.plugin.settings.enableSaveNoteContent &&

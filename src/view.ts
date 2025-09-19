@@ -25,6 +25,12 @@ export class SandboxNoteView extends ItemView {
 		return this.sandboxEditor.getEditor();
 	}
 
+	get shouldShowUnsaved() {
+		return (
+			this.plugin.settings.enableSaveNoteContent && this.hasUnsavedChanges
+		);
+	}
+
 	save = () => {
 		this.plugin.saveManager.saveNoteContentToFile(this);
 	};
@@ -38,10 +44,7 @@ export class SandboxNoteView extends ItemView {
 	getDisplayText() {
 		const baseTitle = "Sandbox note";
 		// Only show asterisk if save setting is enabled and there are unsaved changes
-		const shouldShowUnsaved =
-			this.plugin.settings.enableSaveNoteContent &&
-			this.hasUnsavedChanges;
-		return shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
+		return this.shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
 	}
 
 	/** Get view icon. */
@@ -77,6 +80,14 @@ export class SandboxNoteView extends ItemView {
 		}
 	}
 
+	updateActionButtons() {
+		if (this.plugin.settings.enableSaveNoteContent) {
+			this.addAction("save", "Save sandbox", () => {
+				this.save();
+			});
+		}
+	}
+
 	/** Initialize view on open. */
 	async onOpen() {
 		// Register this view as active
@@ -85,14 +96,12 @@ export class SandboxNoteView extends ItemView {
 		// Synchronize content with existing views
 		this.synchronizeWithExistingViews();
 
+		this.updateActionButtons();
+
 		// Initialize the inline editor with shared content
 		this.sandboxEditor.content =
 			this.plugin.contentManager.sharedNoteContent;
 		this.initialContent = this.plugin.contentManager.sharedNoteContent;
-
-		this.addAction("save", "Save sandbox", () => {
-			this.save();
-		});
 
 		// Focus editor when switching back to this view
 		this.plugin.registerEvent(

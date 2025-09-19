@@ -41,6 +41,7 @@ export class UIManager {
 					}
 					return true;
 				}
+				return false;
 			},
 		});
 	}

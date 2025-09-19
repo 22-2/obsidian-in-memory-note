@@ -3,7 +3,7 @@ import { handleClick, handleContextMenu } from "src/click-handler";
 import { SandboxEditor as SandboxEditor } from "src/sandboxEditor";
 import { SANDBOX_NOTE_ICON, VIEW_TYPE } from "src/utils/constants";
 import type SandboxNotePlugin from "./main";
-import { Notice } from "./tests/obsidian";
+import { Notice } from "obsidian";
 
 /** View for an sandbox note with inline editor. */
 export class SandboxNoteView extends ItemView {

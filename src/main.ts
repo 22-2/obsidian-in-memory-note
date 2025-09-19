@@ -71,11 +71,12 @@ export default class InMemoryNotePlugin extends Plugin {
 
 	/**
 	 * Handles active leaf changes to manage view synchronization and content saving.
+	 * Always saves content when switching away from an in-memory note view if save setting is enabled.
 	 */
 	private handleActiveLeafChange() {
 		const activeView = this.app.workspace.getActiveViewOfType(InMemoryNoteView);
 
-		// Auto-save content from previous view if enabled
+		// Auto-save content from previous view when save setting is enabled
 		if (this.settings.enableSaveNoteContent && this.previousActiveView) {
 			this.saveNoteContentToFile(this.previousActiveView);
 		}

@@ -137,6 +137,7 @@ export class InMemoryNoteView extends ItemView {
 	private connectEditorPlugin() {
 		if (!this.editor) return;
 
+		// TODO: Find a better way to ensure the editor plugin is ready
 		// Delay connection to ensure editor is fully initialized
 		setTimeout(() => {
 			const editorPlugin = this.editor.cm.plugin(
@@ -145,7 +146,7 @@ export class InMemoryNoteView extends ItemView {
 			if (editorPlugin) {
 				editorPlugin.connectToPlugin(this.plugin, this);
 			}
-		}, 100);
+		}, 0);
 	}
 
 	/** Update unsaved state and refresh title. */

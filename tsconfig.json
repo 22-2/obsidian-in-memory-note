@@ -11,7 +11,7 @@
 		"downlevelIteration": true,
 		"resolveJsonModule": true,
 		"lib": ["DOM", "ESNext"],
-		"types": ["node", "obsidian-typings"]
+		"types": ["node", "obsidian-typings", "vitest/globals"]
 	},
 	"include": ["src/**/*", "src/*", "**/*.ts"],
 	"exclude": ["node_modules/*"]

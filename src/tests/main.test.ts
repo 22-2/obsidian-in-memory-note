@@ -5,6 +5,7 @@ import {
 	vi,
 	beforeEach,
 	afterEach,
+	type Mock,
 } from "vitest";
 import SandboxNotePlugin from "src/main";
 import { App, MarkdownView, Notice } from "obsidian";
@@ -52,12 +53,15 @@ describe("SandboxNotePlugin", () => {
 		// Spy on methods that would be called during initialization instead of replacing them
 		vi.spyOn(plugin, "loadSettings").mockResolvedValue(undefined);
 		vi.spyOn(plugin, "initializeLogger").mockImplementation(() => {});
-		vi.spyOn(plugin, "initializeManagers").mockImplementation(() => {});
-		vi.spyOn(plugin, "setupSettingsTab").mockImplementation(() => {});
-		vi.spyOn(plugin, "setupWorkspaceEventHandlers").mockImplementation(
+		vi.spyOn(plugin as any, "initializeManagers").mockImplementation(
 			() => {}
 		);
-		vi.spyOn(plugin, "registerViewType").mockImplementation(() => {});
+		vi.spyOn(plugin as any, "setupSettingsTab").mockImplementation(() => {});
+		vi.spyOn(
+			plugin as any,
+			"setupWorkspaceEventHandlers"
+		).mockImplementation(() => {});
+		vi.spyOn(plugin as any, "registerViewType").mockImplementation(() => {});
 		// We need to have the managers on the plugin instance for the spies to work
 		plugin.editorManager = { setupEditorExtension: vi.fn() } as any;
 		plugin.uiManager = { setupUserInterface: vi.fn() } as any;
@@ -73,7 +77,7 @@ describe("SandboxNotePlugin", () => {
 	it("should disable the plugin and show a notice if compatibility check fails", async () => {
 		// Arrange: Make the MarkdownView constructor throw an error
 		const error = new Error("Incompatible version");
-		(MarkdownView as vi.Mock).mockImplementation(() => {
+		(MarkdownView as Mock).mockImplementation(() => {
 			throw error;
 		});
 
@@ -88,14 +92,14 @@ describe("SandboxNotePlugin", () => {
 
 		// Assert that further initialization methods were NOT called
 		expect(plugin.loadSettings).not.toHaveBeenCalled();
-		expect(plugin.initializeManagers).not.toHaveBeenCalled();
-		expect(plugin.setupSettingsTab).not.toHaveBeenCalled();
+		expect((plugin as any).initializeManagers).not.toHaveBeenCalled();
+		expect((plugin as any).setupSettingsTab).not.toHaveBeenCalled();
 	});
 
 	it("should proceed with initialization if compatibility check passes", async () => {
 		// Arrange: Make the MarkdownView constructor succeed
-		(MarkdownView as vi.Mock).mockImplementation(() => ({
-			destroy: vi.fn(), // Mock the destroy method on the instance
+		(MarkdownView as Mock).mockImplementation(() => ({
+			unload: vi.fn(), // Mock the unload method on the instance
 		}));
 
 		// Act: Call the onload method
@@ -106,8 +110,8 @@ describe("SandboxNotePlugin", () => {
 
 		// Assert that initialization methods were called
 		expect(plugin.loadSettings).toHaveBeenCalledOnce();
-		expect(plugin.initializeManagers).toHaveBeenCalledOnce();
-		expect(plugin.setupSettingsTab).toHaveBeenCalledOnce();
+		expect((plugin as any).initializeManagers).toHaveBeenCalledOnce();
+		expect((plugin as any).setupSettingsTab).toHaveBeenCalledOnce();
 		expect(
 			plugin.editorManager.setupEditorExtension
 		).toHaveBeenCalledOnce();

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { SandboxNoteView } from "src/view";
 import type { WorkspaceLeaf } from "obsidian";
 import type SandboxNotePlugin from "src/main";
-import type { InlineEditor } from "src/inlineEditor";
+import { SandboxEditor } from "src/sandboxEditor";
 
 describe("SandboxNoteView", () => {
 	let mockLeaf: WorkspaceLeaf;
@@ -10,11 +10,14 @@ describe("SandboxNoteView", () => {
 	let mockContentEl: {
 		empty: ReturnType<typeof vi.fn>;
 		createEl: ReturnType<typeof vi.fn>;
+		addEventListener: ReturnType<typeof vi.fn>;
 	};
-	let mockInlineEditor: {
+	let mockSandboxEditor: {
 		onload: ReturnType<typeof vi.fn>;
 		load: ReturnType<typeof vi.fn>;
 		content: string;
+		getEditor: ReturnType<typeof vi.fn>;
+		inlineView: { editMode: {} };
 	};
 	let view: SandboxNoteView;
 
@@ -28,8 +31,8 @@ describe("SandboxNoteView", () => {
 			addEventListener: vi.fn(),
 		};
 
-		// Mock the inline editor
-		mockInlineEditor = {
+		// Mock the sandbox editor
+		mockSandboxEditor = {
 			onload: vi.fn().mockResolvedValue(undefined),
 			load: vi.fn(),
 			content: "",
@@ -72,9 +75,9 @@ describe("SandboxNoteView", () => {
 		// Create an instance of the view
 		view = new SandboxNoteView(mockLeaf, mockPlugin);
 
-		// Manually assign the mocked contentEl and inlineEditor
+		// Manually assign the mocked contentEl and sandboxEditor
 		view.contentEl = mockContentEl as any;
-		view.inlineEditor = mockInlineEditor as unknown as InlineEditor;
+		view.sandboxEditor = mockSandboxEditor as unknown as SandboxEditor;
 
 		// Spy on console.error
 		vi.spyOn(console, "error").mockImplementation(() => {});
@@ -84,16 +87,16 @@ describe("SandboxNoteView", () => {
 		vi.restoreAllMocks();
 	});
 
-	it("should display an error message if inlineEditor.onload fails", async () => {
+	it("should display an error message if sandboxEditor.onload fails", async () => {
 		// Arrange
 		const testError = new Error("Failed to load editor");
-		mockInlineEditor.onload.mockRejectedValue(testError);
+		mockSandboxEditor.onload.mockRejectedValue(testError);
 
 		// Act
 		await view.onOpen();
 
 		// Assert
-		expect(mockInlineEditor.onload).toHaveBeenCalledOnce();
+		expect(mockSandboxEditor.onload).toHaveBeenCalledOnce();
 		expect(console.error).toHaveBeenCalledWith(
 			"Sandbox Note: Failed to initialize inline editor.",
 			testError
@@ -105,17 +108,17 @@ describe("SandboxNoteView", () => {
 			cls: "sandbox-error-message",
 		});
 		// Ensure that the successful load path was not taken
-		expect(mockInlineEditor.load).not.toHaveBeenCalled();
+		expect(mockSandboxEditor.load).not.toHaveBeenCalled();
 	});
 
-	it("should load the editor successfully if inlineEditor.onload succeeds", async () => {
+	it("should load the editor successfully if sandboxEditor.onload succeeds", async () => {
 		// Arrange (already done in beforeEach)
 
 		// Act
 		await view.onOpen();
 
 		// Assert
-		expect(mockInlineEditor.onload).toHaveBeenCalledOnce();
+		expect(mockSandboxEditor.onload).toHaveBeenCalledOnce();
 		expect(console.error).not.toHaveBeenCalled();
 		expect(mockContentEl.empty).not.toHaveBeenCalled();
 		// It's called once to create the container
@@ -123,6 +126,6 @@ describe("SandboxNoteView", () => {
 		expect(mockContentEl.createEl).toHaveBeenCalledWith("div", {
 			cls: "sandbox-note-container",
 		});
-		expect(mockInlineEditor.load).toHaveBeenCalledOnce();
+		expect(mockSandboxEditor.load).toHaveBeenCalledOnce();
 	});
 });

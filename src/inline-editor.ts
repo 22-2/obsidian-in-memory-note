@@ -25,7 +25,7 @@ export class InlineEditor {
 	 */
 	public content = "";
 
-	constructor(private view: InMemoryNoteView) {}
+	constructor(private view: InMemoryNoteView) { }
 
 	/**
 	 * Gets the current content from the editor.
@@ -61,6 +61,12 @@ export class InlineEditor {
 		target.append(this.containerEl);
 		setTimeout(() => this.focus());
 		this.target = target;
+		this.view.plugin.registerDomEvent(
+			this.target,
+			"focusin",
+			this.setActiveEditor
+		);
+		this.setActiveEditor();
 	}
 
 	/**
@@ -69,6 +75,14 @@ export class InlineEditor {
 	focus() {
 		this.inlineView.editor.focus();
 	}
+
+	/**
+	 * Sets the active editor to approximate standard markdown view operations.
+	 */
+	private setActiveEditor = () => {
+		// @ts-ignore
+		this.view.plugin.app.workspace._activeEditor = this.inlineView;
+	};
 
 	/**
 	 * Detaches the editor from the DOM and stores its content.
@@ -105,7 +119,7 @@ export class InlineEditor {
 		// this.inlineView.file = virtualFile as TFile;
 		this.inlineView.save = noop;
 		this.inlineView.saveTitle = noop;
-		this.inlineView.requestSave = () => {};
+		this.inlineView.requestSave = () => { };
 		this.inlineView.__setViewData__ = this.inlineView.setViewData;
 		this.inlineView.setViewData = noop;
 

@@ -1,11 +1,4 @@
-/**
- * Waits for a DOM element matching the specified selector to become available.
- * @param cssSelector The CSS selector of the element to wait for.
- * @param doc The document to search in.
- * @param timeout The maximum time to wait in milliseconds.
- * @returns A promise that resolves with the found element.
- * @throws An error if the element is not found within the timeout.
- */
+/** Wait for DOM element to become available. */
 export function waitForElement(
 	cssSelector: string,
 	doc: Document = document,

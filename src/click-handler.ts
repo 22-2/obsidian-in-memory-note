@@ -2,13 +2,7 @@ import { Editor, MarkdownEditView, MarkdownView } from "obsidian";
 import type { Commands } from "obsidian-typings";
 import { waitForElement } from "./utils/dom";
 
-/**
- * Handles right-click context menu events on the view content.
- * Enables context menu display even when clicking in blank areas of the editor.
- * @param commands The Obsidian Commands instance.
- * @param editMode The markdown edit view mode.
- * @param e The pointer event from the right-click.
- */
+/** Handle right-click context menu events. */
 export const handleContextMenu = async (
 	commands: Commands,
 	editMode: MarkdownEditView,
@@ -23,12 +17,7 @@ export const handleContextMenu = async (
 	editMode.onContextMenu(e, true);
 };
 
-/**
- * Handles click events on the view content to improve editor focus behavior.
- * Allows focusing the editor and positioning the cursor even when clicking in blank areas.
- * @param editor The Obsidian Editor instance.
- * @param e The mouse click event.
- */
+/** Handle click events for better editor focus. */
 export const handleClick = (editor: Editor, e: MouseEvent) => {
 	const target = e.target;
 	if (!(target instanceof HTMLElement)) return;

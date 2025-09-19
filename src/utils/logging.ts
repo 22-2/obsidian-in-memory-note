@@ -1,44 +1,50 @@
-// Log levels as a constant object.
-export const LOG_LEVEL = {
-	DEBUG: "debug",
-	INFO: "info",
-	WARN: "warn",
-	ERROR: "error",
+// --- Change (1): Centralize Log Level Definitions ---
+// Log level names, priorities, and console method names are grouped into one object.
+// This makes log level settings complete and intuitive at a glance.
+export const LogLevelSettings = {
+	debug: { priority: 1, name: "debug" },
+	info: { priority: 2, name: "info" },
+	warn: { priority: 3, name: "warn" },
+	error: { priority: 4, name: "error" },
 } as const;
 
-// LogLevel type generated from the constant object.
-export type LogLevel = (typeof LOG_LEVEL)[keyof typeof LOG_LEVEL];
+// --- Change (2): Make LogLevel type more intuitive ---
+// The LogLevel type is changed to specific string literal types: 'debug' | 'info' | 'warn' | 'error'.
+// This makes the type itself represent the possible values, improving clarity.
+export type LogLevel = keyof typeof LogLevelSettings;
 
-// Priority of log levels.
-const logLevelPriorities: Record<LogLevel, number> = {
-	[LOG_LEVEL.DEBUG]: 1,
-	[LOG_LEVEL.INFO]: 2,
-	[LOG_LEVEL.WARN]: 3,
-	[LOG_LEVEL.ERROR]: 4,
-};
+export type LogFn = (...args: any[]) => void;
 
 interface LoggerInternalSettings {
 	level?: LogLevel;
 	name: string;
 }
 
-// A no-operation function.
+// A function that does nothing
 const noop = () => {};
 
 /**
- * A logger class that supports dynamic log levels, prefixes, and correct source location tracking.
+ * A Logger class for dynamic log level changes, prefix display, and identifying the caller's line number.
  *
- * This logger's key feature is its use of `console[level].bind(console, prefix)`.
- * This approach ensures that the file name and line number logged to the console
- * correspond to where the log function was called, not the logger's internal implementation.
+ * The key feature of this logger is using `console` method `bind`.
+ * This allows the console to correctly show the file name and line number where the log was called.
  * This greatly improves debugging efficiency.
  */
 export class DirectLogger {
 	private settings: LoggerInternalSettings;
 	private prefix: string;
-	private settingLevelPriority: number;
+	private children: DirectLogger[] = [];
 
-	// Log functions are held as properties.
+	// --- Change (3): Remove redundant property, use a getter instead ---
+	// Removed the separate property for log level priority.
+	// Now, it's a getter that calculates priority dynamically from the current log level.
+	// This reduces managed state, making the code simpler and more robust.
+	private get currentLevelPriority(): number {
+		// Safely defaults to 'info' if settings.level is not set.
+		const level = this.settings.level ?? "info";
+		return LogLevelSettings[level].priority;
+	}
+
 	public debug: (...args: any[]) => void = noop;
 	public info: (...args: any[]) => void = noop;
 	public warn: (...args: any[]) => void = noop;
@@ -49,68 +55,78 @@ export class DirectLogger {
 		this.settings = settings;
 		this.prefix = `[${settings.name}]`;
 
-		// Set initial level, defaulting to INFO.
-		const initialLevel = settings.level || LOG_LEVEL.INFO;
-		this.settings.level = initialLevel;
-		this.settingLevelPriority = logLevelPriorities[initialLevel];
+		// Set initial level using string literal type, e.g., 'info'
+		this.settings.level = settings.level || "info";
 
-		// Initialize log functions in the constructor.
 		this.regenerateLogFunctions();
+		console.info(
+			`${this.prefix} Logger initialized with level: ${this.settings.level}`,
+		);
 	}
 
 	/**
-	 * Regenerates all log functions based on the current log level setting.
-	 * This centralizes the logic for both the constructor and `updateLoggingState`.
+	 * [New] Regenerates all log functions based on the current log level settings.
+	 * This method centralizes logic, allowing `constructor` and `updateLoggingState` to share code.
 	 * @private
+	 * @description
+	 * [Most Important] The core of this logger is `console[level].bind(console, this.prefix)`.
+	 * 1. **Preserves Caller Info**: Returns a `bind`ed console function, delaying execution to the caller.
+	 *    This means the console output correctly shows the file and line number where `Logger.debug(...)`
+	 *    was written, not inside this logger class.
+	 * 2. **Auto-Adds Prefix**: The prefix is passed as the second argument to `bind`, automatically added to the log output.
+	 * 3. **Maintains `this` Context**: Ensures `console` methods run with the correct `this` (the `console` object itself).
 	 */
 	private regenerateLogFunctions(): void {
 		const createLogFunction = (
-			level: LogLevel
+			level: LogLevel,
 		): ((...args: any[]) => void) => {
-			if (logLevelPriorities[level] >= this.settingLevelPriority) {
-				// The core of this logger: binding the console method.
-				// 1. **Preserves Caller Information**: Binding returns a function that, when executed,
-				//    logs the correct file and line number of the call site.
-				// 2. **Auto-Prefixing**: The prefix is passed as the first argument to the bound function.
-				// 3. **Maintains `this` Context**: Ensures `console[level]` is called with `console` as `this`.
+			// Compare priorities using the new getter.
+			if (LogLevelSettings[level].priority >= this.currentLevelPriority) {
 				return console[level].bind(console, this.prefix);
 			}
 			return noop;
 		};
 
-		this.debug = createLogFunction(LOG_LEVEL.DEBUG);
-		this.info = createLogFunction(LOG_LEVEL.INFO);
-		this.warn = createLogFunction(LOG_LEVEL.WARN);
-		this.error = createLogFunction(LOG_LEVEL.ERROR);
+		this.debug = createLogFunction("debug");
+		this.info = createLogFunction("info");
+		this.warn = createLogFunction("warn");
+		this.error = createLogFunction("error");
 
-		// `log` is an alias for `info`.
+		// Set `log` as an alias for `info`
 		this.log = this.info;
 	}
 
 	/**
 	 * Dynamically updates the logger's log level and notifies the console of the change.
-	 * @param logLevel The new log level to set.
+	 * @param logLevel The new log level to set
 	 */
 	updateLoggingState(logLevel: LogLevel) {
 		this.settings.level = logLevel;
-		this.settingLevelPriority = logLevelPriorities[this.settings.level];
 
-		// Regenerate log functions after the level changes.
+		// No need to update priority property, making the code cleaner.
 		this.regenerateLogFunctions();
 
-		// Use console.info directly to announce the change, regardless of the new level.
+		// Propagate the change to children
+		for (const child of this.children) {
+			child.updateLoggingState(logLevel);
+		}
+
 		console.info(
-			`${this.prefix} Logging level set to: ${this.settings.level}`
+			`${this.prefix} Logging level set to: ${this.settings.level}`,
 		);
 	}
 
+	getLogLevel() {
+		return this.settings.level || "info";
+	}
+
 	/**
-	 * Creates a new child logger (sub-logger) from the current logger.
+	 * Creates a new child logger (sub-logger) with the current logger as its parent.
 	 * The prefix is extended hierarchically (e.g., `[AppName]` -> `[AppName:SubName]`),
-	 * and the log level is inherited from the parent.
-	 * @param options - Options for the sub-logger.
-	 * @param options.name - The name of the sub-logger, added to the prefix.
-	 * @returns A new sub-logger instance.
+	 * and log level settings are inherited from the parent.
+	 * @param options Options for the sub-logger
+	 * @param options.name The name of the sub-logger, added to the prefix.
+	 * @returns A new sub-logger instance
 	 */
 	getSubLogger({ name }: { name: string }): DirectLogger {
 		const basePrefix = this.prefix.slice(1, -1);
@@ -119,6 +135,7 @@ export class DirectLogger {
 			name: newPrefix,
 			level: this.settings.level,
 		});
+		this.children.push(subLogger);
 		return subLogger;
 	}
 }
@@ -126,15 +143,20 @@ export class DirectLogger {
 export const INITIAL_LOG_LEVEL = getInitialLogLevel();
 
 function getInitialLogLevel(): LogLevel {
-	// for mobile
 	if (typeof process === "undefined") {
+		// Set default to info in browser environment
 		return "info";
 	}
-	const envLevel = (process.env.NEXT_PUBLIC_LOG_LEVEL ||
-		process.env.LOG_LEVEL) as LogLevel;
-	// Check if envLevel is a valid log level.
-	if (envLevel && Object.values(LOG_LEVEL).includes(envLevel)) {
+	const envLevel = process.env.NEXT_PUBLIC_LOG_LEVEL || process.env.LOG_LEVEL;
+	// Check if envLevel is one of the LogLevelSettings keys
+	const availableLevels = Object.keys(LogLevelSettings) as LogLevel[];
+	if (envLevel && availableLevels.includes(envLevel as any)) {
 		return envLevel as LogLevel;
 	}
-	return LOG_LEVEL.INFO; // Default to INFO
+	return "info"; // Default to info
 }
+
+export const Logger = new DirectLogger({
+	name: "Nobi",
+	level: INITIAL_LOG_LEVEL,
+});

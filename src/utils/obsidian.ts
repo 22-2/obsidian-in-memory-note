@@ -6,11 +6,7 @@ import {
 	type UViewState,
 } from "obsidian";
 
-/**
- * Creates a virtual TFile-like object for in-memory operations.
- * @param app The Obsidian App instance.
- * @returns A virtual file object.
- */
+/** Create virtual TFile-like object. */
 export function createVirtualFile(app: App) {
 	const now = new Date().getTime();
 	return {
@@ -27,13 +23,7 @@ export function createVirtualFile(app: App) {
 		},
 	};
 }
-/**
- * Opens a view in a new tab if it isn't already open.
- * @param app The Obsidian App instance.
- * @param viewState The view state to set for the new leaf.
- * @param eState The ephemeral state to set for the new leaf.
- * @returns The instance of the opened view.
- */
+/** Open view in new tab. */
 export async function activateView<T = any, U = any>(
 	app: App,
 	viewState: UViewState,
@@ -51,11 +41,7 @@ export async function activateView<T = any, U = any>(
 	return leaf.view as T;
 }
 
-/**
- * Gets all active workspace leaves (panes)
- * @param app - Obsidian app
- * @returns An array of all workspace leaves
- */
+/** Get all workspace leaves. */
 export function getAllLeaves(app: App): WorkspaceLeaf[] {
 	const leaves: WorkspaceLeaf[] = [];
 	app.workspace.iterateAllLeaves((leaf: WorkspaceLeaf) => {
@@ -64,14 +50,7 @@ export function getAllLeaves(app: App): WorkspaceLeaf[] {
 	return leaves;
 }
 
-/**
- * Retrieves workspace items of a specific type from all workspace leaves.
- *
- * @param app The application instance.
- * @param getItem A function that takes a workspace leaf and returns the workspace item or null/undefined if not found.
- * @returns An array of workspace items of type T.
- * @template T - The type of workspace item, must be either WorkspaceWindow or WorkspaceParent.
- */
+/** Get workspace items of specific type. */
 function getWorkspaceItems<T extends WorkspaceWindow | WorkspaceParent>(
 	app: App,
 	getItem: (leaf: WorkspaceLeaf) => T | null | undefined,
@@ -86,11 +65,7 @@ function getWorkspaceItems<T extends WorkspaceWindow | WorkspaceParent>(
 	return Array.from(itemMap.values()) as T[];
 }
 
-/**
- * Gets all workspace windows
- * @param app - Obsidian app
- * @returns An array of all workspace windows
- */
+/** Get all workspace windows. */
 export function getAllWorkspaceWindows(app: App): WorkspaceWindow[] {
 	return getWorkspaceItems<WorkspaceWindow>(app, (leaf) => leaf.getContainer());
 }

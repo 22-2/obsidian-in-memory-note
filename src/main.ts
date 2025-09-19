@@ -1,4 +1,4 @@
-import { Plugin, TFile } from "obsidian";
+import { Plugin } from "obsidian";
 import {
 	type InMemoryNotePluginSettings,
 	InMemoryNoteSettingTab,
@@ -14,33 +14,25 @@ import { InMemoryNoteView } from "./view";
 import { watchEditorPlugin } from "./watchEditorPlugin";
 import { around } from "monkey-around";
 
-/**
- * Main plugin class for In-Memory Note functionality.
- * Manages plugin lifecycle, settings, view synchronization, and commands.
- */
+/** Main plugin class for In-Memory Note functionality. */
 export default class InMemoryNotePlugin extends Plugin {
 	settings: InMemoryNotePluginSettings = DEFAULT_SETTINGS;
 	logger!: DirectLogger;
 
-	/** Shared content across all in-memory note views */
+	/** Shared content across all views */
 	sharedNoteContent = "";
 
-	/** Set of currently active in-memory note views */
+	/** Currently active views */
 	activeViews: Set<InMemoryNoteView> = new Set();
 
-	/** CodeMirror plugin for watching editor changes */
+	/** CodeMirror plugin for watching changes */
 	watchEditorPlugin = watchEditorPlugin;
 
 	private previousActiveView: InMemoryNoteView | null = null;
 
-	// Store the original checkCallback for 'editor:save-file'
-	private originalSaveCheckCallback:
-		| ((checking: boolean) => boolean | void)
-		| null = null;
 
-	/**
-	 * Initializes the plugin when loaded.
-	 */
+
+	/** Initialize plugin on load. */
 	async onload() {
 		await this.loadSettings();
 		this.initializeLogger();
@@ -52,33 +44,24 @@ export default class InMemoryNotePlugin extends Plugin {
 		this.setupSaveCommandMonkeyPatch(); // Call the new setup method here
 	}
 
-	/**
-	 * Sets up the plugin settings tab.
-	 */
+	/** Setup plugin settings tab. */
 	private setupSettingsTab() {
 		this.addSettingTab(new InMemoryNoteSettingTab(this));
 	}
 
-	/**
-	 * Registers the editor extension for watching changes.
-	 */
+	/** Register editor extension for watching changes. */
 	private setupEditorExtension() {
 		this.registerEditorExtension(watchEditorPlugin);
 	}
 
-	/**
-	 * Sets up workspace event handlers for view management.
-	 */
+	/** Setup workspace event handlers. */
 	private setupWorkspaceEventHandlers() {
 		this.app.workspace.on("active-leaf-change", () => {
 			this.handleActiveLeafChange();
 		});
 	}
 
-	/**
-	 * Handles active leaf changes to manage view synchronization and content saving.
-	 * Always saves content when switching away from an in-memory note view if save setting is enabled.
-	 */
+	/** Handle active leaf changes and auto-save if enabled. */
 	private handleActiveLeafChange() {
 		const activeView =
 			this.app.workspace.getActiveViewOfType(InMemoryNoteView);
@@ -96,9 +79,7 @@ export default class InMemoryNotePlugin extends Plugin {
 		this.previousActiveView = activeView;
 	}
 
-	/**
-	 * Connects the watch editor plugin to a specific view.
-	 */
+	/** Connect watch editor plugin to view. */
 	private connectEditorPluginToView(view: InMemoryNoteView) {
 		const editorPlugin =
 			view.inlineEditor.inlineView.editor.cm.plugin(watchEditorPlugin);
@@ -107,9 +88,7 @@ export default class InMemoryNotePlugin extends Plugin {
 		}
 	}
 
-	/**
-	 * Registers the custom view type with Obsidian.
-	 */
+	/** Register custom view type. */
 	private registerViewType() {
 		this.registerView(
 			VIEW_TYPE,
@@ -117,9 +96,7 @@ export default class InMemoryNotePlugin extends Plugin {
 		);
 	}
 
-	/**
-	 * Sets up the user interface elements (ribbon icon and commands).
-	 */
+	/** Setup UI elements (ribbon icon and commands). */
 	private setupUserInterface() {
 		this.addRibbonIcon(IN_MEMORY_NOTE_ICON, "Open in-memory note", () => {
 			this.activateView();
@@ -134,21 +111,12 @@ export default class InMemoryNotePlugin extends Plugin {
 		});
 	}
 
-	/**
-	 * Sets up the monkey patch for the 'editor:save-file' command.
-	 * This ensures that when the command is triggered:
-	 * 1. If the active view is an InMemoryNoteView and `enableSaveNoteContent` is true,
-	 *    it will save the in-memory note content.
-	 * 2. Otherwise, it will defer to the original save command behavior.
-	 */
+	/** Setup monkey patch for save command to handle in-memory notes. */
 	private setupSaveCommandMonkeyPatch() {
 		const saveCommandDefinition =
 			this.app.commands?.commands?.["editor:save-file"];
 
 		if (saveCommandDefinition?.checkCallback) {
-			// Store the original checkCallback to be able to call it later
-			this.originalSaveCheckCallback =
-				saveCommandDefinition.checkCallback;
 
 			// Apply the monkey-patch using 'around'
 			this.register(
@@ -189,11 +157,7 @@ export default class InMemoryNotePlugin extends Plugin {
 		}
 	}
 
-	/**
-	 * Updates the shared note content and synchronizes it across all active views.
-	 * @param content The new content to propagate.
-	 * @param sourceView The view that initiated the content change.
-	 */
+	/** Update shared content and sync across all views. */
 	updateNoteContent(content: string, sourceView: InMemoryNoteView) {
 		this.sharedNoteContent = content;
 
@@ -205,11 +169,7 @@ export default class InMemoryNotePlugin extends Plugin {
 		}
 	}
 
-	/**
-	 * Saves note content using Obsidian API to data.json without file deletion.
-	 * Uses plugin's saveData method to safely persist content.
-	 * @param view The view instance to save content from.
-	 */
+	/** Save note content to data.json using Obsidian API. */
 	private async saveNoteContentToFile(view: InMemoryNoteView) {
 		try {
 			const content = view.inlineEditor.getContent();
@@ -242,9 +202,7 @@ export default class InMemoryNotePlugin extends Plugin {
 
 
 
-	/**
-	 * Cleanup when the plugin is unloaded.
-	 */
+	/** Cleanup on plugin unload. */
 	onunload() {
 		this.logger.debug("In-Memory Note plugin unloaded");
 		// The `around` utility automatically registers a cleanup function
@@ -252,11 +210,7 @@ export default class InMemoryNotePlugin extends Plugin {
 		// No manual unpatching is required here.
 	}
 
-	/**
-	 * Creates and activates a new In-Memory Note view.
-	 * Multiple views can be open simultaneously and will stay synchronized.
-	 * @returns The newly created leaf containing the view.
-	 */
+	/** Create and activate new In-Memory Note view. */
 	async activateView() {
 		const leaf = await activateView(this.app, {
 			type: VIEW_TYPE,
@@ -266,9 +220,7 @@ export default class InMemoryNotePlugin extends Plugin {
 		return leaf;
 	}
 
-	/**
-	 * Initializes the logger based on the current settings.
-	 */
+	/** Initialize logger with current settings. */
 	initializeLogger(): void {
 		this.logger = new DirectLogger({
 			level: this.settings.logLevel,
@@ -277,9 +229,7 @@ export default class InMemoryNotePlugin extends Plugin {
 		this.logger.debug("debug mode enabled");
 	}
 
-	/**
-	 * Loads plugin settings from storage.
-	 */
+	/** Load plugin settings from storage. */
 	async loadSettings() {
 		this.settings = Object.assign(
 			{},
@@ -288,19 +238,14 @@ export default class InMemoryNotePlugin extends Plugin {
 		);
 	}
 
-	/**
-	 * Saves the current plugin settings to storage.
-	 */
+	/** Save current plugin settings to storage. */
 	async saveSettings() {
 		await this.saveData(this.settings);
 		// Refresh all view titles when settings change
 		this.refreshAllViewTitles();
 	}
 
-	/**
-	 * Refreshes the titles of all active views to reflect current settings.
-	 * This is called when the save setting is toggled.
-	 */
+	/** Refresh all view titles when settings change. */
 	private refreshAllViewTitles() {
 		for (const view of this.activeViews) {
 			view.leaf.updateHeader();

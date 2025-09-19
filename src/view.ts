@@ -4,10 +4,7 @@ import { InlineEditor } from "src/inline-editor";
 import { IN_MEMORY_NOTE_ICON, VIEW_TYPE } from "src/utils/constants";
 import type InMemoryNotePlugin from "./main";
 
-/**
- * Represents the view for an in-memory note.
- * This view hosts an inline editor and manages its lifecycle.
- */
+/** View for an in-memory note with inline editor. */
 export class InMemoryNoteView extends ItemView {
 	plugin: InMemoryNotePlugin;
 	inlineEditor: InlineEditor;
@@ -20,24 +17,17 @@ export class InMemoryNoteView extends ItemView {
 		this.inlineEditor = new InlineEditor(this);
 	}
 
-	/**
-	 * Returns the editor instance from the inline editor.
-	 */
+	/** Get editor instance. */
 	get editor() {
 		return this.inlineEditor.getEditor();
 	}
 
-	/**
-	 * Returns the unique view type.
-	 */
+	/** Get view type. */
 	getViewType() {
 		return VIEW_TYPE;
 	}
 
-	/**
-	 * Returns the display text for the view tab.
-	 * Shows an asterisk (*) prefix when there are unsaved changes and save setting is enabled.
-	 */
+	/** Get display text for tab (shows * for unsaved changes). */
 	getDisplayText() {
 		const baseTitle = "In-memory note";
 		// Only show asterisk if save setting is enabled and there are unsaved changes
@@ -45,25 +35,17 @@ export class InMemoryNoteView extends ItemView {
 		return shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
 	}
 
-	/**
-	 * Returns the icon for the view tab.
-	 */
+	/** Get view icon. */
 	getIcon() {
 		return IN_MEMORY_NOTE_ICON;
 	}
 
-	/**
-	 * Gets the ephemeral (temporary) state of the view for operations like tab duplication.
-	 * This state includes the current editor content but is not permanently saved.
-	 */
+	/** Get ephemeral state for tab duplication. */
 	getEphemeralState(): any {
 		return { content: this.plugin.sharedNoteContent };
 	}
 
-	/**
-	 * Restores the ephemeral state of the view, updating the editor content.
-	 * @param state The state object containing the content to restore.
-	 */
+	/** Restore ephemeral state and update content. */
 	setEphemeralState(state: any): void {
 		if (state && typeof state.content === "string") {
 			// Set initial content for the inline editor
@@ -77,11 +59,7 @@ export class InMemoryNoteView extends ItemView {
 		}
 	}
 
-	/**
-	 * Sets the content of the editor if it differs from the current content.
-	 * This is called by the plugin to synchronize views.
-	 * @param content The new content to set.
-	 */
+	/** Set editor content if different (for view sync). */
 	setContent(content: string) {
 		if (this.editor && this.editor.getValue() !== content) {
 			this.editor.setValue(content);
@@ -90,9 +68,7 @@ export class InMemoryNoteView extends ItemView {
 		}
 	}
 
-	/**
-	 * Initializes the view when opened. Sets up the inline editor and event handlers.
-	 */
+	/** Initialize view on open. */
 	async onOpen() {
 		// Register this view as active
 		this.plugin.activeViews.add(this);
@@ -116,9 +92,7 @@ export class InMemoryNoteView extends ItemView {
 		this.connectEditorPlugin();
 	}
 
-	/**
-	 * Synchronizes content with existing views to ensure consistency.
-	 */
+	/** Sync content with existing views. */
 	private synchronizeWithExistingViews() {
 		const existingViews = Array.from(this.plugin.activeViews);
 		if (existingViews.length > 1) {
@@ -132,9 +106,7 @@ export class InMemoryNoteView extends ItemView {
 		}
 	}
 
-	/**
-	 * Sets up DOM event handlers for click and context menu interactions.
-	 */
+	/** Setup DOM event handlers. */
 	private setupEventHandlers() {
 		if (!this.editor) return;
 
@@ -155,9 +127,7 @@ export class InMemoryNoteView extends ItemView {
 		);
 	}
 
-	/**
-	 * Connects the watch editor plugin to enable content synchronization.
-	 */
+	/** Connect watch editor plugin for sync. */
 	private connectEditorPlugin() {
 		if (!this.editor) return;
 
@@ -170,11 +140,7 @@ export class InMemoryNoteView extends ItemView {
 		}, 100);
 	}
 
-	/**
-	 * Updates the unsaved state based on current content and refreshes the title.
-	 * Only tracks changes when save setting is enabled.
-	 * @param currentContent The current editor content to compare against initial state.
-	 */
+	/** Update unsaved state and refresh title. */
 	updateUnsavedState(currentContent: string) {
 		// Only track unsaved state when save setting is enabled
 		if (!this.plugin.settings.enableSaveNoteContent) {
@@ -191,10 +157,7 @@ export class InMemoryNoteView extends ItemView {
 		}
 	}
 
-	/**
-	 * Marks the current content as saved by updating the initial content reference.
-	 * This removes the unsaved state indicator.
-	 */
+	/** Mark content as saved and remove unsaved indicator. */
 	markAsSaved() {
 		if (this.editor) {
 			this.initialContent = this.editor.getValue();
@@ -202,9 +165,7 @@ export class InMemoryNoteView extends ItemView {
 		}
 	}
 
-	/**
-	 * Cleanup when the view is closed. Unloads the inline editor and removes from active views.
-	 */
+	/** Cleanup on view close. */
 	async onClose() {
 		this.plugin.activeViews.delete(this);
 		this.inlineEditor.unload();

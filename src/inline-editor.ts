@@ -6,50 +6,33 @@ export interface InlineMarkdownView extends MarkdownView {
 	__setViewData__: MarkdownView["setViewData"];
 }
 
-/**
- * Manages an inline MarkdownView instance within a custom view.
- * This class provides an editor interface that is not tied to a physical file.
- */
+/** Manages inline MarkdownView without physical file. */
 export class InlineEditor {
 	public inlineView!: InlineMarkdownView;
 	private containerElement!: HTMLElement;
 	public targetElement: HTMLElement | null = null;
 
-	/**
-	 * Stores the editor content when the editor is not loaded.
-	 */
+	/** Content storage when editor not loaded. */
 	public content = "";
 
 	constructor(private parentView: InMemoryNoteView) {}
 
-	/**
-	 * Gets the current content from the editor.
-	 * @returns The editor's content as a string.
-	 */
+	/** Get current editor content. */
 	getContent() {
 		return this.inlineView.editor.getValue();
 	}
 
-	/**
-	 * Gets the underlying editor instance.
-	 * @returns The Editor object.
-	 */
+	/** Get editor instance. */
 	getEditor(): Editor {
 		return this.inlineView.editor;
 	}
 
-	/**
-	 * Sets the content of the editor.
-	 * @param content The new content to set.
-	 */
+	/** Set editor content. */
 	setContent(content: string) {
 		this.inlineView.__setViewData__(content, true);
 	}
 
-	/**
-	 * Attaches the editor to a target HTML element.
-	 * @param target The element to append the editor to.
-	 */
+	/** Attach editor to target element. */
 	load(target: HTMLElement) {
 		// Restore content from temporary storage
 		this.setContent(this.content);
@@ -67,25 +50,18 @@ export class InlineEditor {
 		this.handleFocusIn();
 	}
 
-	/**
-	 * Focuses the editor.
-	 */
+	/** Focus the editor. */
 	focus() {
 		this.inlineView.editor.focus();
 	}
 
-	/**
-	 * Sets this editor as the active editor in the workspace.
-	 * This enables standard markdown view operations to work properly.
-	 */
+	/** Set as active editor for workspace integration. */
 	private handleFocusIn = () => {
 		// @ts-ignore - Accessing private property to integrate with Obsidian's editor system
 		this.parentView.plugin.app.workspace._activeEditor = this.inlineView;
 	};
 
-	/**
-	 * Detaches the editor from the DOM and preserves its content.
-	 */
+	/** Detach editor and preserve content. */
 	unload() {
 		// Preserve current content before unloading
 		this.content = this.getContent();
@@ -95,10 +71,7 @@ export class InlineEditor {
 		}
 	}
 
-	/**
-	 * Initializes the inline MarkdownView instance.
-	 * Must be called before loading the editor into the DOM.
-	 */
+	/** Initialize inline MarkdownView. */
 	async onload() {
 		this.containerElement = document.createElement("div");
 		this.containerElement.addClasses(["in-memory-inline-editor"]);
@@ -121,10 +94,7 @@ export class InlineEditor {
 		await this.ensureSourceMode();
 	}
 
-	/**
-	 * Disables all save-related operations for the inline view.
-	 * This prevents the editor from attempting to save to the file system.
-	 */
+	/** Disable save operations to prevent file system writes. */
 	private disableSaveOperations() {
 		this.inlineView.save = noop;
 		this.inlineView.saveTitle = noop;
@@ -133,9 +103,7 @@ export class InlineEditor {
 		this.inlineView.setViewData = noop;
 	}
 
-	/**
-	 * Ensures the editor is in source mode rather than preview mode.
-	 */
+	/** Ensure editor is in source mode. */
 	private async ensureSourceMode() {
 		if (this.inlineView.getMode() === "preview") {
 			await this.inlineView.setState(

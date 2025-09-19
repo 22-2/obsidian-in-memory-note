@@ -53,7 +53,7 @@ export class CommandManager {
 								}
 							} catch (error) {
 								console.error(
-									"SandBox-note: monkey patch for save command failed.",
+									"Sandbox-note: monkey patch for save command failed.",
 									error
 								);
 								// Fallback to original command if our patch fails

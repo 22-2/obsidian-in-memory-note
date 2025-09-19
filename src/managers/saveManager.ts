@@ -45,7 +45,7 @@ export class SaveManager {
 			// Skip saving if content is invalid
 			if (typeof content !== "string") {
 				this.logger.debug(
-					"Skipping save: SandBox note content is invalid."
+					"Skipping save: Sandbox note content is invalid."
 				);
 				return;
 			}

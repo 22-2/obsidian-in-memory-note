@@ -36,9 +36,7 @@ describe("CommandManager", () => {
 		mockOriginalSaveCommand = {
 			id: "editor:save-file",
 			name: "Save current file",
-			checkCallback: vi.fn(
-				(checking: boolean) => !checking
-			) as any,
+			checkCallback: vi.fn((checking: boolean) => !checking) as any,
 		};
 
 		// 2. Mock the application and its command registry
@@ -83,7 +81,10 @@ describe("CommandManager", () => {
 
 	it("should not fail if the save command does not exist", () => {
 		(
-			mockPlugin.app.commands.commands as Record<string, Command | undefined>
+			mockPlugin.app.commands.commands as Record<
+				string,
+				Command | undefined
+			>
 		)["editor:save-file"] = undefined;
 
 		expect(() => {
@@ -203,7 +204,7 @@ describe("CommandManager", () => {
 				mockSaveManager.saveNoteContentToFile
 			).toHaveBeenCalledOnce();
 			expect(consoleErrorSpy).toHaveBeenCalledWith(
-				"SandBox-note: monkey patch for save command failed.",
+				"Sandbox-note: monkey patch for save command failed.",
 				testError
 			);
 			expect(originalCheckCallbackSpy).toHaveBeenCalledWith(checking);

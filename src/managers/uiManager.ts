@@ -19,7 +19,6 @@ export class UIManager {
 				this.plugin.activateView();
 			}
 		);
-
 		this.plugin.addCommand({
 			id: "open-sandbox-note-view",
 			name: "Open sandbox note",

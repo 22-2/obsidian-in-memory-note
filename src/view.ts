@@ -11,6 +11,8 @@ export class SandboxNoteView extends ItemView {
 	private hasUnsavedChanges = false;
 	private initialContent = "";
 
+	navigation = true; // Prevent renaming prompts
+
 	constructor(leaf: WorkspaceLeaf, plugin: SandboxNotePlugin) {
 		super(leaf);
 		this.plugin = plugin;

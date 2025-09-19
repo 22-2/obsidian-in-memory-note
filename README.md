@@ -1,32 +1,53 @@
-# In-Memory Note
+# Sandbox Note for Obsidian
 
-A simple scratchpad for Obsidian for temporary thoughts and quick notes. Content exists only in the current tab and is never saved to your vault.
+A simple, temporary scratchpad for your quick thoughts and ideas.
 
-> **Note**: Only one note can be edited at a time. All open in-memory note tabs share the same content.
+This plugin gives you a special "sandbox" note. Anything you write here is **not** saved to a file in your vault. It's a safe place to write messy notes without cluttering your workspace.
 
-## Demo
+> **Important**: All sandbox notes share the same content. If you open multiple sandbox tabs, they will all show the same text and update in real-time.
 
 ![Demo Image](assets/demo.png)
 
-## Features
+## How It Works
 
--   **Ephemeral Content**: Jot down ideas without creating files in your vault. Notes reside solely in memory and are discarded when the tab closes.
--   **Native Editing Experience**: Enjoy the full power and familiarity of Obsidian's built-in Markdown editor for a rich and consistent writing experience.
--   **Session Resilience**: Your in-memory note content is preserved within your Obsidian session history. If a tab is accidentally closed, you can easily restore its content by reopening the view.
-
-### Acknowledgements / Inspiration
-
-This plugin's concept and some implementation ideas were partly inspired by the excellent [obsidian-lineage](https://github.com/ycnmhd/obsidian-lineage) plugin by ycnmhd. We appreciate their work in demonstrating innovative ways to interact with Obsidian notes.
+-   **No Files Created**: Write freely without creating new `.md` files in your vault.
+-   **A Familiar Editor Experience**: Enjoy an editing experience that feels almost identical to Obsidian's native editor. While it supports most core features like Markdown, links, and commands, some complex plugin interactions may not work as expected.
+-   **Safe for Your Session**: Your content is kept safe as long as Obsidian is running. If you close a sandbox tab by accident, just open a new one to get your text back.
 
 ## How to Use
 
--   Click the file icon in the ribbon to open a new in-memory note.
--   Alternatively, use the command palette (`Ctrl/Cmd+P`) and search for "Open in-memory note" to create a new note.
+-   Click the file icon in the ribbon to open a new sandbox note.
+-   Or, use the Command Palette (`Ctrl/Cmd+P`) and search for "Open sandbox note".
+
+---
+
+## ⚠️ Risks and Limitations
+
+To provide this editor experience, this plugin needs to use some of Obsidian's internal (undocumented) APIs. Please be aware of the following risks:
+
+-   **Future Obsidian updates might break this plugin.** Since the APIs are not official, the plugin could stop working after an Obsidian update. We will do our best to fix it, but we cannot guarantee it will always work.
+-   **This plugin is provided "as is".** Please use it at your own risk.
+
+We value transparency and want you to understand how the plugin works.
+
+---
+
+## Optional: Auto-Save Feature
+
+You can turn on an "auto-save" option in the plugin settings.
+
+-   **What it does**: When enabled, the content of your sandbox note is saved inside the plugin's own settings file (`data.json`). This happens when you switch to another tab or close the note.
+-   **Why use it?**: This allows your sandbox content to be restored even after you restart Obsidian.
+-   **Note**: This feature still does **not** create any `.md` files in your vault.
 
 ## Installation
 
-1.  Open Obsidian's settings.
-2.  Go to `Community plugins` and make sure `Restricted mode` is turned off.
-3.  Click `Browse` to open the community plugins list.
-4.  Search for "In-Memory Note" and click `Install`.
-5.  Once installed, `Enable` the plugin in the `Community plugins` section.
+1.  Open Obsidian's **Settings**.
+2.  Go to **Community plugins** and turn off **Restricted mode**.
+3.  Click **Browse** to search for community plugins.
+4.  Search for "**Sandbox Note**".
+5.  Click **Install**, and then click **Enable**.
+
+## Acknowledgements
+
+The concept for this plugin was partly inspired by the excellent [obsidian-lineage](https://github.com/ycnmhd/obsidian-lineage) plugin by ycnmhd.

@@ -84,17 +84,33 @@ export class SandboxNoteView extends ItemView {
 		this.sandboxEditor.content =
 			this.plugin.contentManager.sharedNoteContent;
 		this.initialContent = this.plugin.contentManager.sharedNoteContent;
-		await this.sandboxEditor.onload();
 
-		// Create and load the editor container
-		const editorContainer = this.contentEl.createEl("div", {
-			cls: "sandbox-note-container",
-		});
-		this.sandboxEditor.load(editorContainer);
 
-		// Set up event handlers and editor plugin connection
-		this.setupEventHandlers();
-		this.connectEditorPlugin();
+		try {
+			// Load the inline editor, which relies on private APIs
+			await this.sandboxEditor.onload();
+
+			// Create and load the editor container
+			const editorContainer = this.contentEl.createEl("div", {
+				cls: "sandbox-note-container",
+			});
+			this.sandboxEditor.load(editorContainer);
+
+			// Set up event handlers and editor plugin connection
+			this.setupEventHandlers();
+			this.connectEditorPlugin();
+		} catch (error) {
+			console.error(
+				"Sandbox Note: Failed to initialize inline editor.",
+				error
+			);
+			// Display an error message to the user
+			this.contentEl.empty();
+			this.contentEl.createEl("div", {
+				text: "Error: Could not initialize editor. This might be due to an Obsidian update.",
+				cls: "sandbox-error-message",
+			});
+		}
 	}
 
 	/** Sync content with existing views. */

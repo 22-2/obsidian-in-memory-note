@@ -35,14 +35,21 @@ describe("UIManager", () => {
 			);
 		});
 
-		it("should add the command with the correct parameters", () => {
+		it("should add the commands with the correct parameters", () => {
 			uiManager.setupUserInterface();
 
-			expect(mockPlugin.addCommand).toHaveBeenCalledOnce();
+			expect(mockPlugin.addCommand).toHaveBeenCalledTimes(2);
+
 			expect(mockPlugin.addCommand).toHaveBeenCalledWith({
 				id: "open-sandbox-note-view",
 				name: "Open sandbox note",
 				callback: expect.any(Function),
+			});
+
+			expect(mockPlugin.addCommand).toHaveBeenCalledWith({
+				id: "save-sandbox",
+				name: "Save current sandbox",
+				checkCallback: expect.any(Function),
 			});
 		});
 

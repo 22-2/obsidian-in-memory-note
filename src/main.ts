@@ -32,7 +32,6 @@ export default class InMemoryNotePlugin extends Plugin {
 	watchEditorPlugin = watchEditorPlugin;
 
 	private previousActiveView: InMemoryNoteView | null = null;
-	private currentSavedNoteFile: string | null = null;
 
 	// Store the original checkCallback for 'editor:save-file'
 	private originalSaveCheckCallback:
@@ -207,8 +206,8 @@ export default class InMemoryNotePlugin extends Plugin {
 	}
 
 	/**
-	 * Automatically saves note content to a file when switching away from a view or explicitly by command.
-	 * Only saves non-empty content and maintains a single saved note file.
+	 * Saves note content using Obsidian API to data.json without file deletion.
+	 * Uses plugin's saveData method to safely persist content.
 	 * @param view The view instance to save content from.
 	 */
 	private async saveNoteContentToFile(view: InMemoryNoteView) {
@@ -223,44 +222,25 @@ export default class InMemoryNotePlugin extends Plugin {
 				return;
 			}
 
-			// Clean up previous saved note to maintain only one file
-			await this.cleanupPreviousSavedNote();
+			// Save content to data.json using Obsidian API
+			const dataToSave = {
+				...this.settings,
+				noteContent: content,
+				lastSaved: new Date().toISOString()
+			};
 
-			// Create new timestamped note file
-			const fileName = `in-memory-note-${Date.now()}.md`;
-			const file = await this.app.vault.create(fileName, content);
-			this.currentSavedNoteFile = file.path;
+			await this.saveData(dataToSave);
 
-			// Mark the view as saved since content was written to file
+			// Mark the view as saved since content was persisted
 			view.markAsSaved();
 
-			this.logger.debug(`Auto-saved note content to: ${file.path}`);
+			this.logger.debug("Auto-saved note content to data.json using Obsidian API");
 		} catch (error) {
 			this.logger.error(`Failed to auto-save note content: ${error}`);
 		}
 	}
 
-	/**
-	 * Removes the previously saved note file if it exists.
-	 */
-	private async cleanupPreviousSavedNote() {
-		if (!this.currentSavedNoteFile) {
-			return;
-		}
 
-		const existingFile = this.app.vault.getAbstractFileByPath(
-			this.currentSavedNoteFile
-		);
-		if (existingFile instanceof TFile) {
-			// Ensure it's a TFile before deleting
-			await this.app.vault.delete(existingFile);
-			this.logger.debug(
-				`Cleaned up previous saved note: ${this.currentSavedNoteFile}`
-			);
-		}
-
-		this.currentSavedNoteFile = null;
-	}
 
 	/**
 	 * Cleanup when the plugin is unloaded.

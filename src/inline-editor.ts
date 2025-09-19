@@ -1,7 +1,4 @@
-import {
-	type Editor,
-	MarkdownView,
-} from "obsidian";
+import { type Editor, MarkdownView } from "obsidian";
 import { InMemoryNoteView } from "./view";
 import { noop } from "./utils";
 
@@ -16,14 +13,14 @@ export interface InlineMarkdownView extends MarkdownView {
 export class InlineEditor {
 	public inlineView!: InlineMarkdownView;
 	private containerElement!: HTMLElement;
-	private targetElement: HTMLElement | null = null;
+	public targetElement: HTMLElement | null = null;
 
 	/**
 	 * Stores the editor content when the editor is not loaded.
 	 */
 	public content = "";
 
-	constructor(private parentView: InMemoryNoteView) { }
+	constructor(private parentView: InMemoryNoteView) {}
 
 	/**
 	 * Gets the current content from the editor.
@@ -69,8 +66,6 @@ export class InlineEditor {
 		);
 		this.handleFocusIn();
 	}
-
-
 
 	/**
 	 * Focuses the editor.
@@ -133,7 +128,7 @@ export class InlineEditor {
 	private disableSaveOperations() {
 		this.inlineView.save = noop;
 		this.inlineView.saveTitle = noop;
-		this.inlineView.requestSave = () => { };
+		this.inlineView.requestSave = () => {};
 		this.inlineView.__setViewData__ = this.inlineView.setViewData;
 		this.inlineView.setViewData = noop;
 	}

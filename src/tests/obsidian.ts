@@ -748,6 +748,7 @@ export class ItemView extends Component {
 
 	constructor(leaf: any) {
 		super();
+		this.app = leaf.app;
 		this.containerEl = document.createElement("div");
 		this.titleEl = document.createElement("div");
 		this.titleContainerEl = document.createElement("div");
@@ -859,12 +860,9 @@ export class Setting {
 	}
 
 	addButton(callback: (button: any) => void): Setting {
+		const buttonEl = document.createElement("button");
 		const mockButton = {
-			buttonEl: Object.assign(document.createElement("button"), {
-				addClasses: function (classes: string[]) {
-					classes.forEach((cls) => this.classList.add(cls));
-				},
-			}),
+			buttonEl: buttonEl,
 			setButtonText: (text: string) => {
 				mockButton.buttonEl.textContent = text;
 				return mockButton;
@@ -879,7 +877,12 @@ export class Setting {
 				mockButton.buttonEl.addEventListener("click", cb);
 				return mockButton;
 			},
+			addClasses: (classes: string[]) => {
+				classes.forEach((cls) => buttonEl.classList.add(cls));
+				return mockButton;
+			},
 		};
+
 		// Append to controls so text is visible in DOM for tests
 		this.controlEl.appendChild(mockButton.buttonEl);
 		callback(mockButton);

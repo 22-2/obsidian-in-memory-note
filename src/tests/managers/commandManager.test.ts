@@ -34,7 +34,11 @@ describe("CommandManager", () => {
 
 		// 1. Mock the original save command
 		mockOriginalSaveCommand = {
-			checkCallback: vi.fn((checking: boolean) => !checking),
+			id: "editor:save-file",
+			name: "Save current file",
+			checkCallback: vi.fn(
+				(checking: boolean) => !checking
+			) as any,
 		};
 
 		// 2. Mock the application and its command registry
@@ -43,7 +47,7 @@ describe("CommandManager", () => {
 				commands: {
 					"editor:save-file": mockOriginalSaveCommand,
 				},
-			},
+			} as any,
 			workspace: {
 				getActiveViewOfType: vi.fn(),
 			},
@@ -78,7 +82,9 @@ describe("CommandManager", () => {
 	});
 
 	it("should not fail if the save command does not exist", () => {
-		mockPlugin.app.commands.commands["editor:save-file"] = undefined;
+		(
+			mockPlugin.app.commands.commands as Record<string, Command | undefined>
+		)["editor:save-file"] = undefined;
 
 		expect(() => {
 			commandManager.setupSaveCommandMonkeyPatch();
@@ -87,7 +93,9 @@ describe("CommandManager", () => {
 	});
 
 	describe("Patched Save Command Logic", () => {
-		let originalCheckCallbackSpy: ReturnType<typeof vi.fn>;
+		let originalCheckCallbackSpy:
+			| ((checking: boolean) => boolean | void)
+			| undefined;
 
 		beforeEach(() => {
 			// Keep a clear spy on the original function before it gets patched
@@ -97,7 +105,9 @@ describe("CommandManager", () => {
 
 		it("should call original checkCallback when just checking", () => {
 			const checking = true;
-			mockOriginalSaveCommand.checkCallback(checking);
+			if (mockOriginalSaveCommand.checkCallback) {
+				mockOriginalSaveCommand.checkCallback(checking);
+			}
 
 			expect(originalCheckCallbackSpy).toHaveBeenCalledWith(checking);
 			expect(
@@ -107,11 +117,18 @@ describe("CommandManager", () => {
 
 		it("should call custom save logic for SandboxNoteView when enabled", () => {
 			const mockView = {} as SandboxNoteView;
-			mockApp.workspace.getActiveViewOfType.mockReturnValue(mockView);
+			(
+				mockApp.workspace.getActiveViewOfType as ReturnType<
+					typeof vi.fn
+				>
+			).mockReturnValue(mockView);
 			mockPlugin.settings.enableSaveNoteContent = true;
 
 			const checking = false;
-			const result = mockOriginalSaveCommand.checkCallback(checking);
+			let result;
+			if (mockOriginalSaveCommand.checkCallback) {
+				result = mockOriginalSaveCommand.checkCallback(checking);
+			}
 
 			expect(
 				mockSaveManager.saveNoteContentToFile
@@ -125,11 +142,17 @@ describe("CommandManager", () => {
 
 		it("should call original save logic if setting is disabled", () => {
 			const mockView = {} as SandboxNoteView;
-			mockApp.workspace.getActiveViewOfType.mockReturnValue(mockView);
+			(
+				mockApp.workspace.getActiveViewOfType as ReturnType<
+					typeof vi.fn
+				>
+			).mockReturnValue(mockView);
 			mockPlugin.settings.enableSaveNoteContent = false;
 
 			const checking = false;
-			mockOriginalSaveCommand.checkCallback(checking);
+			if (mockOriginalSaveCommand.checkCallback) {
+				mockOriginalSaveCommand.checkCallback(checking);
+			}
 
 			expect(
 				mockSaveManager.saveNoteContentToFile
@@ -138,10 +161,16 @@ describe("CommandManager", () => {
 		});
 
 		it("should call original save logic if active view is not SandboxNoteView", () => {
-			mockApp.workspace.getActiveViewOfType.mockReturnValue(null);
+			(
+				mockApp.workspace.getActiveViewOfType as ReturnType<
+					typeof vi.fn
+				>
+			).mockReturnValue(null);
 
 			const checking = false;
-			mockOriginalSaveCommand.checkCallback(checking);
+			if (mockOriginalSaveCommand.checkCallback) {
+				mockOriginalSaveCommand.checkCallback(checking);
+			}
 
 			expect(
 				mockSaveManager.saveNoteContentToFile
@@ -151,7 +180,11 @@ describe("CommandManager", () => {
 
 		it("should call original save logic if custom save logic throws an error", () => {
 			const mockView = {} as SandboxNoteView;
-			mockApp.workspace.getActiveViewOfType.mockReturnValue(mockView);
+			(
+				mockApp.workspace.getActiveViewOfType as ReturnType<
+					typeof vi.fn
+				>
+			).mockReturnValue(mockView);
 			mockPlugin.settings.enableSaveNoteContent = true;
 			const testError = new Error("Test error");
 			mockSaveManager.saveNoteContentToFile.mockImplementation(() => {
@@ -162,7 +195,9 @@ describe("CommandManager", () => {
 				.mockImplementation(() => {});
 
 			const checking = false;
-			mockOriginalSaveCommand.checkCallback(checking);
+			if (mockOriginalSaveCommand.checkCallback) {
+				mockOriginalSaveCommand.checkCallback(checking);
+			}
 
 			expect(
 				mockSaveManager.saveNoteContentToFile

@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@codemirror/view':
+        specifier: ^6.38.2
+        version: 6.38.2
       monkey-around:
         specifier: ^3.0.0
         version: 3.0.0
@@ -15,9 +18,6 @@ importers:
       '@biomejs/biome':
         specifier: 2.2.4
         version: 2.2.4
-      '@codemirror/view':
-        specifier: ^6.38.2
-        version: 6.38.2
       '@types/node':
         specifier: 24.5.2
         version: 24.5.2

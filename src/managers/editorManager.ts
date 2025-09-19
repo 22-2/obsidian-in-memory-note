@@ -1,15 +1,15 @@
-import type InMemoryNotePlugin from "../main";
-import type { InMemoryNoteView } from "../view";
+import type SandboxNotePlugin from "../main";
+import type { SandboxNoteView } from "../view";
 import { watchEditorPlugin } from "../watchEditorPlugin";
 
 /** Manages editor extensions and plugin connections */
 export class EditorManager {
-	private plugin: InMemoryNotePlugin;
+	private plugin: SandboxNotePlugin;
 
 	/** CodeMirror plugin for watching changes */
 	watchEditorPlugin = watchEditorPlugin;
 
-	constructor(plugin: InMemoryNotePlugin) {
+	constructor(plugin: SandboxNotePlugin) {
 		this.plugin = plugin;
 	}
 
@@ -19,8 +19,9 @@ export class EditorManager {
 	}
 
 	/** Connect watch editor plugin to view */
-	connectEditorPluginToView(view: InMemoryNoteView) {
-		const editorPlugin = view.inlineEditor.inlineView.editor.cm.plugin(watchEditorPlugin);
+	connectEditorPluginToView(view: SandboxNoteView) {
+		const editorPlugin =
+			view.inlineEditor.inlineView.editor.cm.plugin(watchEditorPlugin);
 		if (editorPlugin) {
 			editorPlugin.connectToPlugin(this.plugin, view);
 		}

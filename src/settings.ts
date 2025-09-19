@@ -1,15 +1,15 @@
 import { PluginSettingTab, Setting } from "obsidian";
-import type InMemoryNotePlugin from "./main";
+import type SandboxNotePlugin from "./main";
 import { type LogLevel } from "./utils/logging";
 
 /** Plugin settings interface. */
-export interface InMemoryNotePluginSettings {
+export interface SandboxNotePluginSettings {
 	logLevel: LogLevel;
 	enableSaveNoteContent: boolean;
 }
 /** Settings tab for the plugin. */
-export class InMemoryNoteSettingTab extends PluginSettingTab {
-	constructor(public plugin: InMemoryNotePlugin) {
+export class SandboxNoteSettingTab extends PluginSettingTab {
+	constructor(public plugin: SandboxNotePlugin) {
 		super(plugin.app, plugin);
 	}
 

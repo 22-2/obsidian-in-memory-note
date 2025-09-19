@@ -1,6 +1,6 @@
 {
-	"id": "in-memory-note",
-	"name": "In-Memory Note",
+	"id": "sandbox-note",
+	"name": "Sandbox Note",
 	"version": "2.2.0",
 	"minAppVersion": "0.15.0",
 	"description": "Provides a scratchpad for temporary notes that are discarded when the tab is closed.",

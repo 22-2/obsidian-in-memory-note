@@ -1,17 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ContentManager } from "src/managers/contentManager";
-import type { InMemoryNoteView } from "src/view";
-import type InMemoryNotePlugin from "src/main";
+import type { SandboxNoteView } from "src/view";
+import type SandboxNotePlugin from "src/main";
 import type { DirectLogger } from "src/utils/logging";
 
 // Helper to create a mock view
-const createMockView = (): InMemoryNoteView => ({
-	setContent: vi.fn(),
-	leaf: {
-		updateHeader: vi.fn(),
-	},
-	// Add other properties and methods as needed for tests
-} as unknown as InMemoryNoteView);
+const createMockView = (): SandboxNoteView =>
+	({
+		setContent: vi.fn(),
+		leaf: {
+			updateHeader: vi.fn(),
+		},
+		// Add other properties and methods as needed for tests
+	} as unknown as SandboxNoteView);
 
 // Mock logger
 const mockLogger = {
@@ -20,13 +21,13 @@ const mockLogger = {
 } as unknown as DirectLogger;
 
 // Mock plugin
-const mockPlugin = {} as InMemoryNotePlugin;
+const mockPlugin = {} as SandboxNotePlugin;
 
 describe("ContentManager", () => {
 	let contentManager: ContentManager;
-	let view1: InMemoryNoteView;
-	let view2: InMemoryNoteView;
-	let view3: InMemoryNoteView;
+	let view1: SandboxNoteView;
+	let view2: SandboxNoteView;
+	let view3: SandboxNoteView;
 
 	beforeEach(() => {
 		// Reset mocks and create new instances for each test
@@ -92,7 +93,7 @@ describe("ContentManager", () => {
 
 			const newContent = "Content for a single view.";
 			expect(() =>
-				contentManager.updateNoteContent(newContent, view1),
+				contentManager.updateNoteContent(newContent, view1)
 			).not.toThrow();
 			expect(contentManager.sharedNoteContent).toBe(newContent);
 		});
@@ -110,9 +111,7 @@ describe("ContentManager", () => {
 		});
 
 		it("should not fail if there are no active views", () => {
-			expect(() =>
-				contentManager.refreshAllViewTitles(),
-			).not.toThrow();
+			expect(() => contentManager.refreshAllViewTitles()).not.toThrow();
 		});
 	});
 });

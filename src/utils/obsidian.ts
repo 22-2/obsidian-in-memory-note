@@ -10,9 +10,9 @@ import {
 export function createVirtualFile(app: App) {
 	const now = new Date().getTime();
 	return {
-		path: `in-memory-note.md`,
-		name: `In-Memory Note.md`,
-		basename: `In-Memory Note`,
+		path: `sandbox-note.md`,
+		name: `Sandbox Note.md`,
+		basename: `Sandbox Note`,
 		extension: "md",
 		vault: app.vault,
 		// stat is a dummy value
@@ -27,7 +27,7 @@ export function createVirtualFile(app: App) {
 export async function activateView<T = any, U = any>(
 	app: App,
 	viewState: UViewState,
-	eState?: U,
+	eState?: U
 ): Promise<T> {
 	const leaf: WorkspaceLeaf = app.workspace.getLeaf("tab");
 
@@ -53,7 +53,7 @@ export function getAllLeaves(app: App): WorkspaceLeaf[] {
 /** Get workspace items of specific type. */
 function getWorkspaceItems<T extends WorkspaceWindow | WorkspaceParent>(
 	app: App,
-	getItem: (leaf: WorkspaceLeaf) => T | null | undefined,
+	getItem: (leaf: WorkspaceLeaf) => T | null | undefined
 ): T[] {
 	const itemMap = new Map<string, T>();
 	getAllLeaves(app).forEach((leaf) => {
@@ -67,5 +67,7 @@ function getWorkspaceItems<T extends WorkspaceWindow | WorkspaceParent>(
 
 /** Get all workspace windows. */
 export function getAllWorkspaceWindows(app: App): WorkspaceWindow[] {
-	return getWorkspaceItems<WorkspaceWindow>(app, (leaf) => leaf.getContainer());
+	return getWorkspaceItems<WorkspaceWindow>(app, (leaf) =>
+		leaf.getContainer()
+	);
 }

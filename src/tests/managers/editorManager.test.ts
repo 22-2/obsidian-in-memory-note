@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EditorManager } from "src/managers/editorManager";
-import type InMemoryNotePlugin from "src/main";
-import type { InMemoryNoteView } from "src/view";
+import type SandboxNotePlugin from "src/main";
+import type { SandboxNoteView } from "src/view";
 import { watchEditorPlugin } from "src/watchEditorPlugin";
 
 describe("EditorManager", () => {
-	let mockPlugin: InMemoryNotePlugin;
+	let mockPlugin: SandboxNotePlugin;
 	let editorManager: EditorManager;
 
 	beforeEach(() => {
@@ -13,7 +13,7 @@ describe("EditorManager", () => {
 
 		mockPlugin = {
 			registerEditorExtension: vi.fn(),
-		} as unknown as InMemoryNotePlugin;
+		} as unknown as SandboxNotePlugin;
 
 		editorManager = new EditorManager(mockPlugin);
 	});
@@ -28,13 +28,13 @@ describe("EditorManager", () => {
 
 			expect(mockPlugin.registerEditorExtension).toHaveBeenCalledOnce();
 			expect(mockPlugin.registerEditorExtension).toHaveBeenCalledWith(
-				watchEditorPlugin,
+				watchEditorPlugin
 			);
 		});
 	});
 
 	describe("connectEditorPluginToView", () => {
-		let mockView: InMemoryNoteView;
+		let mockView: SandboxNoteView;
 		let mockCmPlugin: { connectToPlugin: ReturnType<typeof vi.fn> };
 
 		beforeEach(() => {
@@ -52,29 +52,35 @@ describe("EditorManager", () => {
 						},
 					},
 				},
-			} as unknown as InMemoryNoteView;
+			} as unknown as SandboxNoteView;
 		});
 
 		it("should get the plugin instance and connect it to the view", () => {
 			editorManager.connectEditorPluginToView(mockView);
 
 			// Check that we tried to get the correct plugin
-			expect(mockView.inlineEditor.inlineView.editor.cm.plugin).toHaveBeenCalledOnce();
-			expect(mockView.inlineEditor.inlineView.editor.cm.plugin).toHaveBeenCalledWith(
-				watchEditorPlugin,
-			);
+			expect(
+				mockView.inlineEditor.inlineView.editor.cm.plugin
+			).toHaveBeenCalledOnce();
+			expect(
+				mockView.inlineEditor.inlineView.editor.cm.plugin
+			).toHaveBeenCalledWith(watchEditorPlugin);
 
 			// Check that we connected the plugin to the view
 			expect(mockCmPlugin.connectToPlugin).toHaveBeenCalledOnce();
 			expect(mockCmPlugin.connectToPlugin).toHaveBeenCalledWith(
 				mockPlugin,
-				mockView,
+				mockView
 			);
 		});
 
 		it("should not throw if the editor plugin is not found", () => {
 			// Arrange: mock the cm.plugin to return null
-			(mockView.inlineEditor.inlineView.editor.cm.plugin as ReturnType<typeof vi.fn>).mockReturnValue(null);
+			(
+				mockView.inlineEditor.inlineView.editor.cm.plugin as ReturnType<
+					typeof vi.fn
+				>
+			).mockReturnValue(null);
 
 			// Act & Assert
 			expect(() => {

@@ -1,23 +1,27 @@
-import type InMemoryNotePlugin from "../main";
-import { IN_MEMORY_NOTE_ICON } from "../utils/constants";
+import type SandboxNotePlugin from "../main";
+import { SANDBOX_NOTE_ICON } from "../utils/constants";
 
 /** Manages UI elements like ribbon icons and commands */
 export class UIManager {
-	private plugin: InMemoryNotePlugin;
+	private plugin: SandboxNotePlugin;
 
-	constructor(plugin: InMemoryNotePlugin) {
+	constructor(plugin: SandboxNotePlugin) {
 		this.plugin = plugin;
 	}
 
 	/** Setup UI elements (ribbon icon and commands) */
 	setupUserInterface() {
-		this.plugin.addRibbonIcon(IN_MEMORY_NOTE_ICON, "Open in-memory note", () => {
-			this.plugin.activateView();
-		});
+		this.plugin.addRibbonIcon(
+			SANDBOX_NOTE_ICON,
+			"Open sandbox note",
+			() => {
+				this.plugin.activateView();
+			}
+		);
 
 		this.plugin.addCommand({
-			id: "open-in-memory-note-view",
-			name: "Open in-memory note",
+			id: "open-sandbox-note-view",
+			name: "Open sandbox note",
 			callback: () => {
 				this.plugin.activateView();
 			},

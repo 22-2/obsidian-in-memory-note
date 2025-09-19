@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UIManager } from "src/managers/uiManager";
-import type InMemoryNotePlugin from "src/main";
-import { IN_MEMORY_NOTE_ICON } from "src/utils/constants";
+import type SandboxNotePlugin from "src/main";
+import { SANDBOX_NOTE_ICON } from "src/utils/constants";
 
 describe("UIManager", () => {
-	let mockPlugin: InMemoryNotePlugin;
+	let mockPlugin: SandboxNotePlugin;
 	let uiManager: UIManager;
 
 	beforeEach(() => {
@@ -14,7 +14,7 @@ describe("UIManager", () => {
 			addRibbonIcon: vi.fn(),
 			addCommand: vi.fn(),
 			activateView: vi.fn(),
-		} as unknown as InMemoryNotePlugin;
+		} as unknown as SandboxNotePlugin;
 
 		uiManager = new UIManager(mockPlugin);
 	});
@@ -29,9 +29,9 @@ describe("UIManager", () => {
 
 			expect(mockPlugin.addRibbonIcon).toHaveBeenCalledOnce();
 			expect(mockPlugin.addRibbonIcon).toHaveBeenCalledWith(
-				IN_MEMORY_NOTE_ICON,
-				"Open in-memory note",
-				expect.any(Function),
+				SANDBOX_NOTE_ICON,
+				"Open sandbox note",
+				expect.any(Function)
 			);
 		});
 
@@ -40,8 +40,8 @@ describe("UIManager", () => {
 
 			expect(mockPlugin.addCommand).toHaveBeenCalledOnce();
 			expect(mockPlugin.addCommand).toHaveBeenCalledWith({
-				id: "open-in-memory-note-view",
-				name: "Open in-memory note",
+				id: "open-sandbox-note-view",
+				name: "Open sandbox note",
 				callback: expect.any(Function),
 			});
 		});
@@ -50,7 +50,9 @@ describe("UIManager", () => {
 			uiManager.setupUserInterface();
 
 			// Capture the callback from the mock call
-			const callback = (mockPlugin.addRibbonIcon as ReturnType<typeof vi.fn>).mock.calls[0][2];
+			const callback = (
+				mockPlugin.addRibbonIcon as ReturnType<typeof vi.fn>
+			).mock.calls[0][2];
 			callback();
 
 			expect(mockPlugin.activateView).toHaveBeenCalledOnce();
@@ -60,7 +62,8 @@ describe("UIManager", () => {
 			uiManager.setupUserInterface();
 
 			// Capture the callback from the mock call
-			const callback = (mockPlugin.addCommand as ReturnType<typeof vi.fn>).mock.calls[0][0].callback;
+			const callback = (mockPlugin.addCommand as ReturnType<typeof vi.fn>)
+				.mock.calls[0][0].callback;
 			callback();
 
 			expect(mockPlugin.activateView).toHaveBeenCalledOnce();

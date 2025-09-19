@@ -1,19 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SaveManager } from "src/managers/saveManager";
-import type InMemoryNotePlugin from "src/main";
-import { InMemoryNoteView } from "src/view";
+import type SandboxNotePlugin from "src/main";
+import { SandboxNoteView } from "src/view";
 import type { DirectLogger } from "src/utils/logging";
 import { App } from "obsidian";
 
-const createMockView = (content: string): InMemoryNoteView => ({
-	inlineEditor: {
-		getContent: vi.fn().mockReturnValue(content),
-	},
-	markAsSaved: vi.fn(),
-} as unknown as InMemoryNoteView);
+const createMockView = (content: string): SandboxNoteView =>
+	({
+		inlineEditor: {
+			getContent: vi.fn().mockReturnValue(content),
+		},
+		markAsSaved: vi.fn(),
+	} as unknown as SandboxNoteView);
 
 describe("SaveManager", () => {
-	let mockPlugin: InMemoryNotePlugin;
+	let mockPlugin: SandboxNotePlugin;
 	let mockApp: App;
 	let mockLogger: DirectLogger;
 	let saveManager: SaveManager;
@@ -38,7 +39,7 @@ describe("SaveManager", () => {
 				enableSaveNoteContent: true,
 			},
 			saveData: vi.fn().mockResolvedValue(undefined),
-		} as unknown as InMemoryNotePlugin;
+		} as unknown as SandboxNotePlugin;
 
 		saveManager = new SaveManager(mockPlugin, mockLogger);
 	});
@@ -53,7 +54,8 @@ describe("SaveManager", () => {
 			await saveManager.saveNoteContentToFile(view);
 
 			expect(mockPlugin.saveData).toHaveBeenCalledOnce();
-			const savedData = (mockPlugin.saveData as ReturnType<typeof vi.fn>).mock.calls[0][0];
+			const savedData = (mockPlugin.saveData as ReturnType<typeof vi.fn>)
+				.mock.calls[0][0];
 			expect(savedData.noteContent).toBe("Some note content");
 			expect(savedData.lastSaved).toBeDefined();
 
@@ -81,7 +83,9 @@ describe("SaveManager", () => {
 
 		it("should log an error if saving fails", async () => {
 			const error = new Error("Failed to write to disk");
-			(mockPlugin.saveData as ReturnType<typeof vi.fn>).mockRejectedValue(error);
+			(mockPlugin.saveData as ReturnType<typeof vi.fn>).mockRejectedValue(
+				error
+			);
 			const view = createMockView("Some content");
 
 			await saveManager.saveNoteContentToFile(view);
@@ -120,7 +124,8 @@ describe("SaveManager", () => {
 
 			// Should save the content of the previous view (View A)
 			expect(mockPlugin.saveData).toHaveBeenCalledOnce();
-			const savedData = (mockPlugin.saveData as ReturnType<typeof vi.fn>).mock.calls[0][0];
+			const savedData = (mockPlugin.saveData as ReturnType<typeof vi.fn>)
+				.mock.calls[0][0];
 			expect(savedData.noteContent).toBe("View A content");
 
 			// Previous view should now be View B
@@ -155,7 +160,8 @@ describe("SaveManager", () => {
 			saveManager.handleActiveLeafChange();
 
 			expect(mockPlugin.saveData).toHaveBeenCalledOnce();
-			const savedData = (mockPlugin.saveData as ReturnType<typeof vi.fn>).mock.calls[0][0];
+			const savedData = (mockPlugin.saveData as ReturnType<typeof vi.fn>)
+				.mock.calls[0][0];
 			expect(savedData.noteContent).toBe("View A content");
 			expect(saveManager["previousActiveView"]).toBe(null);
 		});

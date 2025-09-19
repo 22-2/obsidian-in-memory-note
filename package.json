@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-in-memory-note",
+	"name": "obsidian-sandbox-note",
 	"version": "2.2.0",
-	"description": "A minimal in-memory note-taking plugin for Obsidian.",
+	"description": "A minimal sandbox note-taking plugin for Obsidian.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "pnpm dlx tsx esbuild.config.mts",

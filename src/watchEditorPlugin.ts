@@ -1,15 +1,11 @@
-import {
-	ViewUpdate,
-	type PluginValue,
-	ViewPlugin,
-} from "@codemirror/view";
-import type InMemoryNotePlugin from "./main";
-import type { InMemoryNoteView } from "./view";
+import { ViewUpdate, type PluginValue, ViewPlugin } from "@codemirror/view";
+import type SandboxNotePlugin from "./main";
+import type { SandboxNoteView } from "./view";
 
 /** CodeMirror plugin for syncing content across views. */
 export class EditorWatchPlugin implements PluginValue {
-	private connectedPlugin: InMemoryNotePlugin | null = null;
-	private connectedView: InMemoryNoteView | null = null;
+	private connectedPlugin: SandboxNotePlugin | null = null;
+	private connectedView: SandboxNoteView | null = null;
 
 	/** Update shared content through main plugin. */
 	private propagateContentChange(content: string) {
@@ -28,17 +24,17 @@ export class EditorWatchPlugin implements PluginValue {
 		// Only process actual document changes
 		if (update.docChanged) {
 			const updatedContent = update.state.doc.toString();
-			
+
 			// Update the unsaved state for the current view
 			this.connectedView.updateUnsavedState(updatedContent);
-			
+
 			// Propagate content changes to other views
 			this.propagateContentChange(updatedContent);
 		}
 	}
 
 	/** Connect to main plugin and view. */
-	connectToPlugin(plugin: InMemoryNotePlugin, view: InMemoryNoteView): void {
+	connectToPlugin(plugin: SandboxNotePlugin, view: SandboxNoteView): void {
 		this.connectedPlugin = plugin;
 		this.connectedView = view;
 	}

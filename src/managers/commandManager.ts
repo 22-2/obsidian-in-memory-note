@@ -1,16 +1,16 @@
-import type InMemoryNotePlugin from "../main";
-import { InMemoryNoteView } from "../view";
+import type SandboxNotePlugin from "../main";
+import { SandboxNoteView } from "../view";
 import { around } from "monkey-around";
 
 /** Manages command overrides and monkey patches */
 export class CommandManager {
-	private plugin: InMemoryNotePlugin;
+	private plugin: SandboxNotePlugin;
 
-	constructor(plugin: InMemoryNotePlugin) {
+	constructor(plugin: SandboxNotePlugin) {
 		this.plugin = plugin;
 	}
 
-	/** Setup monkey patch for save command to handle in-memory notes */
+	/** Setup monkey patch for save command to handle sandbox notes */
 	setupSaveCommandMonkeyPatch() {
 		const saveCommandDefinition =
 			this.plugin.app.commands?.commands?.["editor:save-file"];
@@ -27,22 +27,20 @@ export class CommandManager {
 									// If Obsidian is just checking if the command is available,
 									// we should always allow it, or delegate to the original for more complex checks.
 									// For our purpose, we want the save command to always appear if Obsidian normally allows it.
-									return (
-										orig?.call(this, checking) ?? true
-									);
+									return orig?.call(this, checking) ?? true;
 								}
 
 								// When the command is actually executed (checking is false)
 								const activeView =
 									this.plugin.app.workspace.getActiveViewOfType(
-										InMemoryNoteView
+										SandboxNoteView
 									);
 
 								if (
 									activeView &&
 									this.plugin.settings.enableSaveNoteContent
 								) {
-									// If it's an InMemoryNoteView and saving is enabled,
+									// If it's an SandboxNoteView and saving is enabled,
 									// execute our custom save logic.
 									this.plugin.saveManager.saveNoteContentToFile(
 										activeView
@@ -55,7 +53,7 @@ export class CommandManager {
 								}
 							} catch (error) {
 								console.error(
-									"In-memory-note: monkey patch for save command failed.",
+									"SandBox-note: monkey patch for save command failed.",
 									error
 								);
 								// Fallback to original command if our patch fails

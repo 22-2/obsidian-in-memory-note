@@ -1,21 +1,21 @@
 import { Plugin } from "obsidian";
 import {
-	type InMemoryNotePluginSettings,
-	InMemoryNoteSettingTab,
+	type SandboxNotePluginSettings,
+	SandboxNoteSettingTab,
 } from "./settings";
 import { DEFAULT_SETTINGS, VIEW_TYPE } from "./utils/constants";
 import { DirectLogger } from "./utils/logging";
 import { activateView } from "./utils/obsidian";
-import { InMemoryNoteView } from "./view";
+import { SandboxNoteView } from "./view";
 import { ContentManager } from "./managers/contentManager";
 import { SaveManager } from "./managers/saveManager";
 import { UIManager } from "./managers/uiManager";
 import { CommandManager } from "./managers/commandManager";
 import { EditorManager } from "./managers/editorManager";
 
-/** Main plugin class for In-Memory Note functionality. */
-export default class InMemoryNotePlugin extends Plugin {
-	settings: InMemoryNotePluginSettings = DEFAULT_SETTINGS;
+/** Main plugin class for Sandbox Note functionality. */
+export default class SandboxNotePlugin extends Plugin {
+	settings: SandboxNotePluginSettings = DEFAULT_SETTINGS;
 	logger!: DirectLogger;
 
 	// Managers
@@ -49,7 +49,7 @@ export default class InMemoryNotePlugin extends Plugin {
 
 	/** Setup plugin settings tab. */
 	private setupSettingsTab() {
-		this.addSettingTab(new InMemoryNoteSettingTab(this));
+		this.addSettingTab(new SandboxNoteSettingTab(this));
 	}
 
 	/** Setup workspace event handlers. */
@@ -62,39 +62,36 @@ export default class InMemoryNotePlugin extends Plugin {
 	/** Handle active leaf changes and auto-save if enabled. */
 	private handleActiveLeafChange() {
 		const activeView =
-			this.app.workspace.getActiveViewOfType(InMemoryNoteView);
+			this.app.workspace.getActiveViewOfType(SandboxNoteView);
 
 		// Delegate to save manager
 		this.saveManager.handleActiveLeafChange();
 
 		// Connect the editor plugin to the new active view
-		if (activeView instanceof InMemoryNoteView) {
+		if (activeView instanceof SandboxNoteView) {
 			this.editorManager.connectEditorPluginToView(activeView);
 		}
 	}
 
 	/** Register custom view type. */
 	private registerViewType() {
-		this.registerView(
-			VIEW_TYPE,
-			(leaf) => new InMemoryNoteView(leaf, this)
-		);
+		this.registerView(VIEW_TYPE, (leaf) => new SandboxNoteView(leaf, this));
 	}
 
 	/** Update shared content and sync across all views. */
-	updateNoteContent(content: string, sourceView: InMemoryNoteView) {
+	updateNoteContent(content: string, sourceView: SandboxNoteView) {
 		this.contentManager.updateNoteContent(content, sourceView);
 	}
 
 	/** Cleanup on plugin unload. */
 	async onunload() {
-		this.logger.debug("In-Memory Note plugin unloaded");
+		this.logger.debug("Sandbox Note plugin unloaded");
 		// Save note content on unload if enabled
 		const activeView =
-			this.app.workspace.getActiveViewOfType(InMemoryNoteView);
+			this.app.workspace.getActiveViewOfType(SandboxNoteView);
 		if (
 			this.settings.enableSaveNoteContent &&
-			activeView instanceof InMemoryNoteView
+			activeView instanceof SandboxNoteView
 		) {
 			// Save synchronously (fire and forget)
 			await this.saveManager.saveNoteContentToFile(activeView);
@@ -104,7 +101,7 @@ export default class InMemoryNotePlugin extends Plugin {
 		// No manual unpatching is required here.
 	}
 
-	/** Create and activate new In-Memory Note view. */
+	/** Create and activate new Sandbox Note view. */
 	async activateView() {
 		const leaf = await activateView(this.app, {
 			type: VIEW_TYPE,
@@ -118,7 +115,7 @@ export default class InMemoryNotePlugin extends Plugin {
 	initializeLogger(): void {
 		this.logger = new DirectLogger({
 			level: this.settings.logLevel,
-			name: "InMemoryNotePlugin",
+			name: "SandboxNotePlugin",
 		});
 		this.logger.debug("debug mode enabled");
 	}

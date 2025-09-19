@@ -1,5 +1,5 @@
 import { type Editor, MarkdownView } from "obsidian";
-import { InMemoryNoteView } from "./view";
+import { SandboxNoteView } from "./view";
 import { noop } from "./utils";
 
 export interface InlineMarkdownView extends MarkdownView {
@@ -15,7 +15,7 @@ export class InlineEditor {
 	/** Content storage when editor not loaded. */
 	public content = "";
 
-	constructor(private parentView: InMemoryNoteView) {}
+	constructor(private parentView: SandboxNoteView) {}
 
 	/** Get current editor content. */
 	getContent() {
@@ -74,7 +74,7 @@ export class InlineEditor {
 	/** Initialize inline MarkdownView. */
 	async onload() {
 		this.containerElement = document.createElement("div");
-		this.containerElement.addClasses(["in-memory-inline-editor"]);
+		this.containerElement.addClasses(["sandbox-inline-editor"]);
 
 		// Create the inline MarkdownView with necessary configuration
 		this.inlineView = new MarkdownView({

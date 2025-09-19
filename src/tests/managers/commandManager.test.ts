@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CommandManager } from "src/managers/commandManager";
-import type InMemoryNotePlugin from "src/main";
+import type SandboxNotePlugin from "src/main";
 import { App, type Command } from "obsidian";
-import { InMemoryNoteView } from "src/view";
+import { SandboxNoteView } from "src/view";
 import { around } from "monkey-around";
 
 // Let vitest handle the mocking. It will replace 'around' with a spy.
 vi.mock("monkey-around");
 
 describe("CommandManager", () => {
-	let mockPlugin: InMemoryNotePlugin;
+	let mockPlugin: SandboxNotePlugin;
 	let mockApp: App;
 	let mockSaveManager: { saveNoteContentToFile: ReturnType<typeof vi.fn> };
 	let mockOriginalSaveCommand: Command;
@@ -24,12 +24,12 @@ describe("CommandManager", () => {
 			(obj, methods) => {
 				// We call the patch function immediately to get the wrapped function
 				const patchedCheckCallback = methods.checkCallback(
-					obj.checkCallback,
+					obj.checkCallback
 				);
 				// In the test, we replace the original callback with the patched one
 				// to simulate the monkey patch.
 				obj.checkCallback = patchedCheckCallback;
-			},
+			}
 		);
 
 		// 1. Mock the original save command
@@ -61,7 +61,7 @@ describe("CommandManager", () => {
 				enableSaveNoteContent: true,
 			},
 			register: vi.fn(),
-		} as unknown as InMemoryNotePlugin;
+		} as unknown as SandboxNotePlugin;
 
 		commandManager = new CommandManager(mockPlugin);
 	});
@@ -72,7 +72,7 @@ describe("CommandManager", () => {
 		expect(around).toHaveBeenCalledOnce();
 		expect(around).toHaveBeenCalledWith(
 			mockOriginalSaveCommand,
-			expect.any(Object),
+			expect.any(Object)
 		);
 		expect(mockPlugin.register).toHaveBeenCalledOnce();
 	});
@@ -101,12 +101,12 @@ describe("CommandManager", () => {
 
 			expect(originalCheckCallbackSpy).toHaveBeenCalledWith(checking);
 			expect(
-				mockSaveManager.saveNoteContentToFile,
+				mockSaveManager.saveNoteContentToFile
 			).not.toHaveBeenCalled();
 		});
 
-		it("should call custom save logic for InMemoryNoteView when enabled", () => {
-			const mockView = {} as InMemoryNoteView;
+		it("should call custom save logic for SandboxNoteView when enabled", () => {
+			const mockView = {} as SandboxNoteView;
 			mockApp.workspace.getActiveViewOfType.mockReturnValue(mockView);
 			mockPlugin.settings.enableSaveNoteContent = true;
 
@@ -114,17 +114,17 @@ describe("CommandManager", () => {
 			const result = mockOriginalSaveCommand.checkCallback(checking);
 
 			expect(
-				mockSaveManager.saveNoteContentToFile,
+				mockSaveManager.saveNoteContentToFile
 			).toHaveBeenCalledOnce();
-			expect(
-				mockSaveManager.saveNoteContentToFile,
-			).toHaveBeenCalledWith(mockView);
+			expect(mockSaveManager.saveNoteContentToFile).toHaveBeenCalledWith(
+				mockView
+			);
 			expect(originalCheckCallbackSpy).not.toHaveBeenCalled();
 			expect(result).toBe(true);
 		});
 
 		it("should call original save logic if setting is disabled", () => {
-			const mockView = {} as InMemoryNoteView;
+			const mockView = {} as SandboxNoteView;
 			mockApp.workspace.getActiveViewOfType.mockReturnValue(mockView);
 			mockPlugin.settings.enableSaveNoteContent = false;
 
@@ -132,25 +132,25 @@ describe("CommandManager", () => {
 			mockOriginalSaveCommand.checkCallback(checking);
 
 			expect(
-				mockSaveManager.saveNoteContentToFile,
+				mockSaveManager.saveNoteContentToFile
 			).not.toHaveBeenCalled();
 			expect(originalCheckCallbackSpy).toHaveBeenCalledWith(checking);
 		});
 
-		it("should call original save logic if active view is not InMemoryNoteView", () => {
+		it("should call original save logic if active view is not SandboxNoteView", () => {
 			mockApp.workspace.getActiveViewOfType.mockReturnValue(null);
 
 			const checking = false;
 			mockOriginalSaveCommand.checkCallback(checking);
 
 			expect(
-				mockSaveManager.saveNoteContentToFile,
+				mockSaveManager.saveNoteContentToFile
 			).not.toHaveBeenCalled();
 			expect(originalCheckCallbackSpy).toHaveBeenCalledWith(checking);
 		});
 
 		it("should call original save logic if custom save logic throws an error", () => {
-			const mockView = {} as InMemoryNoteView;
+			const mockView = {} as SandboxNoteView;
 			mockApp.workspace.getActiveViewOfType.mockReturnValue(mockView);
 			mockPlugin.settings.enableSaveNoteContent = true;
 			const testError = new Error("Test error");
@@ -168,7 +168,7 @@ describe("CommandManager", () => {
 				mockSaveManager.saveNoteContentToFile
 			).toHaveBeenCalledOnce();
 			expect(consoleErrorSpy).toHaveBeenCalledWith(
-				"In-memory-note: monkey patch for save command failed.",
+				"SandBox-note: monkey patch for save command failed.",
 				testError
 			);
 			expect(originalCheckCallbackSpy).toHaveBeenCalledWith(checking);

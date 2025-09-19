@@ -1,17 +1,17 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
 import { handleClick, handleContextMenu } from "src/click-handler";
 import { InlineEditor } from "src/inlineEditor";
-import { IN_MEMORY_NOTE_ICON, VIEW_TYPE } from "src/utils/constants";
-import type InMemoryNotePlugin from "./main";
+import { SANDBOX_NOTE_ICON, VIEW_TYPE } from "src/utils/constants";
+import type SandboxNotePlugin from "./main";
 
-/** View for an in-memory note with inline editor. */
-export class InMemoryNoteView extends ItemView {
-	plugin: InMemoryNotePlugin;
+/** View for an sandbox note with inline editor. */
+export class SandboxNoteView extends ItemView {
+	plugin: SandboxNotePlugin;
 	inlineEditor: InlineEditor;
 	private hasUnsavedChanges = false;
 	private initialContent = "";
 
-	constructor(leaf: WorkspaceLeaf, plugin: InMemoryNotePlugin) {
+	constructor(leaf: WorkspaceLeaf, plugin: SandboxNotePlugin) {
 		super(leaf);
 		this.plugin = plugin;
 		this.inlineEditor = new InlineEditor(this);
@@ -29,7 +29,7 @@ export class InMemoryNoteView extends ItemView {
 
 	/** Get display text for tab (shows * for unsaved changes). */
 	getDisplayText() {
-		const baseTitle = "In-memory note";
+		const baseTitle = "SandBox note";
 		// Only show asterisk if save setting is enabled and there are unsaved changes
 		const shouldShowUnsaved =
 			this.plugin.settings.enableSaveNoteContent &&
@@ -39,7 +39,7 @@ export class InMemoryNoteView extends ItemView {
 
 	/** Get view icon. */
 	getIcon() {
-		return IN_MEMORY_NOTE_ICON;
+		return SANDBOX_NOTE_ICON;
 	}
 
 	/** Get ephemeral state for tab duplication. */
@@ -86,7 +86,7 @@ export class InMemoryNoteView extends ItemView {
 
 		// Create and load the editor container
 		const editorContainer = this.contentEl.createEl("div", {
-			cls: "in-memory-note-container",
+			cls: "sandbox-note-container",
 		});
 		this.inlineEditor.load(editorContainer);
 

@@ -1,15 +1,15 @@
-import { InMemoryNoteView } from "../view";
-import type InMemoryNotePlugin from "../main";
+import { SandboxNoteView } from "../view";
+import type SandboxNotePlugin from "../main";
 import type { DirectLogger } from "../utils/logging";
 
 /** Manages content persistence and auto-save functionality */
 export class SaveManager {
-	private plugin: InMemoryNotePlugin;
+	private plugin: SandboxNotePlugin;
 	private logger: DirectLogger;
-	private previousActiveView: InMemoryNoteView | null = null;
+	private previousActiveView: SandboxNoteView | null = null;
 	private isSaving = false;
 
-	constructor(plugin: InMemoryNotePlugin, logger: DirectLogger) {
+	constructor(plugin: SandboxNotePlugin, logger: DirectLogger) {
 		this.plugin = plugin;
 		this.logger = logger;
 	}
@@ -17,7 +17,7 @@ export class SaveManager {
 	/** Handle active leaf changes and auto-save if enabled */
 	handleActiveLeafChange() {
 		const activeView =
-			this.plugin.app.workspace.getActiveViewOfType(InMemoryNoteView);
+			this.plugin.app.workspace.getActiveViewOfType(SandboxNoteView);
 
 		// Auto-save content from previous view when save setting is enabled
 		if (
@@ -31,7 +31,7 @@ export class SaveManager {
 	}
 
 	/** Save note content to data.json using Obsidian API */
-	async saveNoteContentToFile(view: InMemoryNoteView) {
+	async saveNoteContentToFile(view: SandboxNoteView) {
 		try {
 			if (this.isSaving) {
 				this.logger.debug(
@@ -45,7 +45,7 @@ export class SaveManager {
 			// Skip saving if content is invalid
 			if (typeof content !== "string") {
 				this.logger.debug(
-					"Skipping save: In-memory note content is invalid."
+					"Skipping save: SandBox note content is invalid."
 				);
 				return;
 			}

@@ -24,9 +24,9 @@ export class SandboxNoteView extends ItemView {
 		return this.sandboxEditor.getEditor();
 	}
 
-	save() {
+	save = () => {
 		this.plugin.saveManager.saveNoteContentToFile(this);
-	}
+	};
 
 	/** Get view type. */
 	getViewType() {
@@ -88,6 +88,8 @@ export class SandboxNoteView extends ItemView {
 		this.sandboxEditor.content =
 			this.plugin.contentManager.sharedNoteContent;
 		this.initialContent = this.plugin.contentManager.sharedNoteContent;
+
+		this.addAction("save", "Save sandbox", this.save);
 
 		try {
 			// Load the inline editor, which relies on private APIs

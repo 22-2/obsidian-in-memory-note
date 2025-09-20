@@ -43,6 +43,8 @@ export default class SandboxNotePlugin extends Plugin {
 		await this.loadSettings();
 		this.initializeLogger();
 		this.initializeManagers();
+		this.contentManager.sharedNoteContent =
+			this.settings.noteContent ?? "";
 		this.setupSettingsTab();
 		this.editorManager.setupEditorExtension();
 		this.setupWorkspaceEventHandlers();
@@ -181,7 +183,11 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Save current plugin settings to storage. */
 	async saveSettings() {
-		await this.saveData(this.settings);
+		const settingsToSave = {
+			...this.settings,
+			noteContent: this.contentManager.sharedNoteContent,
+		};
+		await this.saveData(settingsToSave);
 		// Refresh all view titles when settings change
 		this.contentManager.refreshAllViewTitles();
 	}

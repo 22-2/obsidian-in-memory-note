@@ -63,6 +63,7 @@ describe("SandboxNotePlugin", () => {
 		).mockImplementation(() => {});
 		vi.spyOn(plugin as any, "registerViewType").mockImplementation(() => {});
 		// We need to have the managers on the plugin instance for the spies to work
+		plugin.contentManager = { sharedNoteContent: "" } as any;
 		plugin.editorManager = { setupEditorExtension: vi.fn() } as any;
 		plugin.uiManager = { setupUserInterface: vi.fn() } as any;
 		plugin.commandManager = {

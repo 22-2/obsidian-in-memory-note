@@ -11,6 +11,7 @@ const createMockView = (): SandboxNoteView =>
 		leaf: {
 			updateHeader: vi.fn(),
 		},
+		getViewType: vi.fn().mockReturnValue("sandbox-note"),
 		// Add other properties and methods as needed for tests
 	} as unknown as SandboxNoteView);
 
@@ -18,6 +19,7 @@ const createMockView = (): SandboxNoteView =>
 const mockLogger = {
 	info: vi.fn(),
 	error: vi.fn(),
+	debug: vi.fn(),
 } as unknown as DirectLogger;
 
 // Mock plugin

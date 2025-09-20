@@ -23,14 +23,20 @@ export function setContent(view: AbstractNoteView, content: string) {
  */
 export function synchronizeWithExistingViews(view: SandboxNoteView) {
 	const existingViews = Array.from(view.plugin.contentManager.activeViews);
-	if (existingViews.length > 1) {
-		// Get content from an existing view (excluding this one)
-		const sourceView = existingViews.find((v) => v !== view);
-		if (sourceView && sourceView.editor) {
-			view.plugin.contentManager.sharedNoteContent =
-				sourceView.editor.getValue();
-			// Also sync the initial content to match the existing view's state
-			view.initialContent = sourceView.initialContent;
-		}
+	const sourceView = existingViews.find((v) => v !== view);
+
+	if (sourceView?.editor) {
+		const content = sourceView.editor.getValue();
+		view.plugin.contentManager.sharedNoteContent = content;
+		view.initialContent = sourceView.initialContent;
+		// Directly set the content in the new view's editor
+		view.setContent(content);
+		return;
+	}
+
+	// If no other views are open, but there's initial content from startup, use it.
+	const initialContent = view.plugin.contentManager.sharedNoteContent;
+	if (initialContent) {
+		view.setContent(initialContent);
 	}
 }

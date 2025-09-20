@@ -143,7 +143,7 @@ export default class SandboxNotePlugin extends Plugin {
 	}
 
 	/** Create and activate new Sandbox Note view. */
-	async activateView() {
+	async activateSandboxView() {
 		return this.activateAbstractView(VIEW_TYPE_SANDBOX);
 	}
 

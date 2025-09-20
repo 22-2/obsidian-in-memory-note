@@ -1,8 +1,5 @@
 import type SandboxNotePlugin from "../main";
-import {
-	IN_MEMORY_NOTE_ICON,
-	SANDBOX_NOTE_ICON,
-} from "../utils/constants";
+import { IN_MEMORY_NOTE_ICON, SANDBOX_NOTE_ICON } from "../utils/constants";
 import { AbstractNoteView } from "../AbstractNoteView";
 
 /** Manages UI elements like ribbon icons and commands */
@@ -21,7 +18,7 @@ export class UIManager {
 			name: "Open sandbox note",
 			icon: SANDBOX_NOTE_ICON,
 			callback: () => {
-				this.plugin.activateView();
+				this.plugin.activateSandboxView();
 			},
 		});
 
@@ -42,7 +39,7 @@ export class UIManager {
 			checkCallback: (checking) => {
 				const view =
 					this.plugin.app.workspace.getActiveViewOfType(
-						AbstractNoteView,
+						AbstractNoteView
 					);
 				if (view) {
 					if (!checking) {
@@ -59,8 +56,16 @@ export class UIManager {
 			SANDBOX_NOTE_ICON,
 			"Open sandbox note",
 			() => {
-				this.plugin.activateView();
-			},
+				this.plugin.activateSandboxView();
+			}
+		);
+		// Ribbon icon to open the in-memory note
+		this.plugin.addRibbonIcon(
+			IN_MEMORY_NOTE_ICON,
+			"Open in-memory note",
+			() => {
+				this.plugin.activateInMemoryView();
+			}
 		);
 	}
 }

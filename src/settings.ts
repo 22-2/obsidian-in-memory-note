@@ -1,6 +1,6 @@
 import { PluginSettingTab, Setting } from "obsidian";
 import type SandboxNotePlugin from "./main";
-import { type LogLevel } from "./utils/logging";
+import { Logger, type LogLevel } from "./utils/logging";
 
 /** Plugin settings interface. */
 export interface SandboxNotePluginSettings {
@@ -34,11 +34,10 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 				toggle
 					.setValue(this.plugin.settings.logLevel === "debug")
 					.onChange(async (enabled) => {
-						this.plugin.settings.logLevel = enabled
-							? "debug"
-							: "info";
+						const newLevel = enabled ? "debug" : "info";
+						this.plugin.settings.logLevel = newLevel;
 						await this.plugin.saveSettings();
-						this.plugin.initializeLogger();
+						Logger.updateLoggingState(newLevel);
 					});
 			});
 	}

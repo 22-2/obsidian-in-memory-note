@@ -9,6 +9,19 @@ import {
 } from "vitest";
 import SandboxNotePlugin from "../main";
 import { App, MarkdownView, Notice } from "obsidian";
+import { Logger } from "../utils/logging";
+
+// Mock the entire logging module
+vi.mock("../utils/logging", () => ({
+	Logger: {
+		updateLoggingState: vi.fn(),
+		debug: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn(),
+	},
+	LogLevelSettings: {},
+}));
 
 // Mock only the necessary parts of the 'obsidian' module
 vi.mock("obsidian", async (importOriginal) => {
@@ -52,7 +65,6 @@ describe("SandboxNotePlugin", () => {
 
 		// Spy on methods that would be called during initialization instead of replacing them
 		vi.spyOn(plugin, "loadSettings").mockResolvedValue(undefined);
-		vi.spyOn(plugin, "initializeLogger").mockImplementation(() => {});
 		vi.spyOn(plugin as any, "initializeManagers").mockImplementation(
 			() => {}
 		);
@@ -92,6 +104,7 @@ describe("SandboxNotePlugin", () => {
 
 		// Assert that further initialization methods were NOT called
 		expect(plugin.loadSettings).not.toHaveBeenCalled();
+		expect(Logger.updateLoggingState).not.toHaveBeenCalled();
 		expect((plugin as any).initializeManagers).not.toHaveBeenCalled();
 		expect((plugin as any).setupSettingsTab).not.toHaveBeenCalled();
 	});
@@ -110,6 +123,7 @@ describe("SandboxNotePlugin", () => {
 
 		// Assert that initialization methods were called
 		expect(plugin.loadSettings).toHaveBeenCalledOnce();
+		expect(Logger.updateLoggingState).toHaveBeenCalledOnce();
 		expect((plugin as any).initializeManagers).toHaveBeenCalledOnce();
 		expect((plugin as any).setupSettingsTab).toHaveBeenCalledOnce();
 		expect(

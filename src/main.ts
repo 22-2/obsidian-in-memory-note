@@ -51,6 +51,21 @@ export default class SandboxNotePlugin extends Plugin {
 		this.registerViewType();
 		this.uiManager.setupUserInterface();
 		this.commandManager.updateSaveCommandMonkeyPatch();
+		this.app.workspace.onLayoutReady(() => this.onLayoutReady());
+	}
+
+	/** Fires once the workspace is ready. */
+	private onLayoutReady(): void {
+		this.logger.debug("Workspace layout ready.");
+		// Connect to any existing sandbox views that were restored on startup
+		this.app.workspace.getLeavesOfType(VIEW_TYPE_SANDBOX).forEach((leaf) => {
+			if (leaf.view instanceof SandboxNoteView) {
+				this.logger.debug(
+					`Connecting to existing view on layout ready: ${leaf.view.getViewType()}`
+				);
+				this.editorManager.connectEditorPluginToView(leaf.view);
+			}
+		});
 	}
 
 	/**

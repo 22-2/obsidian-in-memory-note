@@ -44,6 +44,7 @@ describe("SandboxNotePlugin", () => {
 		mockApp = {
 			workspace: {
 				on: vi.fn(),
+				onLayoutReady: vi.fn(),
 			},
 		} as unknown as App;
 

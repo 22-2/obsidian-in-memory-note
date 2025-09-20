@@ -4,6 +4,7 @@ import manifest from "../../manifest.json";
 export const DEFAULT_SETTINGS: SandboxNotePluginSettings = {
 	logLevel: "info",
 	enableSaveNoteContent: false,
+	enableUnsafeCtrlS: false,
 };
 
 export const APP_NAME = manifest.name || "SandboxNote";

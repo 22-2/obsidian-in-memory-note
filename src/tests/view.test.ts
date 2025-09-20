@@ -82,6 +82,7 @@ describe("SandboxNoteView", () => {
 			app: {
 				commands: {},
 			},
+			updateHeader: vi.fn(),
 		} as unknown as WorkspaceLeaf;
 
 		// Create an instance of the view

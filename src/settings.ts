@@ -6,6 +6,7 @@ import { type LogLevel } from "./utils/logging";
 export interface SandboxNotePluginSettings {
 	logLevel: LogLevel;
 	enableSaveNoteContent: boolean;
+	enableUnsafeCtrlS: boolean;
 }
 /** Settings tab for the plugin. */
 export class SandboxNoteSettingTab extends PluginSettingTab {
@@ -19,6 +20,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 
 		this.addDebugLoggingSetting();
 		this.addAutoSaveSetting();
+		this.addUnsafeCtrlSSetting();
 	}
 
 	/** Add debug logging toggle. */
@@ -45,7 +47,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			.setName("Auto-save note content")
 			.setDesc(
 				"Automatically save note content to a file when switching away from the view. " +
-					"Only one saved note is maintained at a time."
+					"This does not affect the Ctrl+S behavior."
 			)
 			.addToggle((toggle) => {
 				toggle
@@ -53,6 +55,25 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 					.onChange(async (enabled) => {
 						this.plugin.settings.enableSaveNoteContent = enabled;
 						await this.plugin.saveSettings();
+					});
+			});
+	}
+
+	/** Add unsafe Ctrl+S save setting. */
+	private addUnsafeCtrlSSetting() {
+		new Setting(this.containerEl)
+			.setName("Enable Ctrl+S to save sandbox note")
+			.setDesc(
+				"Overrides the default save command (Ctrl+S) to save the content of the sandbox note. " +
+					"This is an unsafe feature as it alters core Obsidian behavior."
+			)
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this.plugin.settings.enableUnsafeCtrlS)
+					.onChange(async (enabled) => {
+						this.plugin.settings.enableUnsafeCtrlS = enabled;
+						await this.plugin.saveSettings();
+						this.plugin.commandManager.updateSaveCommandMonkeyPatch();
 					});
 			});
 	}

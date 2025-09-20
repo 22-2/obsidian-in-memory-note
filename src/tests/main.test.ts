@@ -66,7 +66,7 @@ describe("SandboxNotePlugin", () => {
 		plugin.editorManager = { setupEditorExtension: vi.fn() } as any;
 		plugin.uiManager = { setupUserInterface: vi.fn() } as any;
 		plugin.commandManager = {
-			setupSaveCommandMonkeyPatch: vi.fn(),
+			updateSaveCommandMonkeyPatch: vi.fn(),
 		} as any;
 	});
 

@@ -42,7 +42,7 @@ export default class SandboxNotePlugin extends Plugin {
 		this.setupWorkspaceEventHandlers();
 		this.registerViewType();
 		this.uiManager.setupUserInterface();
-		this.commandManager.setupSaveCommandMonkeyPatch();
+		this.commandManager.updateSaveCommandMonkeyPatch();
 	}
 
 	/**

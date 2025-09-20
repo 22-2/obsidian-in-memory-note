@@ -1,8 +1,4 @@
 import { MarkdownView, Notice, Plugin } from "obsidian";
-import { ContentManager } from "./managers/contentManager";
-import { EditorManager } from "./managers/editorManager";
-import { SaveManager } from "./managers/saveManager";
-import { UIManager } from "./managers/uiManager";
 import {
 	type SandboxNotePluginSettings,
 	SandboxNoteSettingTab,
@@ -11,6 +7,11 @@ import { DEFAULT_SETTINGS, VIEW_TYPE } from "./utils/constants";
 import { DirectLogger } from "./utils/logging";
 import { activateView } from "./utils/obsidian";
 import { SandboxNoteView } from "./view";
+import { ContentManager } from "./managers/contentManager";
+import { SaveManager } from "./managers/saveManager";
+import { UIManager } from "./managers/uiManager";
+import { CommandManager } from "./managers/commandManager";
+import { EditorManager } from "./managers/editorManager";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
@@ -21,6 +22,7 @@ export default class SandboxNotePlugin extends Plugin {
 	contentManager!: ContentManager;
 	saveManager!: SaveManager;
 	uiManager!: UIManager;
+	commandManager!: CommandManager;
 	editorManager!: EditorManager;
 
 	/** Initialize plugin on load. */
@@ -40,6 +42,7 @@ export default class SandboxNotePlugin extends Plugin {
 		this.setupWorkspaceEventHandlers();
 		this.registerViewType();
 		this.uiManager.setupUserInterface();
+		this.commandManager.setupSaveCommandMonkeyPatch();
 	}
 
 	/**
@@ -78,6 +81,7 @@ export default class SandboxNotePlugin extends Plugin {
 		this.contentManager = new ContentManager(this, this.logger);
 		this.saveManager = new SaveManager(this, this.logger);
 		this.uiManager = new UIManager(this);
+		this.commandManager = new CommandManager(this);
 		this.editorManager = new EditorManager(this);
 	}
 

@@ -191,7 +191,10 @@ export class SandboxNoteView extends ItemView {
 			return;
 		}
 
-		(this.saveActionEl || this.addAction("save", "Save", this.save)).show();
+		if (!this.saveActionEl) {
+			this.saveActionEl = this.addAction("save", "Save", this.save);
+		}
+		this.saveActionEl.show();
 
 		const shouldShowUnsaved =
 			this.plugin.settings.enableSaveNoteContent &&

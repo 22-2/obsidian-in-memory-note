@@ -6,6 +6,7 @@ import { type LogLevel } from "./utils/logging";
 export interface SandboxNotePluginSettings {
 	logLevel: LogLevel;
 	enableSaveNoteContent: boolean;
+	autoSaveDebounceMs: number;
 	enableUnsafeCtrlS: boolean;
 }
 /** Settings tab for the plugin. */
@@ -20,6 +21,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 
 		this.addDebugLoggingSetting();
 		this.addAutoSaveSetting();
+		this.addAutoSaveDebounceSetting();
 		this.addUnsafeCtrlSSetting();
 	}
 
@@ -46,14 +48,48 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 		new Setting(this.containerEl)
 			.setName("Auto-save note content")
 			.setDesc(
-				"Automatically save note content to a file when switching away from the view. " +
-					"This does not affect the Ctrl+S behavior."
+				"When enabled, the note content is saved automatically after you stop typing. " +
+					"This feature helps prevent data loss from unexpected shutdowns."
 			)
 			.addToggle((toggle) => {
 				toggle
 					.setValue(this.plugin.settings.enableSaveNoteContent)
 					.onChange(async (enabled) => {
 						this.plugin.settings.enableSaveNoteContent = enabled;
+						await this.plugin.saveSettings();
+						// Re-render the dependent setting
+						this.display();
+					});
+			});
+	}
+
+	/** Add auto-save debounce delay setting. */
+	private addAutoSaveDebounceSetting() {
+		if (!this.plugin.settings.enableSaveNoteContent) {
+			return;
+		}
+
+		const options: Record<string, string> = {
+			"3000": "3 seconds",
+			"5000": "5 seconds",
+			"10000": "10 seconds",
+			"30000": "30 seconds",
+			"60000": "1 minute",
+			"300000": "5 minutes",
+		};
+
+		new Setting(this.containerEl)
+			.setName("Auto-save delay")
+			.setDesc(
+				"The delay after you stop typing before the note is saved."
+			)
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOptions(options)
+					.setValue(String(this.plugin.settings.autoSaveDebounceMs))
+					.onChange(async (value) => {
+						this.plugin.settings.autoSaveDebounceMs =
+							Number.parseInt(value, 10);
 						await this.plugin.saveSettings();
 					});
 			});

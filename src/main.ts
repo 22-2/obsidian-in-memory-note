@@ -124,17 +124,6 @@ export default class SandboxNotePlugin extends Plugin {
 	/** Cleanup on plugin unload. */
 	async onunload() {
 		this.logger.debug("Sandbox Note plugin unloaded");
-		// Save note content on unload if enabled
-		const activeView =
-			this.app.workspace.getActiveViewOfType(SandboxNoteView);
-		if (
-			this.settings.enableSaveNoteContent &&
-			activeView instanceof SandboxNoteView
-		) {
-			// Save synchronously (fire and forget)
-			await activeView.save();
-			this.logger.debug("Auto-saved note content on unload");
-		}
 		// The `around` utility automatically registers a cleanup function
 		// that reverts the monkey patch when the plugin is unloaded.
 		// No manual unpatching is required here.

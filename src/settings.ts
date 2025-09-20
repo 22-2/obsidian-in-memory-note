@@ -36,6 +36,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.enableLogger)
 					.onChange(async (enabled) => {
 						this.plugin.settings.enableLogger = enabled;
+						this.plugin.initializeLogger();
 						await this.plugin.saveSettings();
 					});
 			});

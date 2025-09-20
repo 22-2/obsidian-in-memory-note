@@ -5,6 +5,7 @@ import { updateActionButtons } from "../helpers/viewHelpers";
 import { setContent } from "../helpers/viewSync";
 import { SANDBOX_NOTE_ICON } from "../utils/constants";
 import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
+import log from "loglevel";
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
@@ -88,7 +89,7 @@ export abstract class AbstractNoteView extends ItemView {
 			this.setupEventHandlers();
 			this.connectEditorPlugin();
 		} catch (error) {
-			console.error(
+			log.error(
 				"Sandbox Note: Failed to initialize inline editor.",
 				error
 			);

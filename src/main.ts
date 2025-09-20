@@ -91,7 +91,7 @@ export default class SandboxNotePlugin extends Plugin {
 
 			return true;
 		} catch (error) {
-			console.error(
+			log.error(
 				"Sandbox Note plugin: Compatibility check failed. This is likely due to an Obsidian update.",
 				error
 			);

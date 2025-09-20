@@ -1,3 +1,4 @@
+import log from "loglevel";
 import type SandboxNotePlugin from "../main";
 import { SandboxNoteView } from "../views/SandboxNoteView";
 import { around } from "monkey-around";
@@ -48,7 +49,7 @@ export class CommandManager {
 							// Otherwise, call the original save command's logic.
 							return orig?.call(this, checking);
 						} catch (error) {
-							console.error(
+							log.error(
 								"Sandbox-note: monkey patch for save command failed.",
 								error
 							);

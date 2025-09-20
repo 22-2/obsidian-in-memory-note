@@ -12,6 +12,7 @@ export class SandboxNoteView extends ItemView {
 	private hasUnsavedChanges = false;
 	private initialContent = "";
 	private saveActionEl!: HTMLElement;
+	private onloadCallbacks: (() => void)[] = [];
 
 	navigation = true; // Prevent renaming prompts
 
@@ -175,16 +176,20 @@ export class SandboxNoteView extends ItemView {
 	private connectEditorPlugin() {
 		if (!this.editor) return;
 
-		// TODO: Find a better way to ensure the editor plugin is ready
 		// Delay connection to ensure editor is fully initialized
-		setTimeout(() => {
+		this.onloadCallbacks.push(() => {
 			const editorPlugin = this.editor.cm.plugin(
 				this.plugin.editorManager.watchEditorPlugin
 			);
 			if (editorPlugin) {
 				editorPlugin.connectToPlugin(this.plugin, this);
 			}
-		}, 0);
+		});
+	}
+
+	onload(): void {
+		this.onloadCallbacks.forEach((callback) => callback());
+		this.onloadCallbacks = [];
 	}
 
 	/** Update action buttons based on unsaved state. */

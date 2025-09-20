@@ -52,6 +52,11 @@ describe("SandboxNoteView", () => {
 
 		// Mock the plugin and its dependencies
 		mockPlugin = {
+			app: {
+				workspace: {
+					on: vi.fn(),
+				},
+			},
 			contentManager: {
 				addActiveView: vi.fn(),
 				sharedNoteContent: "shared content",
@@ -63,6 +68,7 @@ describe("SandboxNoteView", () => {
 			settings: {
 				enableSaveNoteContent: true,
 			},
+			registerEvent: vi.fn(),
 		} as unknown as SandboxNotePlugin;
 
 		// Mock the workspace leaf
@@ -79,8 +85,14 @@ describe("SandboxNoteView", () => {
 		view.contentEl = mockContentEl as any;
 		view.sandboxEditor = mockSandboxEditor as unknown as SandboxEditor;
 
-		// Mock the addAction method on the view instance since it's not available in the test environment
-		view.addAction = vi.fn();
+		// Mock the addAction method to return a mock HTMLElement
+		const mockSaveActionEl = {
+			show: vi.fn(),
+			hide: vi.fn(),
+			toggleClass: vi.fn(),
+			setAttribute: vi.fn(),
+		};
+		view.addAction = vi.fn().mockReturnValue(mockSaveActionEl);
 
 		// Spy on console.error
 		vi.spyOn(console, "error").mockImplementation(() => {});

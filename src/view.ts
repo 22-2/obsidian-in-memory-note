@@ -11,6 +11,7 @@ export class SandboxNoteView extends ItemView {
 	sandboxEditor: SandboxEditor;
 	private hasUnsavedChanges = false;
 	private initialContent = "";
+	private saveActionEl!: HTMLElement;
 
 	navigation = true; // Prevent renaming prompts
 
@@ -90,9 +91,11 @@ export class SandboxNoteView extends ItemView {
 			this.plugin.contentManager.sharedNoteContent;
 		this.initialContent = this.plugin.contentManager.sharedNoteContent;
 
-		this.addAction("save", "Save sandbox", () => {
+		this.saveActionEl = this.addAction("save", "Save sandbox", () => {
 			this.save();
 		});
+
+		this.updateActionButtons();
 
 		// Focus editor when switching back to this view
 		this.plugin.registerEvent(
@@ -184,16 +187,38 @@ export class SandboxNoteView extends ItemView {
 		}, 0);
 	}
 
+	/** Update action buttons based on unsaved state. */
+	updateActionButtons() {
+		if (!this.plugin.settings.enableSaveNoteContent) {
+			this.saveActionEl.hide();
+			return;
+		}
+
+		this.saveActionEl.show();
+
+		const shouldShowUnsaved =
+			this.plugin.settings.enableSaveNoteContent &&
+			this.hasUnsavedChanges;
+
+		this.saveActionEl.toggleClass("is-disabled", !shouldShowUnsaved);
+		this.saveActionEl.setAttribute(
+			"aria-disabled",
+			String(!shouldShowUnsaved)
+		);
+	}
+
 	/** Update unsaved state and refresh title. */
 	updateUnsavedState(currentContent: string) {
 		// Only track unsaved state when save setting is enabled
 		if (!this.plugin.settings.enableSaveNoteContent) {
 			this.hasUnsavedChanges = false;
+			this.updateActionButtons();
 			return;
 		}
 
 		const wasUnsaved = this.hasUnsavedChanges;
 		this.hasUnsavedChanges = currentContent !== this.initialContent;
+		this.updateActionButtons();
 
 		// Update the tab title if the unsaved state changed
 		if (wasUnsaved !== this.hasUnsavedChanges) {

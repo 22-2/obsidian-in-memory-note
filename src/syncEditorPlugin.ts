@@ -58,4 +58,4 @@ export class SyncEditorPlugin implements PluginValue {
 }
 
 /** CodeMirror ViewPlugin for watching changes. */
-export const watchEditorPlugin = ViewPlugin.fromClass(SyncEditorPlugin);
+export const syncEditorPlugin = ViewPlugin.fromClass(SyncEditorPlugin);

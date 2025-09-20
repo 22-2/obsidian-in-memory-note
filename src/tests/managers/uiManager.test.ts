@@ -13,7 +13,13 @@ describe("UIManager", () => {
 		mockPlugin = {
 			addRibbonIcon: vi.fn(),
 			addCommand: vi.fn(),
-			activateView: vi.fn(),
+			activateSandboxView: vi.fn(),
+			activateInMemoryView: vi.fn(),
+			app: {
+				workspace: {
+					getActiveViewOfType: vi.fn(),
+				},
+			},
 		} as unknown as SandboxNotePlugin;
 
 		uiManager = new UIManager(mockPlugin);
@@ -48,43 +54,74 @@ describe("UIManager", () => {
 			expect(mockPlugin.addCommand).toHaveBeenCalledWith({
 				id: "open-sandbox-note-view",
 				name: "Open sandbox note",
+				icon: SANDBOX_NOTE_ICON,
 				callback: expect.any(Function),
-			});
-
-			expect(mockPlugin.addCommand).toHaveBeenCalledWith({
-				id: "save-sandbox",
-				name: "Save current sandbox",
-				checkCallback: expect.any(Function),
 			});
 
 			expect(mockPlugin.addCommand).toHaveBeenCalledWith({
 				id: "open-in-memory-note-view",
 				name: "Open in-memory note",
+				icon: IN_MEMORY_NOTE_ICON,
+				callback: expect.any(Function),
+			});
+
+			expect(mockPlugin.addCommand).toHaveBeenCalledWith({
+				id: "save-note",
+				name: "Save current note",
 				checkCallback: expect.any(Function),
 			});
 		});
 
-		it("should call activateView when the ribbon icon callback is executed", () => {
+		it("should call activateSandboxView when the sandbox ribbon icon callback is executed", () => {
 			uiManager.setupUserInterface();
 
-			// Capture the callback from the mock call
-			const callback = (
+			const sandboxRibbonCallback = (
 				mockPlugin.addRibbonIcon as ReturnType<typeof vi.fn>
-			).mock.calls[0][2];
-			callback();
+			).mock.calls.find(
+				(call) => call[1] === "Open sandbox note"
+			)?.[2];
+			sandboxRibbonCallback();
 
 			expect(mockPlugin.activateSandboxView).toHaveBeenCalledOnce();
 		});
 
-		it("should call activateView when the command callback is executed", () => {
+		it("should call activateInMemoryView when the in-memory ribbon icon callback is executed", () => {
 			uiManager.setupUserInterface();
 
-			// Capture the callback from the mock call
-			const callback = (mockPlugin.addCommand as ReturnType<typeof vi.fn>)
-				.mock.calls[0][0].callback;
-			callback();
+			const inMemoryRibbonCallback = (
+				mockPlugin.addRibbonIcon as ReturnType<typeof vi.fn>
+			).mock.calls.find(
+				(call) => call[1] === "Open in-memory note"
+			)?.[2];
+			inMemoryRibbonCallback();
+
+			expect(mockPlugin.activateInMemoryView).toHaveBeenCalledOnce();
+		});
+
+		it("should call activateSandboxView when the sandbox command callback is executed", () => {
+			uiManager.setupUserInterface();
+
+			const sandboxCommandCallback = (
+				mockPlugin.addCommand as ReturnType<typeof vi.fn>
+			).mock.calls.find(
+				(call) => call[0].id === "open-sandbox-note-view"
+			)?.[0].callback;
+			sandboxCommandCallback();
 
 			expect(mockPlugin.activateSandboxView).toHaveBeenCalledOnce();
+		});
+
+		it("should call activateInMemoryView when the in-memory command callback is executed", () => {
+			uiManager.setupUserInterface();
+
+			const inMemoryCommandCallback = (
+				mockPlugin.addCommand as ReturnType<typeof vi.fn>
+			).mock.calls.find(
+				(call) => call[0].id === "open-in-memory-note-view"
+			)?.[0].callback;
+			inMemoryCommandCallback();
+
+			expect(mockPlugin.activateInMemoryView).toHaveBeenCalledOnce();
 		});
 	});
 });

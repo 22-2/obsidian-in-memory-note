@@ -5,7 +5,7 @@ import {
 } from "./settings";
 import {
 	DEFAULT_SETTINGS,
-	VIEW_TYPE,
+	VIEW_TYPE_SANDBOX,
 	VIEW_TYPE_IN_MEMORY,
 } from "./utils/constants";
 import { DirectLogger } from "./utils/logging";
@@ -119,7 +119,10 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Register custom view type. */
 	private registerViewType() {
-		this.registerView(VIEW_TYPE, (leaf) => new SandboxNoteView(leaf, this));
+		this.registerView(
+			VIEW_TYPE_SANDBOX,
+			(leaf) => new SandboxNoteView(leaf, this)
+		);
 		this.registerView(
 			VIEW_TYPE_IN_MEMORY,
 			(leaf) => new InMemoryNoteView(leaf, this)
@@ -141,7 +144,7 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Create and activate new Sandbox Note view. */
 	async activateView() {
-		return this.activateAbstractView(VIEW_TYPE);
+		return this.activateAbstractView(VIEW_TYPE_SANDBOX);
 	}
 
 	/** Create and activate new In-Memory Note view. */

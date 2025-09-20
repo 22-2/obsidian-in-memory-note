@@ -1,5 +1,5 @@
 import { WorkspaceLeaf } from "obsidian";
-import { VIEW_TYPE } from "src/utils/constants";
+import { VIEW_TYPE_SANDBOX } from "src/utils/constants";
 import type SandboxNotePlugin from "./main";
 import { synchronizeWithExistingViews } from "./viewSync";
 import { AbstractNoteView } from "./AbstractNoteView";
@@ -12,7 +12,7 @@ export class SandboxNoteView extends AbstractNoteView {
 
 	/** Get view type. */
 	getViewType() {
-		return VIEW_TYPE;
+		return VIEW_TYPE_SANDBOX;
 	}
 
 	/** Get the base title for the view. */

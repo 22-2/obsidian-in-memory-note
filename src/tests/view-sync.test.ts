@@ -33,9 +33,6 @@ describe("View Sync Helpers", () => {
 				},
 			},
 			initialContent: "",
-			sandboxEditor: {
-				getEditor: () => mockEditor as unknown as Editor,
-			},
 		} as unknown as SandboxNoteView;
 	});
 

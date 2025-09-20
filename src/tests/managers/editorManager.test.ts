@@ -43,8 +43,8 @@ describe("EditorManager", () => {
 			};
 
 			mockView = {
-				sandboxEditor: {
-					inlineView: {
+				wrapper: {
+					virtualEditor: {
 						editor: {
 							cm: {
 								plugin: vi.fn().mockReturnValue(mockCmPlugin),

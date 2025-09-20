@@ -8,7 +8,7 @@ import {
 	VIEW_TYPE_SANDBOX,
 	VIEW_TYPE_IN_MEMORY,
 } from "./utils/constants";
-import { DirectLogger } from "./utils/logging";
+import { Logger } from "./utils/logging";
 import { activateView } from "./utils/obsidian";
 import { SandboxNoteView } from "./SandboxNoteView";
 import { InMemoryNoteView } from "./InMemoryNoteView";
@@ -22,7 +22,6 @@ import { EditorManager } from "./managers/editorManager";
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
 	settings: SandboxNotePluginSettings = DEFAULT_SETTINGS;
-	logger!: DirectLogger;
 
 	// Managers
 	contentManager!: ContentManager;
@@ -41,7 +40,7 @@ export default class SandboxNotePlugin extends Plugin {
 		}
 
 		await this.loadSettings();
-		this.initializeLogger();
+		Logger.updateLoggingState(this.settings.logLevel);
 		this.initializeManagers();
 		this.setupSettingsTab();
 		this.editorManager.setupEditorExtension();
@@ -84,8 +83,8 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Initialize all manager instances */
 	private initializeManagers() {
-		this.contentManager = new ContentManager(this, this.logger);
-		this.saveManager = new SaveManager(this, this.logger);
+		this.contentManager = new ContentManager(this, Logger);
+		this.saveManager = new SaveManager(this, Logger);
 		this.uiManager = new UIManager(this);
 		this.commandManager = new CommandManager(this);
 		this.editorManager = new EditorManager(this);
@@ -136,7 +135,7 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Cleanup on plugin unload. */
 	async onunload() {
-		this.logger.debug("Sandbox Note plugin unloaded");
+		Logger.debug("Sandbox Note plugin unloaded");
 		// The `around` utility automatically registers a cleanup function
 		// that reverts the monkey patch when the plugin is unloaded.
 		// No manual unpatching is required here.
@@ -159,15 +158,6 @@ export default class SandboxNotePlugin extends Plugin {
 		});
 
 		return leaf;
-	}
-
-	/** Initialize logger with current settings. */
-	initializeLogger(): void {
-		this.logger = new DirectLogger({
-			level: this.settings.logLevel,
-			name: "SandboxNotePlugin",
-		});
-		this.logger.debug("debug mode enabled");
 	}
 
 	/** Load plugin settings from storage. */

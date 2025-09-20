@@ -76,6 +76,8 @@ export class SandboxNoteView extends ItemView {
 			this.editor.setValue(content);
 			// Update unsaved state when content is synchronized from other views
 			this.updateUnsavedState(content);
+			// Refresh the tab title
+			this.leaf.updateHeader();
 		}
 	}
 

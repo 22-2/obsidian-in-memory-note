@@ -41,9 +41,8 @@ describe("View Sync Helpers", () => {
 
 	describe("setContent", () => {
 		it("should not do anything if the editor is not available", () => {
-			vi.spyOn(mockView.sandboxEditor, "getEditor").mockReturnValue(
-				undefined as any
-			);
+			// Simulate the editor not being available
+			(mockView as any).editor = undefined;
 			setContent(mockView, "new content");
 			expect(mockEditor.setValue).not.toHaveBeenCalled();
 		});

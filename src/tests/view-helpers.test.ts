@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getDisplayText, updateActionButtons } from "src/view-helpers";
+import { getDisplayText, updateActionButtons } from "src/viewHelpers";
 import type { SandboxNoteView } from "src/SandboxNoteView";
 
 describe("View Helpers", () => {

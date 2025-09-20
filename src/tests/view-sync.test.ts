@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { setContent, synchronizeWithExistingViews } from "src/view-sync";
+import { setContent, synchronizeWithExistingViews } from "src/viewSync";
 import type { SandboxNoteView } from "src/SandboxNoteView";
 import type { Editor } from "obsidian";
 

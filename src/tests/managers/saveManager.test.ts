@@ -260,5 +260,30 @@ describe("SaveManager", () => {
 				.mock.calls[0][0];
 			expect(savedData.noteContent).toBe("Content 2");
 		});
+
+		it("should cancel debounced save if a direct save is triggered", async () => {
+			const view1 = createMockView("Debounced call");
+			const view2 = createMockView("Direct call");
+
+			// Start a debounced save
+			saveManager.debouncedSave(view1);
+			expect(mockPlugin.saveData).not.toHaveBeenCalled();
+
+			// Trigger a direct save before the debounce timer fires
+			await saveManager.saveNoteContentToFile(view2);
+
+			// The direct save should have been executed
+			expect(mockPlugin.saveData).toHaveBeenCalledOnce();
+			const savedData = (
+				mockPlugin.saveData as ReturnType<typeof vi.fn>
+			).mock.calls[0][0];
+			expect(savedData.noteContent).toBe("Direct call");
+
+			// Fast-forward time to see if the debounced save also fires
+			await vi.advanceTimersByTimeAsync(1000);
+
+			// Should not have been called again
+			expect(mockPlugin.saveData).toHaveBeenCalledOnce();
+		});
 	});
 });

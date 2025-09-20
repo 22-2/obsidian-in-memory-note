@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
 import { handleClick, handleContextMenu } from "src/click-handler";
-import { EditorWrapper } from "src/sandboxEditor";
+import { EditorWrapper } from "src/editorWrapper";
 import { SANDBOX_NOTE_ICON, VIEW_TYPE } from "src/utils/constants";
 import type SandboxNotePlugin from "./main";
 import { getDisplayText, updateActionButtons } from "./viewHelpers";

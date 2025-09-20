@@ -106,13 +106,13 @@ export default class SandboxNotePlugin extends Plugin {
 	/** Handle active leaf changes and auto-save if enabled. */
 	private handleActiveLeafChange() {
 		const activeView =
-			this.app.workspace.getActiveViewOfType(AbstractNoteView);
+			this.app.workspace.getActiveViewOfType(SandboxNoteView);
 
 		// Delegate to save manager
 		this.saveManager.handleActiveLeafChange();
 
 		// Connect the editor plugin to the new active view
-		if (activeView instanceof AbstractNoteView) {
+		if (activeView instanceof SandboxNoteView) {
 			this.editorManager.connectEditorPluginToView(activeView);
 		}
 	}
@@ -122,7 +122,7 @@ export default class SandboxNotePlugin extends Plugin {
 		this.registerView(VIEW_TYPE, (leaf) => new SandboxNoteView(leaf, this));
 		this.registerView(
 			VIEW_TYPE_IN_MEMORY,
-			(leaf) => new InMemoryNoteView(leaf, this),
+			(leaf) => new InMemoryNoteView(leaf, this)
 		);
 	}
 

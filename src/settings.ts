@@ -8,6 +8,8 @@ export interface SandboxNotePluginSettings {
 	enableSaveNoteContent: boolean;
 	autoSaveDebounceMs: number;
 	enableUnsafeCtrlS: boolean;
+	noteContent: string;
+	lastSaved: string;
 }
 /** Settings tab for the plugin. */
 export class SandboxNoteSettingTab extends PluginSettingTab {

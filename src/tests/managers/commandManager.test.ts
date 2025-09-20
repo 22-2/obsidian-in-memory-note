@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CommandManager } from "src/managers/commandManager";
 import type SandboxNotePlugin from "src/main";
 import { App, type Command } from "obsidian";
-import { SandboxNoteView } from "src/view";
+import { SandboxNoteView } from "src/SandboxNoteView";
 import { around } from "monkey-around";
 
 // Let vitest handle the mocking. It will replace 'around' with a spy.

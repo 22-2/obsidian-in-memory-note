@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ContentManager } from "src/managers/contentManager";
-import type { SandboxNoteView } from "src/view";
+import type { SandboxNoteView } from "src/SandboxNoteView";
 import type SandboxNotePlugin from "src/main";
 import type { DirectLogger } from "src/utils/logging";
 

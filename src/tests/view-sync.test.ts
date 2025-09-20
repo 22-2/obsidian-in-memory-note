@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { setContent, synchronizeWithExistingViews } from "src/view-sync";
-import type { SandboxNoteView } from "src/view";
+import type { SandboxNoteView } from "src/SandboxNoteView";
 import type { Editor } from "obsidian";
 
 describe("View Sync Helpers", () => {
@@ -75,7 +75,9 @@ describe("View Sync Helpers", () => {
 		it("should synchronize content from another view", () => {
 			const mockOtherView = {
 				editor: {
-					getValue: vi.fn().mockReturnValue("content from other view"),
+					getValue: vi
+						.fn()
+						.mockReturnValue("content from other view"),
 				},
 				initialContent: "other initial content",
 			} as unknown as SandboxNoteView;
@@ -85,9 +87,9 @@ describe("View Sync Helpers", () => {
 
 			synchronizeWithExistingViews(mockView);
 
-			expect(
-				mockView.plugin.contentManager.sharedNoteContent
-			).toBe("content from other view");
+			expect(mockView.plugin.contentManager.sharedNoteContent).toBe(
+				"content from other view"
+			);
 			expect(mockView.initialContent).toBe("other initial content");
 		});
 

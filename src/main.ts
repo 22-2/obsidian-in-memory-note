@@ -6,7 +6,7 @@ import {
 import { DEFAULT_SETTINGS, VIEW_TYPE } from "./utils/constants";
 import { DirectLogger } from "./utils/logging";
 import { activateView } from "./utils/obsidian";
-import { SandboxNoteView } from "./view";
+import { SandboxNoteView } from "./SandboxNoteView";
 import { ContentManager } from "./managers/contentManager";
 import { SaveManager } from "./managers/saveManager";
 import { UIManager } from "./managers/uiManager";

@@ -1,6 +1,6 @@
 import { ViewUpdate, type PluginValue, ViewPlugin } from "@codemirror/view";
 import type SandboxNotePlugin from "./main";
-import type { SandboxNoteView } from "./view";
+import type { SandboxNoteView } from "./SandboxNoteView";
 
 /** CodeMirror plugin for syncing content across views. */
 export class EditorWatchPlugin implements PluginValue {

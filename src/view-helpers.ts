@@ -1,4 +1,4 @@
-import type { SandboxNoteView } from "./view";
+import type { SandboxNoteView } from "./SandboxNoteView";
 
 /**
  * Get the display text for the view tab, showing an asterisk for unsaved changes.
@@ -32,8 +32,5 @@ export function updateActionButtons(view: SandboxNoteView): void {
 		view.plugin.settings.enableSaveNoteContent && view.hasUnsavedChanges;
 
 	view.saveActionEl.toggleClass("is-disabled", !shouldShowUnsaved);
-	view.saveActionEl.setAttribute(
-		"aria-disabled",
-		String(!shouldShowUnsaved)
-	);
+	view.saveActionEl.setAttribute("aria-disabled", String(!shouldShowUnsaved));
 }

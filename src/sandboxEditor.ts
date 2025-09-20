@@ -1,5 +1,5 @@
 import { type Editor, MarkdownView } from "obsidian";
-import { SandboxNoteView } from "./view";
+import { SandboxNoteView } from "./SandboxNoteView";
 import { noop } from "./utils";
 
 export interface InlineMarkdownView extends MarkdownView {

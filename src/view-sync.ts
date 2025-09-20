@@ -1,4 +1,4 @@
-import type { SandboxNoteView } from "./view";
+import type { SandboxNoteView } from "./SandboxNoteView";
 
 /**
  * Set the editor content if it's different from the provided content.
@@ -21,9 +21,7 @@ export function setContent(view: SandboxNoteView, content: string) {
  * @param view The instance of the SandboxNoteView to synchronize.
  */
 export function synchronizeWithExistingViews(view: SandboxNoteView) {
-	const existingViews = Array.from(
-		view.plugin.contentManager.activeViews
-	);
+	const existingViews = Array.from(view.plugin.contentManager.activeViews);
 	if (existingViews.length > 1) {
 		// Get content from an existing view (excluding this one)
 		const sourceView = existingViews.find((v) => v !== view);

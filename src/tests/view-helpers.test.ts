@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getDisplayText, updateActionButtons } from "src/view-helpers";
-import type { SandboxNoteView } from "src/view";
+import type { SandboxNoteView } from "src/SandboxNoteView";
 
 describe("View Helpers", () => {
 	let mockView: SandboxNoteView;

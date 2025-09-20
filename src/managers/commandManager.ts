@@ -1,5 +1,5 @@
 import type SandboxNotePlugin from "../main";
-import { SandboxNoteView } from "../view";
+import { SandboxNoteView } from "../SandboxNoteView";
 import { around } from "monkey-around";
 
 /** Manages command overrides and monkey patches */
@@ -21,7 +21,10 @@ export class CommandManager {
 		}
 
 		// If the setting is enabled and there is no patch, patch it.
-		if (this.plugin.settings.enableUnsafeCtrlS && !this.unpatchSaveCommand) {
+		if (
+			this.plugin.settings.enableUnsafeCtrlS &&
+			!this.unpatchSaveCommand
+		) {
 			this.unpatchSaveCommand = around(saveCommandDefinition, {
 				checkCallback: (orig) => {
 					// Return a new checkCallback function that acts as our interceptor

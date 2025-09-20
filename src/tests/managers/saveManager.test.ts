@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SaveManager } from "src/managers/saveManager";
 import type SandboxNotePlugin from "src/main";
-import { SandboxNoteView } from "src/view";
+import { SandboxNoteView } from "src/SandboxNoteView";
 import type { DirectLogger } from "src/utils/logging";
 import { App } from "obsidian";
 

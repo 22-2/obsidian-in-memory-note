@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EditorManager } from "src/managers/editorManager";
 import type SandboxNotePlugin from "src/main";
-import type { SandboxNoteView } from "src/view";
+import type { SandboxNoteView } from "src/SandboxNoteView";
 import { watchEditorPlugin } from "src/watchEditorPlugin";
 
 describe("EditorManager", () => {

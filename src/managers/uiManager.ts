@@ -1,4 +1,4 @@
-import { SandboxNoteView } from "src/view";
+import { SandboxNoteView } from "src/SandboxNoteView";
 import type SandboxNotePlugin from "../main";
 import { SANDBOX_NOTE_ICON } from "../utils/constants";
 

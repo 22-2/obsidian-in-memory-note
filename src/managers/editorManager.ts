@@ -1,3 +1,4 @@
+import type { AbstractNoteView } from "src/AbstractNoteView";
 import type SandboxNotePlugin from "../main";
 import type { SandboxNoteView } from "../SandboxNoteView";
 import { watchEditorPlugin } from "../syncEditorPlugin";
@@ -19,7 +20,7 @@ export class EditorManager {
 	}
 
 	/** Connect watch editor plugin to view */
-	connectEditorPluginToView(view: SandboxNoteView) {
+	connectEditorPluginToView(view: AbstractNoteView) {
 		const editorPlugin =
 			view.wrapper.virtualEditor.editor.cm.plugin(watchEditorPlugin);
 		if (editorPlugin) {

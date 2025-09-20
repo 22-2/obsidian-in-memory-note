@@ -185,6 +185,7 @@ export default class SandboxNotePlugin extends Plugin {
 		} else {
 			log.disableAll();
 		}
+		log.debug("Logger initialized");
 	}
 
 	/** Load plugin settings from storage. */

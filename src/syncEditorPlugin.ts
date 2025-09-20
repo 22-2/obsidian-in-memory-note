@@ -3,7 +3,7 @@ import type SandboxNotePlugin from "./main";
 import type { SandboxNoteView } from "./SandboxNoteView";
 
 /** CodeMirror plugin for syncing content across views. */
-export class EditorWatchPlugin implements PluginValue {
+export class SyncEditorPlugin implements PluginValue {
 	private connectedPlugin: SandboxNotePlugin | null = null;
 	private connectedView: SandboxNoteView | null = null;
 
@@ -47,4 +47,4 @@ export class EditorWatchPlugin implements PluginValue {
 }
 
 /** CodeMirror ViewPlugin for watching changes. */
-export const watchEditorPlugin = ViewPlugin.fromClass(EditorWatchPlugin);
+export const watchEditorPlugin = ViewPlugin.fromClass(SyncEditorPlugin);

@@ -1,6 +1,6 @@
 import type SandboxNotePlugin from "../main";
 import type { SandboxNoteView } from "../SandboxNoteView";
-import { watchEditorPlugin } from "../watchEditorPlugin";
+import { watchEditorPlugin } from "../syncEditorPlugin";
 
 /** Manages editor extensions and plugin connections */
 export class EditorManager {

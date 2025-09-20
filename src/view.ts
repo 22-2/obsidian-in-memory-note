@@ -98,6 +98,14 @@ export class SandboxNoteView extends ItemView {
 			this.plugin.contentManager.sharedNoteContent;
 		this.initialContent = this.plugin.contentManager.sharedNoteContent;
 
+		this.plugin.registerEvent(
+			this.plugin.app.workspace.on("active-leaf-change", (leaf) => {
+				if (leaf?.id === this.leaf.id) {
+					this.editor.focus();
+				}
+			})
+		);
+
 		try {
 			// Load the inline editor, which relies on private APIs
 			await this.sandboxEditor.onload();

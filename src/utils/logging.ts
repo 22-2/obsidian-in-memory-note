@@ -31,6 +31,7 @@ const noop = () => {};
  * This greatly improves debugging efficiency.
  */
 export class DirectLogger {
+	private static _instance: DirectLogger;
 	private settings: LoggerInternalSettings;
 	private prefix: string;
 	private children: DirectLogger[] = [];
@@ -51,7 +52,7 @@ export class DirectLogger {
 	public error: (...args: any[]) => void = noop;
 	public log: (...args: any[]) => void = noop;
 
-	constructor(settings: LoggerInternalSettings) {
+	private constructor(settings: LoggerInternalSettings) {
 		this.settings = settings;
 		this.prefix = `[${settings.name}]`;
 
@@ -62,6 +63,16 @@ export class DirectLogger {
 		console.info(
 			`${this.prefix} Logger initialized with level: ${this.settings.level}`,
 		);
+	}
+
+	public static get instance(): DirectLogger {
+		if (!this._instance) {
+			this._instance = new DirectLogger({
+				name: "Nobi",
+				level: INITIAL_LOG_LEVEL,
+			});
+		}
+		return this._instance;
 	}
 
 	/**
@@ -156,7 +167,4 @@ function getInitialLogLevel(): LogLevel {
 	return "info"; // Default to info
 }
 
-export const Logger = new DirectLogger({
-	name: "Nobi",
-	level: INITIAL_LOG_LEVEL,
-});
+export const Logger = DirectLogger.instance;

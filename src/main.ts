@@ -8,7 +8,7 @@ import {
 	VIEW_TYPE_SANDBOX,
 	VIEW_TYPE_IN_MEMORY,
 } from "./utils/constants";
-import { DirectLogger } from "./utils/logging";
+import { DirectLogger, Logger } from "./utils/logging";
 import { activateView } from "./utils/obsidian";
 import { SandboxNoteView } from "./views/SandboxNoteView";
 import { InMemoryNoteView } from "./views/InMemoryNoteView";
@@ -181,10 +181,10 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Initialize logger with current settings. */
 	initializeLogger(): void {
-		this.logger = new DirectLogger({
-			level: this.settings.logLevel,
+		this.logger = Logger.getSubLogger({
 			name: "SandboxNotePlugin",
 		});
+		this.logger.updateLoggingState(this.settings.logLevel);
 		this.logger.debug("debug mode enabled");
 	}
 

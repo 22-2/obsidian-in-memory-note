@@ -6,6 +6,8 @@ export const DEFAULT_SETTINGS: SandboxNotePluginSettings = {
 	enableSaveNoteContent: false,
 	autoSaveDebounceMs: 3000,
 	enableUnsafeCtrlS: false,
+	noteContent: "",
+	lastSaved: "",
 };
 
 export const APP_NAME = manifest.name || "SandboxNote";

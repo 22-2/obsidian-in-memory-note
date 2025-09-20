@@ -1,6 +1,6 @@
 import { Editor, MarkdownEditView, MarkdownView } from "obsidian";
 import type { Commands } from "obsidian-typings";
-import { waitForElement } from "./utils/dom";
+import { waitForElement } from "../utils/dom";
 
 /** Handle right-click context menu events. */
 export const handleContextMenu = async (

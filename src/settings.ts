@@ -1,10 +1,9 @@
 import { PluginSettingTab, Setting } from "obsidian";
 import type SandboxNotePlugin from "./main";
-import { Logger, type LogLevel } from "./utils/logging";
 
 /** Plugin settings interface. */
 export interface SandboxNotePluginSettings {
-	logLevel: LogLevel;
+	enableLogger: boolean;
 	enableSaveNoteContent: boolean;
 	autoSaveDebounceMs: number;
 	enableUnsafeCtrlS: boolean;
@@ -34,12 +33,10 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			.setDesc("Enable or disable debug messages in the console.")
 			.addToggle((toggle) => {
 				toggle
-					.setValue(this.plugin.settings.logLevel === "debug")
+					.setValue(this.plugin.settings.enableLogger)
 					.onChange(async (enabled) => {
-						const newLevel = enabled ? "debug" : "info";
-						this.plugin.settings.logLevel = newLevel;
+						this.plugin.settings.enableLogger = enabled;
 						await this.plugin.saveSettings();
-						Logger.updateLoggingState(newLevel);
 					});
 			});
 	}

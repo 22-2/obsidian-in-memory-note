@@ -2,7 +2,7 @@ import { type SandboxNotePluginSettings } from "../settings";
 import manifest from "../../manifest.json";
 
 export const DEFAULT_SETTINGS: SandboxNotePluginSettings = {
-	logLevel: "info",
+	enableLogger: "info",
 	enableSaveNoteContent: false,
 	autoSaveDebounceMs: 3000,
 	enableUnsafeCtrlS: false,

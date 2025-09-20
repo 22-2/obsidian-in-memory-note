@@ -4,7 +4,6 @@ import { App } from "obsidian";
 import type SandboxNotePlugin from "src/main";
 import { SaveManager } from "src/managers/saveManager";
 import type { SandboxNoteView } from "src/views/SandboxNoteView";
-import type { DirectLogger } from "src/utils/logging";
 
 const createMockView = (content: string): SandboxNoteView =>
 	({
@@ -18,7 +17,6 @@ const createMockView = (content: string): SandboxNoteView =>
 describe("SaveManager", () => {
 	let mockPlugin: SandboxNotePlugin;
 	let mockApp: App;
-	let mockLogger: DirectLogger;
 	let saveManager: SaveManager;
 
 	beforeEach(() => {
@@ -30,11 +28,6 @@ describe("SaveManager", () => {
 			},
 		} as unknown as App;
 
-		mockLogger = {
-			debug: vi.fn(),
-			error: vi.fn(),
-		} as unknown as DirectLogger;
-
 		mockPlugin = {
 			app: mockApp,
 			settings: {
@@ -43,7 +36,7 @@ describe("SaveManager", () => {
 			saveData: vi.fn().mockResolvedValue(undefined),
 		} as unknown as SandboxNotePlugin;
 
-		saveManager = new SaveManager(mockPlugin, mockLogger);
+		saveManager = new SaveManager(mockPlugin);
 	});
 
 	it("should be defined", () => {
@@ -62,9 +55,6 @@ describe("SaveManager", () => {
 			expect(savedData.lastSaved).toBeDefined();
 
 			expect(view.markAsSaved).toHaveBeenCalledOnce();
-			expect(mockLogger.debug).toHaveBeenCalledWith(
-				"Auto-saved note content to data.json using Obsidian API"
-			);
 		});
 
 		it("should save content if it is empty", async () => {
@@ -92,9 +82,6 @@ describe("SaveManager", () => {
 
 			await saveManager.saveNoteContentToFile(view);
 
-			expect(mockLogger.error).toHaveBeenCalledWith(
-				`Failed to auto-save note content: ${error}`
-			);
 			expect(view.markAsSaved).not.toHaveBeenCalled();
 		});
 	});

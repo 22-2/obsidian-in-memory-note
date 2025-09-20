@@ -1,7 +1,6 @@
 import type SandboxNotePlugin from "src/main";
 import { ContentManager } from "src/managers/contentManager";
 import type { SandboxNoteView } from "src/views/SandboxNoteView";
-import type { DirectLogger } from "src/utils/logging";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Helper to create a mock view
@@ -20,7 +19,7 @@ const mockLogger = {
 	info: vi.fn(),
 	error: vi.fn(),
 	debug: vi.fn(),
-} as unknown as DirectLogger;
+};
 
 // Mock plugin
 const mockPlugin = {} as SandboxNotePlugin;
@@ -34,7 +33,7 @@ describe("ContentManager", () => {
 	beforeEach(() => {
 		// Reset mocks and create new instances for each test
 		vi.clearAllMocks();
-		contentManager = new ContentManager(mockPlugin, mockLogger);
+		contentManager = new ContentManager(mockPlugin);
 		view1 = createMockView();
 		view2 = createMockView();
 		view3 = createMockView();

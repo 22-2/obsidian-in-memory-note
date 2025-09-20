@@ -30,6 +30,7 @@
 	},
 	"dependencies": {
 		"@codemirror/view": "^6.38.2",
+		"loglevel": "^1.9.2",
 		"monkey-around": "^3.0.0"
 	}
 }

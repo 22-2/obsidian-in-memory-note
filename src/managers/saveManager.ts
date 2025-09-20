@@ -1,23 +1,21 @@
 import { SandboxNoteView } from "../views/SandboxNoteView";
 import { debounce, type DebouncedFunction } from "../utils";
 import type SandboxNotePlugin from "../main";
-import type { DirectLogger } from "../utils/logging";
+import log from "loglevel";
 
 const SAVE_DEBOUNCE_DELAY = 1000;
 
 /** Manages content persistence and auto-save functionality */
 export class SaveManager {
 	private plugin: SandboxNotePlugin;
-	private logger: DirectLogger;
 	private previousActiveView: SandboxNoteView | null = null;
 	private isSaving = false;
 
 	/** Debounced save function */
 	debouncedSave: DebouncedFunction<(view: SandboxNoteView) => Promise<void>>;
 
-	constructor(plugin: SandboxNotePlugin, logger: DirectLogger) {
+	constructor(plugin: SandboxNotePlugin) {
 		this.plugin = plugin;
-		this.logger = logger;
 		this.debouncedSave = debounce(
 			(view: SandboxNoteView) => this.saveNoteContentToFile(view),
 			SAVE_DEBOUNCE_DELAY
@@ -29,7 +27,7 @@ export class SaveManager {
 		const activeView =
 			this.plugin.app.workspace.getActiveViewOfType(SandboxNoteView);
 
-		this.logger.debug(
+		log.debug(
 			`Handling active leaf change. Previous: ${
 				this.previousActiveView?.getViewType() ?? "none"
 			}, Current: ${activeView?.getViewType() ?? "none"}`
@@ -40,7 +38,7 @@ export class SaveManager {
 			this.plugin.settings.enableSaveNoteContent &&
 			this.previousActiveView
 		) {
-			this.logger.debug(
+			log.debug(
 				`Triggering save for previous view: ${this.previousActiveView.getViewType()}`
 			);
 			this.saveNoteContentToFile(this.previousActiveView);
@@ -54,12 +52,10 @@ export class SaveManager {
 		// Once a save is in progress, cancel any other debounced saves
 		this.debouncedSave.cancel();
 
-		this.logger.debug(`Save triggered for view: ${view.getViewType()}`);
+		log.debug(`Save triggered for view: ${view.getViewType()}`);
 		try {
 			if (this.isSaving) {
-				this.logger.debug(
-					"Skipping save: A save is already in progress."
-				);
+				log.debug("Skipping save: A save is already in progress.");
 				return;
 			}
 			this.isSaving = true;
@@ -67,9 +63,7 @@ export class SaveManager {
 
 			// Skip saving if content is invalid
 			if (typeof content !== "string") {
-				this.logger.debug(
-					"Skipping save: Sandbox note content is invalid."
-				);
+				log.debug("Skipping save: Sandbox note content is invalid.");
 				return;
 			}
 
@@ -83,11 +77,11 @@ export class SaveManager {
 			// Mark the view as saved since content was persisted
 			view.markAsSaved();
 
-			this.logger.debug(
+			log.debug(
 				"Auto-saved note content to data.json using Obsidian API"
 			);
 		} catch (error) {
-			this.logger.error(`Failed to auto-save note content: ${error}`);
+			log.error(`Failed to auto-save note content: ${error}`);
 		} finally {
 			this.isSaving = false;
 		}

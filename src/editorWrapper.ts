@@ -2,15 +2,15 @@ import { type Editor, MarkdownView } from "obsidian";
 import { SandboxNoteView } from "./SandboxNoteView";
 import { noop } from "./utils";
 
-export interface InlineMarkdownView extends MarkdownView {
+export interface UnsafeVirtualMarkdownView extends MarkdownView {
 	__setViewData__: MarkdownView["setViewData"];
 }
 
 /** Manages inline MarkdownView without physical file. */
-export class SandboxEditor {
-	public inlineView!: InlineMarkdownView;
-	private containerElement!: HTMLElement;
-	public targetElement: HTMLElement | null = null;
+export class EditorWrapper {
+	public virtualEditor!: UnsafeVirtualMarkdownView;
+	private containerEl!: HTMLElement;
+	public targetEl: HTMLElement | null = null;
 
 	/** Content storage when editor not loaded. */
 	public content = "";
@@ -19,31 +19,31 @@ export class SandboxEditor {
 
 	/** Get current editor content. */
 	getContent() {
-		return this.inlineView.editor.getValue();
+		return this.virtualEditor.editor.getValue();
 	}
 
 	/** Get editor instance. */
 	getEditor(): Editor {
-		return this.inlineView.editor;
+		return this.virtualEditor.editor;
 	}
 
 	/** Set editor content. */
 	setContent(content: string) {
-		this.inlineView.__setViewData__(content, true);
+		this.virtualEditor.__setViewData__(content, true);
 	}
 
 	/** Attach editor to target element. */
 	load(target: HTMLElement) {
 		// Restore content from temporary storage
 		this.setContent(this.content);
-		target.append(this.containerElement);
+		target.append(this.containerEl);
 
 		// Focus the editor after DOM is ready
 		setTimeout(() => this.focus());
 
-		this.targetElement = target;
+		this.targetEl = target;
 		this.parentView.plugin.registerDomEvent(
-			this.targetElement,
+			this.targetEl,
 			"focusin",
 			this.handleFocusIn
 		);
@@ -52,40 +52,40 @@ export class SandboxEditor {
 
 	/** Focus the editor. */
 	focus() {
-		this.inlineView.editor.focus();
+		this.virtualEditor.editor.focus();
 	}
 
 	/** Set as active editor for workspace integration. */
 	private handleFocusIn = () => {
 		// @ts-ignore - Accessing private property to integrate with Obsidian's editor system
-		this.parentView.plugin.app.workspace._activeEditor = this.inlineView;
+		this.parentView.plugin.app.workspace._activeEditor = this.virtualEditor;
 	};
 
 	/** Detach editor and preserve content. */
 	unload() {
 		// Preserve current content before unloading
 		this.content = this.getContent();
-		if (this.targetElement) {
-			this.targetElement.empty();
-			this.targetElement = null;
+		if (this.targetEl) {
+			this.targetEl.empty();
+			this.targetEl = null;
 		}
 	}
 
 	/** Initialize inline MarkdownView. */
 	async onload() {
-		this.containerElement = document.createElement("div");
-		this.containerElement.addClasses(["sandbox-inline-editor"]);
+		this.containerEl = document.createElement("div");
+		this.containerEl.addClasses(["sandbox-inline-editor"]);
 
 		// Create the inline MarkdownView with necessary configuration
-		this.inlineView = new MarkdownView({
-			containerEl: this.containerElement,
+		this.virtualEditor = new MarkdownView({
+			containerEl: this.containerEl,
 			app: this.parentView.plugin.app,
 			workspace: this.parentView.plugin.app.workspace,
 			history: {
 				backHistory: [],
 				forwardHistory: [],
 			},
-		} as never) as InlineMarkdownView;
+		} as never) as UnsafeVirtualMarkdownView;
 
 		// Disable save operations to prevent file system interactions
 		this.disableSaveOperations();
@@ -96,17 +96,17 @@ export class SandboxEditor {
 
 	/** Disable save operations to prevent file system writes. */
 	private disableSaveOperations() {
-		this.inlineView.save = noop;
-		this.inlineView.saveTitle = noop;
-		this.inlineView.requestSave = () => {};
-		this.inlineView.__setViewData__ = this.inlineView.setViewData;
-		this.inlineView.setViewData = noop;
+		this.virtualEditor.save = noop;
+		this.virtualEditor.saveTitle = noop;
+		this.virtualEditor.requestSave = () => {};
+		this.virtualEditor.__setViewData__ = this.virtualEditor.setViewData;
+		this.virtualEditor.setViewData = noop;
 	}
 
 	/** Ensure editor is in source mode. */
 	private async ensureSourceMode() {
-		if (this.inlineView.getMode() === "preview") {
-			await this.inlineView.setState(
+		if (this.virtualEditor.getMode() === "preview") {
+			await this.virtualEditor.setState(
 				{ mode: "source" },
 				{ history: false }
 			);

@@ -40,7 +40,7 @@ export class SaveManager {
 				return;
 			}
 			this.isSaving = true;
-			const content = view.sandboxEditor.getContent();
+			const content = view.wrapper.getContent();
 
 			// Skip saving if content is invalid
 			if (typeof content !== "string") {

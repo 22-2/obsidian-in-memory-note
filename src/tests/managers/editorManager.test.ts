@@ -60,10 +60,10 @@ describe("EditorManager", () => {
 
 			// Check that we tried to get the correct plugin
 			expect(
-				mockView.sandboxEditor.inlineView.editor.cm.plugin
+				mockView.wrapper.virtualEditor.editor.cm.plugin
 			).toHaveBeenCalledOnce();
 			expect(
-				mockView.sandboxEditor.inlineView.editor.cm.plugin
+				mockView.wrapper.virtualEditor.editor.cm.plugin
 			).toHaveBeenCalledWith(watchEditorPlugin);
 
 			// Check that we connected the plugin to the view
@@ -77,8 +77,9 @@ describe("EditorManager", () => {
 		it("should not throw if the editor plugin is not found", () => {
 			// Arrange: mock the cm.plugin to return null
 			(
-				mockView.sandboxEditor.inlineView.editor.cm
-					.plugin as ReturnType<typeof vi.fn>
+				mockView.wrapper.virtualEditor.editor.cm.plugin as ReturnType<
+					typeof vi.fn
+				>
 			).mockReturnValue(null);
 
 			// Act & Assert

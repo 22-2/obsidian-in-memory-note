@@ -21,7 +21,7 @@ export class EditorManager {
 	/** Connect watch editor plugin to view */
 	connectEditorPluginToView(view: SandboxNoteView) {
 		const editorPlugin =
-			view.sandboxEditor.inlineView.editor.cm.plugin(watchEditorPlugin);
+			view.wrapper.virtualEditor.editor.cm.plugin(watchEditorPlugin);
 		if (editorPlugin) {
 			editorPlugin.connectToPlugin(this.plugin, view);
 		}

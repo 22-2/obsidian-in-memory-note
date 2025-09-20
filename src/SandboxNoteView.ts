@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
 import { handleClick, handleContextMenu } from "src/click-handler";
-import { SandboxEditor } from "src/sandboxEditor";
+import { EditorWrapper } from "src/sandboxEditor";
 import { SANDBOX_NOTE_ICON, VIEW_TYPE } from "src/utils/constants";
 import type SandboxNotePlugin from "./main";
 import { getDisplayText, updateActionButtons } from "./viewHelpers";
@@ -9,7 +9,7 @@ import { setContent, synchronizeWithExistingViews } from "./viewSync";
 /** View for an sandbox note with inline editor. */
 export class SandboxNoteView extends ItemView {
 	plugin: SandboxNotePlugin;
-	public sandboxEditor: SandboxEditor;
+	public wrapper: EditorWrapper;
 	hasUnsavedChanges = false;
 	initialContent = "";
 	saveActionEl!: HTMLElement;
@@ -20,12 +20,12 @@ export class SandboxNoteView extends ItemView {
 	constructor(leaf: WorkspaceLeaf, plugin: SandboxNotePlugin) {
 		super(leaf);
 		this.plugin = plugin;
-		this.sandboxEditor = new SandboxEditor(this);
+		this.wrapper = new EditorWrapper(this);
 	}
 
 	/** Get editor instance. */
 	get editor() {
-		return this.sandboxEditor.getEditor();
+		return this.wrapper.getEditor();
 	}
 
 	save = () => {
@@ -60,11 +60,11 @@ export class SandboxNoteView extends ItemView {
 	setEphemeralState(state: any): void {
 		if (state && typeof state.content === "string") {
 			// Set initial content for the inline editor
-			this.sandboxEditor.content = state.content;
+			this.wrapper.content = state.content;
 			this.initialContent = state.content;
 
 			// If the view is already loaded, update the editor immediately
-			if (this.sandboxEditor.targetElement) {
+			if (this.wrapper.targetEl) {
 				this.setContent(state.content);
 			}
 		}
@@ -84,8 +84,7 @@ export class SandboxNoteView extends ItemView {
 		this.synchronizeWithExistingViews();
 
 		// Initialize the inline editor with shared content
-		this.sandboxEditor.content =
-			this.plugin.contentManager.sharedNoteContent;
+		this.wrapper.content = this.plugin.contentManager.sharedNoteContent;
 		this.initialContent = this.plugin.contentManager.sharedNoteContent;
 
 		this.plugin.registerEvent(
@@ -98,13 +97,13 @@ export class SandboxNoteView extends ItemView {
 
 		try {
 			// Load the inline editor, which relies on private APIs
-			await this.sandboxEditor.onload();
+			await this.wrapper.onload();
 
 			// Create and load the editor container
 			const editorContainer = this.contentEl.createEl("div", {
 				cls: "sandbox-note-container",
 			});
-			this.sandboxEditor.load(editorContainer);
+			this.wrapper.load(editorContainer);
 			this.loadContent();
 
 			// Set up event handlers and editor plugin connection
@@ -145,7 +144,7 @@ export class SandboxNoteView extends ItemView {
 			handleContextMenu.bind(
 				null,
 				this.app.commands,
-				this.sandboxEditor.inlineView.editMode
+				this.wrapper.virtualEditor.editMode
 			)
 		);
 	}
@@ -205,7 +204,7 @@ export class SandboxNoteView extends ItemView {
 	/** Cleanup on view close. */
 	async onClose() {
 		this.plugin.contentManager.removeActiveView(this);
-		this.sandboxEditor.unload();
+		this.wrapper.unload();
 		this.contentEl.empty();
 	}
 }

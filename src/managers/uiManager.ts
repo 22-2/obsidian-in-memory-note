@@ -3,7 +3,7 @@ import {
 	IN_MEMORY_NOTE_ICON,
 	SANDBOX_NOTE_ICON,
 } from "../utils/constants";
-import { AbstractNoteView } from "src/AbstractNoteView";
+import { AbstractNoteView } from "../AbstractNoteView";
 
 /** Manages UI elements like ribbon icons and commands */
 export class UIManager {

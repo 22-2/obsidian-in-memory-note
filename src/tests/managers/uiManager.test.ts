@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UIManager } from "src/managers/uiManager";
-import type SandboxNotePlugin from "src/main";
-import { SANDBOX_NOTE_ICON } from "src/utils/constants";
+import { UIManager } from "../managers/uiManager";
+import type SandboxNotePlugin from "../main";
+import { SANDBOX_NOTE_ICON } from "../utils/constants";
 
 describe("UIManager", () => {
 	let mockPlugin: SandboxNotePlugin;

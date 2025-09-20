@@ -1,5 +1,5 @@
 import { WorkspaceLeaf } from "obsidian";
-import { VIEW_TYPE }in "src/utils/constants";
+import { VIEW_TYPE } from "src/utils/constants";
 import type SandboxNotePlugin from "./main";
 import { synchronizeWithExistingViews } from "./viewSync";
 import { AbstractNoteView } from "./AbstractNoteView";

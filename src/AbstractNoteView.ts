@@ -2,7 +2,7 @@ import { ItemView, WorkspaceLeaf } from "obsidian";
 import { handleClick, handleContextMenu } from "src/click-handler";
 import { EditorWrapper } from "src/editorWrapper";
 import type SandboxNotePlugin from "./main";
-import { getDisplayText, updateActionButtons } from "./viewHelpers";
+import { updateActionButtons } from "./viewHelpers";
 import { setContent } from "./viewSync";
 import { SANDBOX_NOTE_ICON } from "./utils/constants";
 
@@ -46,6 +46,7 @@ export abstract class AbstractNoteView extends ItemView {
 			this.plugin.settings.enableSaveNoteContent && this.hasUnsavedChanges;
 		return shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
 	}
+
 
 	/** Get view icon. */
 	getIcon() {

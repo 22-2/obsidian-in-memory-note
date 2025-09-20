@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { EditorManager } from "src/managers/editorManager";
-import type SandboxNotePlugin from "src/main";
-import type { SandboxNoteView } from "src/SandboxNoteView";
-import { watchEditorPlugin } from "src/syncEditorPlugin";
+import { EditorManager } from "../managers/editorManager";
+import type SandboxNotePlugin from "../main";
+import type { SandboxNoteView } from "../SandboxNoteView";
+import { watchEditorPlugin } from "../syncEditorPlugin";
 
 describe("EditorManager", () => {
 	let mockPlugin: SandboxNotePlugin;

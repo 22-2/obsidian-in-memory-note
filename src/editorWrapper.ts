@@ -1,6 +1,6 @@
 import { type Editor, MarkdownView } from "obsidian";
-import { SandboxNoteView } from "./SandboxNoteView";
 import { noop } from "./utils";
+import type { AbstractNoteView } from "./AbstractNoteView";
 
 export interface UnsafeVirtualMarkdownView extends MarkdownView {
 	__setViewData__: MarkdownView["setViewData"];
@@ -15,7 +15,7 @@ export class EditorWrapper {
 	/** Content storage when editor not loaded. */
 	public content = "";
 
-	constructor(private parentView: SandboxNoteView) {}
+	constructor(private parentView: AbstractNoteView) {}
 
 	/** Get current editor content. */
 	getContent() {

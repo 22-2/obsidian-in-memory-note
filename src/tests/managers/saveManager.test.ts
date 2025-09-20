@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SaveManager } from "src/managers/saveManager";
-import type SandboxNotePlugin from "src/main";
-import { SandboxNoteView } from "src/SandboxNoteView";
-import type { DirectLogger } from "src/utils/logging";
+import { SaveManager } from "../managers/saveManager";
+import type SandboxNotePlugin from "../main";
+import { SandboxNoteView } from "../SandboxNoteView";
+import type { DirectLogger } from "../utils/logging";
 import { App } from "obsidian";
 
 const createMockView = (content: string): SandboxNoteView =>

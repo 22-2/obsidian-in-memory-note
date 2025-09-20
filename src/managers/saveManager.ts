@@ -1,5 +1,5 @@
 import { SandboxNoteView } from "../SandboxNoteView";
-import { debounce } from "../utils";
+import { debounce, type DebouncedFunction } from "../utils";
 import type SandboxNotePlugin from "../main";
 import type { DirectLogger } from "../utils/logging";
 
@@ -13,7 +13,9 @@ export class SaveManager {
 	private isSaving = false;
 
 	/** Debounced save function */
-	debouncedSave: (view: SandboxNoteView) => void;
+	debouncedSave: DebouncedFunction<
+		(view: SandboxNoteView) => Promise<void>
+	>;
 
 	constructor(plugin: SandboxNotePlugin, logger: DirectLogger) {
 		this.plugin = plugin;
@@ -51,6 +53,9 @@ export class SaveManager {
 
 	/** Save note content to data.json using Obsidian API */
 	async saveNoteContentToFile(view: SandboxNoteView) {
+		// Once a save is in progress, cancel any other debounced saves
+		this.debouncedSave.cancel();
+
 		this.logger.debug(`Save triggered for view: ${view.getViewType()}`);
 		try {
 			if (this.isSaving) {

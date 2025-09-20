@@ -1,8 +1,8 @@
+import type SandboxNotePlugin from "src/main";
+import { EditorManager } from "src/managers/editorManager";
+import type { SandboxNoteView } from "src/SandboxNoteView";
+import { watchEditorPlugin } from "src/syncEditorPlugin";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { EditorManager } from "../managers/editorManager";
-import type SandboxNotePlugin from "../main";
-import type { SandboxNoteView } from "../SandboxNoteView";
-import { watchEditorPlugin } from "../syncEditorPlugin";
 
 describe("EditorManager", () => {
 	let mockPlugin: SandboxNotePlugin;
@@ -60,10 +60,10 @@ describe("EditorManager", () => {
 
 			// Check that we tried to get the correct plugin
 			expect(
-				mockView.wrapper.virtualEditor.editor.cm.plugin,
+				mockView.wrapper.virtualEditor.editor.cm.plugin
 			).toHaveBeenCalledOnce();
 			expect(
-				mockView.wrapper.virtualEditor.editor.cm.plugin,
+				mockView.wrapper.virtualEditor.editor.cm.plugin
 			).toHaveBeenCalledWith(watchEditorPlugin);
 
 			// Check that we connected the plugin to the view

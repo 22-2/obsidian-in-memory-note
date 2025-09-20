@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CommandManager } from "../managers/commandManager";
-import type SandboxNotePlugin from "../main";
-import { App, type Command } from "obsidian";
-import { SandboxNoteView } from "../SandboxNoteView";
 import { around } from "monkey-around";
+import type { App, Command } from "obsidian";
+import type SandboxNotePlugin from "src/main";
+import { CommandManager } from "src/managers/commandManager";
+import type { SandboxNoteView } from "src/SandboxNoteView";
 
 // Let vitest handle the mocking. It will replace 'around' with a spy.
 vi.mock("monkey-around");

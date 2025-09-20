@@ -20,7 +20,7 @@ export class EditorManager {
 	}
 
 	/** Connect watch editor plugin to view */
-	connectEditorPluginToView(view: AbstractNoteView) {
+	connectEditorPluginToView(view: SandboxNoteView) {
 		const editorPlugin =
 			view.wrapper.virtualEditor.editor.cm.plugin(syncEditorPlugin);
 		if (editorPlugin) {

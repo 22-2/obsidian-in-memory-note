@@ -128,7 +128,8 @@ export default class SandboxNotePlugin extends Plugin {
 			activeView instanceof SandboxNoteView
 		) {
 			// Save synchronously (fire and forget)
-			await this.saveManager.saveNoteContentToFile(activeView);
+			await activeView.save();
+			this.logger.debug("Auto-saved note content on unload");
 		}
 		// The `around` utility automatically registers a cleanup function
 		// that reverts the monkey patch when the plugin is unloaded.

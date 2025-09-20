@@ -28,7 +28,13 @@ export class SandboxNoteView extends AbstractNoteView {
 
 	/** A change in this view should be broadcast to other sandbox views. */
 	override onContentChanged(content: string): void {
+		// Broadcast content changes to other views
 		this.plugin.contentManager.updateNoteContent(content, this);
+
+		// Trigger debounced save if the setting is enabled
+		if (this.plugin.settings.enableSaveNoteContent) {
+			this.plugin.saveManager.debouncedSave(this);
+		}
 	}
 
 	/** Save the content using the SaveManager. */

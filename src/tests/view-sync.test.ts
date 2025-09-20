@@ -26,6 +26,7 @@ describe("View Sync Helpers", () => {
 			editor: mockEditor as unknown as Editor,
 			leaf: mockLeaf,
 			updateUnsavedState: vi.fn(),
+			setContent: vi.fn(),
 			plugin: {
 				contentManager: {
 					activeViews: new Set(),
@@ -62,13 +63,19 @@ describe("View Sync Helpers", () => {
 	});
 
 	describe("synchronizeWithExistingViews", () => {
-		it("should not do anything if there are no other active views", () => {
+		it("should set content from shared content if no other views are open", () => {
+			mockView.plugin.contentManager.sharedNoteContent =
+				"initial content from plugin";
 			mockView.plugin.contentManager.activeViews.add(mockView);
+
 			synchronizeWithExistingViews(mockView);
-			expect(mockView.plugin.contentManager.sharedNoteContent).toBe("");
+
+			expect(mockView.setContent).toHaveBeenCalledWith(
+				"initial content from plugin"
+			);
 		});
 
-		it("should synchronize content from another view", () => {
+		it("should synchronize content from another view and set it in the editor", () => {
 			const mockOtherView = {
 				editor: {
 					getValue: vi
@@ -87,6 +94,9 @@ describe("View Sync Helpers", () => {
 				"content from other view"
 			);
 			expect(mockView.initialContent).toBe("other initial content");
+			expect(mockView.setContent).toHaveBeenCalledWith(
+				"content from other view"
+			);
 		});
 
 		it("should not synchronize if the other view has no editor", () => {
@@ -100,6 +110,13 @@ describe("View Sync Helpers", () => {
 			synchronizeWithExistingViews(mockView);
 
 			expect(mockView.plugin.contentManager.sharedNoteContent).toBe("");
+			expect(mockView.setContent).not.toHaveBeenCalled();
+		});
+
+		it("should do nothing if no other views and no initial content", () => {
+			mockView.plugin.contentManager.activeViews.add(mockView);
+			synchronizeWithExistingViews(mockView);
+			expect(mockView.setContent).not.toHaveBeenCalled();
 		});
 	});
 });

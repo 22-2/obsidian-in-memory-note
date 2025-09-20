@@ -20,11 +20,17 @@ export class ContentManager {
 
 	/** Update shared content and sync across all views */
 	updateNoteContent(content: string, sourceView: SandboxNoteView) {
+		this.logger.debug(
+			`Updating note content from view: ${sourceView.getViewType()}`
+		);
 		this.sharedNoteContent = content;
 
 		// Synchronize content to all other active views
 		for (const view of this.activeViews) {
 			if (view !== sourceView) {
+				this.logger.debug(
+					`Syncing content to view: ${view.getViewType()}`
+				);
 				view.setContent(content);
 			}
 		}
@@ -32,11 +38,21 @@ export class ContentManager {
 
 	/** Register a view as active */
 	addActiveView(view: SandboxNoteView) {
+		this.logger.debug(
+			`Adding active view: ${view.getViewType()}, total: ${
+				this.activeViews.size + 1
+			}`
+		);
 		this.activeViews.add(view);
 	}
 
 	/** Unregister a view */
 	removeActiveView(view: SandboxNoteView) {
+		this.logger.debug(
+			`Removing active view: ${view.getViewType()}, remaining: ${
+				this.activeViews.size - 1
+			}`
+		);
 		this.activeViews.delete(view);
 	}
 

@@ -9,19 +9,6 @@ import {
 } from "vitest";
 import SandboxNotePlugin from "../main";
 import { App, MarkdownView, Notice } from "obsidian";
-import { Logger } from "../utils/logging";
-
-// Mock the entire logging module
-vi.mock("../utils/logging", () => ({
-	Logger: {
-		updateLoggingState: vi.fn(),
-		debug: vi.fn(),
-		info: vi.fn(),
-		warn: vi.fn(),
-		error: vi.fn(),
-	},
-	LogLevelSettings: {},
-}));
 
 // Mock only the necessary parts of the 'obsidian' module
 vi.mock("obsidian", async (importOriginal) => {
@@ -57,6 +44,7 @@ describe("SandboxNotePlugin", () => {
 		mockApp = {
 			workspace: {
 				on: vi.fn(),
+				onLayoutReady: vi.fn(),
 			},
 		} as unknown as App;
 
@@ -65,16 +53,22 @@ describe("SandboxNotePlugin", () => {
 
 		// Spy on methods that would be called during initialization instead of replacing them
 		vi.spyOn(plugin, "loadSettings").mockResolvedValue(undefined);
+		vi.spyOn(plugin, "initializeLogger").mockImplementation(() => {});
 		vi.spyOn(plugin as any, "initializeManagers").mockImplementation(
 			() => {}
 		);
-		vi.spyOn(plugin as any, "setupSettingsTab").mockImplementation(() => {});
+		vi.spyOn(plugin as any, "setupSettingsTab").mockImplementation(
+			() => {}
+		);
 		vi.spyOn(
 			plugin as any,
 			"setupWorkspaceEventHandlers"
 		).mockImplementation(() => {});
-		vi.spyOn(plugin as any, "registerViewType").mockImplementation(() => {});
+		vi.spyOn(plugin as any, "registerViewType").mockImplementation(
+			() => {}
+		);
 		// We need to have the managers on the plugin instance for the spies to work
+		plugin.contentManager = { sharedNoteContent: "" } as any;
 		plugin.editorManager = { setupEditorExtension: vi.fn() } as any;
 		plugin.uiManager = { setupUserInterface: vi.fn() } as any;
 		plugin.commandManager = {
@@ -104,7 +98,6 @@ describe("SandboxNotePlugin", () => {
 
 		// Assert that further initialization methods were NOT called
 		expect(plugin.loadSettings).not.toHaveBeenCalled();
-		expect(Logger.updateLoggingState).not.toHaveBeenCalled();
 		expect((plugin as any).initializeManagers).not.toHaveBeenCalled();
 		expect((plugin as any).setupSettingsTab).not.toHaveBeenCalled();
 	});
@@ -123,7 +116,6 @@ describe("SandboxNotePlugin", () => {
 
 		// Assert that initialization methods were called
 		expect(plugin.loadSettings).toHaveBeenCalledOnce();
-		expect(Logger.updateLoggingState).toHaveBeenCalledOnce();
 		expect((plugin as any).initializeManagers).toHaveBeenCalledOnce();
 		expect((plugin as any).setupSettingsTab).toHaveBeenCalledOnce();
 		expect(

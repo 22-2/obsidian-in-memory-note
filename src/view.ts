@@ -81,14 +81,6 @@ export class SandboxNoteView extends ItemView {
 		}
 	}
 
-	updateActionButtons() {
-		if (this.plugin.settings.enableSaveNoteContent) {
-			this.addAction("save", "Save sandbox", () => {
-				this.save();
-			});
-		}
-	}
-
 	/** Initialize view on open. */
 	async onOpen() {
 		// Register this view as active
@@ -96,8 +88,6 @@ export class SandboxNoteView extends ItemView {
 
 		// Synchronize content with existing views
 		this.synchronizeWithExistingViews();
-
-		this.updateActionButtons();
 
 		// Initialize the inline editor with shared content
 		this.sandboxEditor.content =

@@ -1,4 +1,4 @@
-import type { SandboxNoteView } from "../SandboxNoteView";
+import type { SandboxNoteView } from "../views/SandboxNoteView";
 import type SandboxNotePlugin from "../main";
 import type { DirectLogger } from "../utils/logging";
 

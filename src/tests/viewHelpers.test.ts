@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { updateActionButtons } from "../viewHelpers";
-import type { AbstractNoteView } from "../AbstractNoteView";
+import type { AbstractNoteView } from "../views/AbstractNoteView";
+import { updateActionButtons } from "src/helpers/viewHelpers";
 
 describe("View Helpers", () => {
 	let mockView: AbstractNoteView;

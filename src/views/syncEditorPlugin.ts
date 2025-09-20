@@ -1,5 +1,5 @@
 import { ViewUpdate, type PluginValue, ViewPlugin } from "@codemirror/view";
-import type SandboxNotePlugin from "./main";
+import type SandboxNotePlugin from "../main";
 import { type Debouncer, debounce } from "obsidian";
 import { AbstractNoteView } from "./AbstractNoteView";
 

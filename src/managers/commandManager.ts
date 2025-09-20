@@ -1,5 +1,5 @@
 import type SandboxNotePlugin from "../main";
-import { SandboxNoteView } from "../SandboxNoteView";
+import { SandboxNoteView } from "../views/SandboxNoteView";
 import { around } from "monkey-around";
 
 /** Manages command overrides and monkey patches */

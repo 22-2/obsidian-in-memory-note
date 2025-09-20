@@ -3,7 +3,7 @@ import { around } from "monkey-around";
 import type { App, Command } from "obsidian";
 import type SandboxNotePlugin from "src/main";
 import { CommandManager } from "src/managers/commandManager";
-import type { SandboxNoteView } from "src/SandboxNoteView";
+import type { SandboxNoteView } from "src/views/SandboxNoteView";
 
 // Let vitest handle the mocking. It will replace 'around' with a spy.
 vi.mock("monkey-around");

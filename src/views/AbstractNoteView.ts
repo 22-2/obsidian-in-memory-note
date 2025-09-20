@@ -1,10 +1,10 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
-import { handleClick, handleContextMenu } from "src/click-handler";
-import { EditorWrapper } from "src/editorWrapper";
-import type SandboxNotePlugin from "./main";
-import { updateActionButtons } from "./viewHelpers";
-import { setContent } from "./viewSync";
-import { SANDBOX_NOTE_ICON } from "./utils/constants";
+import { EditorWrapper } from "src/views/editorWrapper";
+import type SandboxNotePlugin from "../main";
+import { updateActionButtons } from "../helpers/viewHelpers";
+import { setContent } from "../helpers/viewSync";
+import { SANDBOX_NOTE_ICON } from "../utils/constants";
+import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
@@ -43,10 +43,10 @@ export abstract class AbstractNoteView extends ItemView {
 	getDisplayText(): string {
 		const baseTitle = this.getBaseTitle();
 		const shouldShowUnsaved =
-			this.plugin.settings.enableSaveNoteContent && this.hasUnsavedChanges;
+			this.plugin.settings.enableSaveNoteContent &&
+			this.hasUnsavedChanges;
 		return shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
 	}
-
 
 	/** Get view icon. */
 	getIcon() {
@@ -65,7 +65,7 @@ export abstract class AbstractNoteView extends ItemView {
 				if (leaf?.id === this.leaf.id) {
 					this.editor?.focus();
 				}
-			}),
+			})
 		);
 
 		try {
@@ -88,7 +88,10 @@ export abstract class AbstractNoteView extends ItemView {
 			this.setupEventHandlers();
 			this.connectEditorPlugin();
 		} catch (error) {
-			console.error("Sandbox Note: Failed to initialize inline editor.", error);
+			console.error(
+				"Sandbox Note: Failed to initialize inline editor.",
+				error
+			);
 			// Display an error message to the user
 			this.contentEl.empty();
 			this.contentEl.createEl("div", {
@@ -105,7 +108,7 @@ export abstract class AbstractNoteView extends ItemView {
 		this.registerDomEvent(
 			this.contentEl,
 			"mousedown",
-			handleClick.bind(null, this.editor),
+			handleClick.bind(null, this.editor)
 		);
 
 		this.registerDomEvent(
@@ -114,8 +117,8 @@ export abstract class AbstractNoteView extends ItemView {
 			handleContextMenu.bind(
 				null,
 				this.app.commands,
-				this.wrapper.virtualEditor.editMode,
-			),
+				this.wrapper.virtualEditor.editMode
+			)
 		);
 	}
 
@@ -126,7 +129,7 @@ export abstract class AbstractNoteView extends ItemView {
 		// Delay connection to ensure editor is fully initialized
 		this.onloadCallbacks.push(() => {
 			const editorPlugin = this.editor.cm.plugin(
-				this.plugin.editorManager.watchEditorPlugin,
+				this.plugin.editorManager.watchEditorPlugin
 			);
 			if (editorPlugin) {
 				// We are casting `this` to `any` because the plugin expects a concrete view type

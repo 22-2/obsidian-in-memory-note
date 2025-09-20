@@ -1,4 +1,4 @@
-import type { AbstractNoteView } from "./AbstractNoteView";
+import type { AbstractNoteView } from "../views/AbstractNoteView";
 
 /**
  * Update the visibility and state of action buttons based on unsaved changes.

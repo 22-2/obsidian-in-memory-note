@@ -1,5 +1,5 @@
 import { type Editor, MarkdownView } from "obsidian";
-import { noop } from "./utils";
+import { noop } from "../utils";
 import type { AbstractNoteView } from "./AbstractNoteView";
 
 export interface UnsafeVirtualMarkdownView extends MarkdownView {

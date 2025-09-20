@@ -1,5 +1,5 @@
-import type { SandboxNoteView } from "./SandboxNoteView";
-import type { AbstractNoteView } from "./AbstractNoteView";
+import type { SandboxNoteView } from "../views/SandboxNoteView";
+import type { AbstractNoteView } from "../views/AbstractNoteView";
 
 /**
  * Set the editor content if it's different from the provided content.

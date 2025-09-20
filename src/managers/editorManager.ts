@@ -1,7 +1,7 @@
-import type { AbstractNoteView } from "src/AbstractNoteView";
+import type { AbstractNoteView } from "src/views/AbstractNoteView";
 import type SandboxNotePlugin from "../main";
-import type { SandboxNoteView } from "../SandboxNoteView";
-import { syncEditorPlugin } from "../syncEditorPlugin";
+import type { SandboxNoteView } from "../views/SandboxNoteView";
+import { syncEditorPlugin } from "../views/syncEditorPlugin";
 
 /** Manages editor extensions and plugin connections */
 export class EditorManager {

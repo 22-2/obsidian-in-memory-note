@@ -1,7 +1,7 @@
 import type SandboxNotePlugin from "src/main";
 import { EditorManager } from "src/managers/editorManager";
-import type { SandboxNoteView } from "src/SandboxNoteView";
-import { syncEditorPlugin } from "src/syncEditorPlugin";
+import type { SandboxNoteView } from "src/views/SandboxNoteView";
+import { syncEditorPlugin } from "src/views/syncEditorPlugin";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("EditorManager", () => {

@@ -1,6 +1,6 @@
 import type SandboxNotePlugin from "src/main";
 import { ContentManager } from "src/managers/contentManager";
-import type { SandboxNoteView } from "src/SandboxNoteView";
+import type { SandboxNoteView } from "src/views/SandboxNoteView";
 import type { DirectLogger } from "src/utils/logging";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

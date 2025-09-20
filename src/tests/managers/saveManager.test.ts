@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "obsidian";
 import type SandboxNotePlugin from "src/main";
 import { SaveManager } from "src/managers/saveManager";
-import type { SandboxNoteView } from "src/SandboxNoteView";
+import type { SandboxNoteView } from "src/views/SandboxNoteView";
 import type { DirectLogger } from "src/utils/logging";
 
 const createMockView = (content: string): SandboxNoteView =>
@@ -274,9 +274,8 @@ describe("SaveManager", () => {
 
 			// The direct save should have been executed
 			expect(mockPlugin.saveData).toHaveBeenCalledOnce();
-			const savedData = (
-				mockPlugin.saveData as ReturnType<typeof vi.fn>
-			).mock.calls[0][0];
+			const savedData = (mockPlugin.saveData as ReturnType<typeof vi.fn>)
+				.mock.calls[0][0];
 			expect(savedData.noteContent).toBe("Direct call");
 
 			// Fast-forward time to see if the debounced save also fires

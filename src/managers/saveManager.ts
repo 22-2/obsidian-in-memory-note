@@ -1,4 +1,4 @@
-import { SandboxNoteView } from "../SandboxNoteView";
+import { SandboxNoteView } from "../views/SandboxNoteView";
 import { debounce, type DebouncedFunction } from "../utils";
 import type SandboxNotePlugin from "../main";
 import type { DirectLogger } from "../utils/logging";
@@ -13,9 +13,7 @@ export class SaveManager {
 	private isSaving = false;
 
 	/** Debounced save function */
-	debouncedSave: DebouncedFunction<
-		(view: SandboxNoteView) => Promise<void>
-	>;
+	debouncedSave: DebouncedFunction<(view: SandboxNoteView) => Promise<void>>;
 
 	constructor(plugin: SandboxNotePlugin, logger: DirectLogger) {
 		this.plugin = plugin;

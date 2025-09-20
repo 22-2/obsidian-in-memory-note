@@ -99,8 +99,8 @@ export class SandboxNoteView extends ItemView {
 
 		// Focus editor when switching back to this view
 		this.plugin.registerEvent(
-			this.plugin.app.workspace.on("active-leaf-change", () => {
-				if (this.leaf.id === this.leaf.id) {
+			this.plugin.app.workspace.on("active-leaf-change", (leaf) => {
+				if (leaf?.id === this.leaf.id) {
 					this.editor.focus();
 				}
 			})

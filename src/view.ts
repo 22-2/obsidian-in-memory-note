@@ -3,15 +3,17 @@ import { handleClick, handleContextMenu } from "src/click-handler";
 import { SandboxEditor as SandboxEditor } from "src/sandboxEditor";
 import { SANDBOX_NOTE_ICON, VIEW_TYPE } from "src/utils/constants";
 import type SandboxNotePlugin from "./main";
+import { getDisplayText, updateActionButtons } from "./view-helpers";
+import { setContent, synchronizeWithExistingViews } from "./view-sync";
 import { Notice } from "obsidian";
 
 /** View for an sandbox note with inline editor. */
 export class SandboxNoteView extends ItemView {
 	plugin: SandboxNotePlugin;
-	sandboxEditor: SandboxEditor;
-	private hasUnsavedChanges = false;
-	private initialContent = "";
-	private saveActionEl!: HTMLElement;
+	public sandboxEditor: SandboxEditor;
+	hasUnsavedChanges = false;
+	initialContent = "";
+	saveActionEl!: HTMLElement;
 	private onloadCallbacks: (() => void)[] = [];
 
 	navigation = true; // Prevent renaming prompts
@@ -42,12 +44,7 @@ export class SandboxNoteView extends ItemView {
 
 	/** Get display text for tab (shows * for unsaved changes). */
 	getDisplayText() {
-		const baseTitle = "Sandbox note";
-		// Only show asterisk if save setting is enabled and there are unsaved changes
-		const shouldShowUnsaved =
-			this.plugin.settings.enableSaveNoteContent &&
-			this.hasUnsavedChanges;
-		return shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
+		return getDisplayText(this);
 	}
 
 	/** Get view icon. */
@@ -76,13 +73,7 @@ export class SandboxNoteView extends ItemView {
 
 	/** Set editor content if different (for view sync). */
 	setContent(content: string) {
-		if (this.editor && this.editor.getValue() !== content) {
-			this.editor.setValue(content);
-			// Update unsaved state when content is synchronized from other views
-			this.updateUnsavedState(content);
-			// Refresh the tab title
-			this.leaf.updateHeader();
-		}
+		setContent(this, content);
 	}
 
 	/** Initialize view on open. */
@@ -136,19 +127,7 @@ export class SandboxNoteView extends ItemView {
 
 	/** Sync content with existing views. */
 	private synchronizeWithExistingViews() {
-		const existingViews = Array.from(
-			this.plugin.contentManager.activeViews
-		);
-		if (existingViews.length > 1) {
-			// Get content from an existing view (excluding this one)
-			const sourceView = existingViews.find((view) => view !== this);
-			if (sourceView && sourceView.editor) {
-				this.plugin.contentManager.sharedNoteContent =
-					sourceView.editor.getValue();
-				// Also sync the initial content to match the existing view's state
-				this.initialContent = sourceView.initialContent;
-			}
-		}
+		synchronizeWithExistingViews(this);
 	}
 
 	/** Setup DOM event handlers. */
@@ -194,25 +173,7 @@ export class SandboxNoteView extends ItemView {
 
 	/** Update action buttons based on unsaved state. */
 	updateActionButtons() {
-		if (!this.plugin.settings.enableSaveNoteContent) {
-			this.saveActionEl.hide();
-			return;
-		}
-
-		if (!this.saveActionEl) {
-			this.saveActionEl = this.addAction("save", "Save", this.save);
-		}
-		this.saveActionEl.show();
-
-		const shouldShowUnsaved =
-			this.plugin.settings.enableSaveNoteContent &&
-			this.hasUnsavedChanges;
-
-		this.saveActionEl.toggleClass("is-disabled", !shouldShowUnsaved);
-		this.saveActionEl.setAttribute(
-			"aria-disabled",
-			String(!shouldShowUnsaved)
-		);
+		updateActionButtons(this);
 	}
 
 	/** Update unsaved state and refresh title. */

@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { EditorManager } from "src/managers/editorManager";
 import type SandboxNotePlugin from "src/main";
+import { EditorManager } from "src/managers/editorManager";
 import type { SandboxNoteView } from "src/SandboxNoteView";
-import { watchEditorPlugin } from "src/syncEditorPlugin";
+import { syncEditorPlugin } from "src/syncEditorPlugin";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("EditorManager", () => {
 	let mockPlugin: SandboxNotePlugin;
@@ -28,7 +28,7 @@ describe("EditorManager", () => {
 
 			expect(mockPlugin.registerEditorExtension).toHaveBeenCalledOnce();
 			expect(mockPlugin.registerEditorExtension).toHaveBeenCalledWith(
-				watchEditorPlugin
+				syncEditorPlugin
 			);
 		});
 	});
@@ -43,8 +43,8 @@ describe("EditorManager", () => {
 			};
 
 			mockView = {
-				sandboxEditor: {
-					inlineView: {
+				wrapper: {
+					virtualEditor: {
 						editor: {
 							cm: {
 								plugin: vi.fn().mockReturnValue(mockCmPlugin),
@@ -64,7 +64,7 @@ describe("EditorManager", () => {
 			).toHaveBeenCalledOnce();
 			expect(
 				mockView.wrapper.virtualEditor.editor.cm.plugin
-			).toHaveBeenCalledWith(watchEditorPlugin);
+			).toHaveBeenCalledWith(syncEditorPlugin);
 
 			// Check that we connected the plugin to the view
 			expect(mockCmPlugin.connectToPlugin).toHaveBeenCalledOnce();

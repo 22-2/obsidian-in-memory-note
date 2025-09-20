@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import type SandboxNotePlugin from "src/main";
 import { ContentManager } from "src/managers/contentManager";
 import type { SandboxNoteView } from "src/SandboxNoteView";
-import type SandboxNotePlugin from "src/main";
 import type { DirectLogger } from "src/utils/logging";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Helper to create a mock view
 const createMockView = (): SandboxNoteView =>

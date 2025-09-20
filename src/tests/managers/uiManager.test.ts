@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UIManager } from "src/managers/uiManager";
 import type SandboxNotePlugin from "src/main";
-import { SANDBOX_NOTE_ICON } from "src/utils/constants";
+import { UIManager } from "src/managers/uiManager";
+import { IN_MEMORY_NOTE_ICON, SANDBOX_NOTE_ICON } from "src/utils/constants";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("UIManager", () => {
 	let mockPlugin: SandboxNotePlugin;
@@ -27,10 +27,15 @@ describe("UIManager", () => {
 		it("should add the ribbon icon with the correct parameters", () => {
 			uiManager.setupUserInterface();
 
-			expect(mockPlugin.addRibbonIcon).toHaveBeenCalledOnce();
+			expect(mockPlugin.addRibbonIcon).toHaveBeenCalledTimes(2);
 			expect(mockPlugin.addRibbonIcon).toHaveBeenCalledWith(
 				SANDBOX_NOTE_ICON,
 				"Open sandbox note",
+				expect.any(Function)
+			);
+			expect(mockPlugin.addRibbonIcon).toHaveBeenCalledWith(
+				IN_MEMORY_NOTE_ICON,
+				"Open in-memory note",
 				expect.any(Function)
 			);
 		});
@@ -38,7 +43,7 @@ describe("UIManager", () => {
 		it("should add the commands with the correct parameters", () => {
 			uiManager.setupUserInterface();
 
-			expect(mockPlugin.addCommand).toHaveBeenCalledTimes(2);
+			expect(mockPlugin.addCommand).toHaveBeenCalledTimes(3);
 
 			expect(mockPlugin.addCommand).toHaveBeenCalledWith({
 				id: "open-sandbox-note-view",
@@ -49,6 +54,12 @@ describe("UIManager", () => {
 			expect(mockPlugin.addCommand).toHaveBeenCalledWith({
 				id: "save-sandbox",
 				name: "Save current sandbox",
+				checkCallback: expect.any(Function),
+			});
+
+			expect(mockPlugin.addCommand).toHaveBeenCalledWith({
+				id: "open-in-memory-note-view",
+				name: "Open in-memory note",
 				checkCallback: expect.any(Function),
 			});
 		});
@@ -62,7 +73,7 @@ describe("UIManager", () => {
 			).mock.calls[0][2];
 			callback();
 
-			expect(mockPlugin.activateView).toHaveBeenCalledOnce();
+			expect(mockPlugin.activateSandboxView).toHaveBeenCalledOnce();
 		});
 
 		it("should call activateView when the command callback is executed", () => {
@@ -73,7 +84,7 @@ describe("UIManager", () => {
 				.mock.calls[0][0].callback;
 			callback();
 
-			expect(mockPlugin.activateView).toHaveBeenCalledOnce();
+			expect(mockPlugin.activateSandboxView).toHaveBeenCalledOnce();
 		});
 	});
 });

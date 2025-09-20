@@ -1,6 +1,6 @@
-import { SandboxNoteView } from "src/SandboxNoteView";
 import type SandboxNotePlugin from "../main";
-import { SANDBOX_NOTE_ICON } from "../utils/constants";
+import { IN_MEMORY_NOTE_ICON, SANDBOX_NOTE_ICON } from "../utils/constants";
+import { AbstractNoteView } from "../AbstractNoteView";
 
 /** Manages UI elements like ribbon icons and commands */
 export class UIManager {
@@ -12,27 +12,34 @@ export class UIManager {
 
 	/** Setup UI elements (ribbon icon and commands) */
 	setupUserInterface() {
-		this.plugin.addRibbonIcon(
-			SANDBOX_NOTE_ICON,
-			"Open sandbox note",
-			() => {
-				this.plugin.activateView();
-			}
-		);
+		// Command to open the sandbox note
 		this.plugin.addCommand({
 			id: "open-sandbox-note-view",
 			name: "Open sandbox note",
+			icon: SANDBOX_NOTE_ICON,
 			callback: () => {
-				this.plugin.activateView();
+				this.plugin.activateSandboxView();
 			},
 		});
+
+		// Command to open the in-memory note
 		this.plugin.addCommand({
-			id: "save-sandbox",
-			name: "Save current sandbox",
+			id: "open-in-memory-note-view",
+			name: "Open in-memory note",
+			icon: IN_MEMORY_NOTE_ICON,
+			callback: () => {
+				this.plugin.activateInMemoryView();
+			},
+		});
+
+		// Command to save the current note (if it's saveable)
+		this.plugin.addCommand({
+			id: "save-note",
+			name: "Save current note",
 			checkCallback: (checking) => {
 				const view =
 					this.plugin.app.workspace.getActiveViewOfType(
-						SandboxNoteView
+						AbstractNoteView
 					);
 				if (view) {
 					if (!checking) {
@@ -43,5 +50,22 @@ export class UIManager {
 				return false;
 			},
 		});
+
+		// Ribbon icon to open the sandbox note
+		this.plugin.addRibbonIcon(
+			SANDBOX_NOTE_ICON,
+			"Open sandbox note",
+			() => {
+				this.plugin.activateSandboxView();
+			}
+		);
+		// Ribbon icon to open the in-memory note
+		this.plugin.addRibbonIcon(
+			IN_MEMORY_NOTE_ICON,
+			"Open in-memory note",
+			() => {
+				this.plugin.activateInMemoryView();
+			}
+		);
 	}
 }

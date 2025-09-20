@@ -1,20 +1,13 @@
 import { ViewUpdate, type PluginValue, ViewPlugin } from "@codemirror/view";
 import type SandboxNotePlugin from "./main";
-import type { SandboxNoteView } from "./SandboxNoteView";
 import { type Debouncer, debounce } from "obsidian";
+import { AbstractNoteView } from "./AbstractNoteView";
 
 /** CodeMirror plugin for syncing content across views. */
 export class SyncEditorPlugin implements PluginValue {
 	private connectedPlugin: SandboxNotePlugin | null = null;
-	private connectedView: SandboxNoteView | null = null;
+	private connectedView: AbstractNoteView | null = null;
 	private debouncer: Debouncer<[], void> | null = null;
-
-	/** Update shared content through main plugin. */
-	private propagateContentChange(content: string) {
-		if (this.connectedPlugin && this.connectedView) {
-			this.connectedPlugin.updateNoteContent(content, this.connectedView);
-		}
-	}
 
 	/** Handle editor updates and propagate changes. */
 	update(update: ViewUpdate): void {
@@ -30,8 +23,8 @@ export class SyncEditorPlugin implements PluginValue {
 			// Update the unsaved state for the current view
 			this.connectedView.updateUnsavedState(updatedContent);
 
-			// Propagate content changes to other views
-			this.propagateContentChange(updatedContent);
+			// Let the view handle the content change
+			this.connectedView.onContentChanged(updatedContent);
 
 			// Trigger debounced save if enabled
 			this.debouncer?.();
@@ -39,17 +32,15 @@ export class SyncEditorPlugin implements PluginValue {
 	}
 
 	/** Connect to main plugin and view. */
-	connectToPlugin(plugin: SandboxNotePlugin, view: SandboxNoteView): void {
+	connectToPlugin(plugin: SandboxNotePlugin, view: AbstractNoteView): void {
 		this.connectedPlugin = plugin;
 		this.connectedView = view;
 
 		if (this.connectedPlugin.settings.enableSaveNoteContent) {
 			this.debouncer = debounce(
 				() => {
-					if (this.connectedView && this.connectedPlugin) {
-						this.connectedPlugin.saveManager.saveNoteContentToFile(
-							this.connectedView
-						);
+					if (this.connectedView) {
+						this.connectedView.save();
 					}
 				},
 				this.connectedPlugin.settings.autoSaveDebounceMs,
@@ -67,4 +58,4 @@ export class SyncEditorPlugin implements PluginValue {
 }
 
 /** CodeMirror ViewPlugin for watching changes. */
-export const watchEditorPlugin = ViewPlugin.fromClass(SyncEditorPlugin);
+export const syncEditorPlugin = ViewPlugin.fromClass(SyncEditorPlugin);

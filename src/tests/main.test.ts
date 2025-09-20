@@ -7,7 +7,7 @@ import {
 	afterEach,
 	type Mock,
 } from "vitest";
-import SandboxNotePlugin from "src/main";
+import SandboxNotePlugin from "../main";
 import { App, MarkdownView, Notice } from "obsidian";
 
 // Mock only the necessary parts of the 'obsidian' module

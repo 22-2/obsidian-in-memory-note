@@ -28,7 +28,11 @@ export class SandboxNoteView extends ItemView {
 	}
 
 	save = () => {
-		this.plugin.saveManager.saveNoteContentToFile(this);
+		return this.plugin.saveManager.saveNoteContentToFile(this);
+	};
+
+	loadContent = () => {
+		this.setContent(this.plugin.contentManager.sharedNoteContent);
 	};
 
 	/** Get view type. */
@@ -118,6 +122,7 @@ export class SandboxNoteView extends ItemView {
 				cls: "sandbox-note-container",
 			});
 			this.sandboxEditor.load(editorContainer);
+			this.loadContent();
 
 			// Set up event handlers and editor plugin connection
 			this.setupEventHandlers();

@@ -3,10 +3,16 @@ import {
 	type SandboxNotePluginSettings,
 	SandboxNoteSettingTab,
 } from "./settings";
-import { DEFAULT_SETTINGS, VIEW_TYPE } from "./utils/constants";
+import {
+	DEFAULT_SETTINGS,
+	VIEW_TYPE,
+	VIEW_TYPE_IN_MEMORY,
+} from "./utils/constants";
 import { DirectLogger } from "./utils/logging";
 import { activateView } from "./utils/obsidian";
 import { SandboxNoteView } from "./SandboxNoteView";
+import { InMemoryNoteView } from "./InMemoryNoteView";
+import { AbstractNoteView } from "./AbstractNoteView";
 import { ContentManager } from "./managers/contentManager";
 import { SaveManager } from "./managers/saveManager";
 import { UIManager } from "./managers/uiManager";
@@ -100,13 +106,13 @@ export default class SandboxNotePlugin extends Plugin {
 	/** Handle active leaf changes and auto-save if enabled. */
 	private handleActiveLeafChange() {
 		const activeView =
-			this.app.workspace.getActiveViewOfType(SandboxNoteView);
+			this.app.workspace.getActiveViewOfType(AbstractNoteView);
 
 		// Delegate to save manager
 		this.saveManager.handleActiveLeafChange();
 
 		// Connect the editor plugin to the new active view
-		if (activeView instanceof SandboxNoteView) {
+		if (activeView instanceof AbstractNoteView) {
 			this.editorManager.connectEditorPluginToView(activeView);
 		}
 	}
@@ -114,6 +120,10 @@ export default class SandboxNotePlugin extends Plugin {
 	/** Register custom view type. */
 	private registerViewType() {
 		this.registerView(VIEW_TYPE, (leaf) => new SandboxNoteView(leaf, this));
+		this.registerView(
+			VIEW_TYPE_IN_MEMORY,
+			(leaf) => new InMemoryNoteView(leaf, this),
+		);
 	}
 
 	/** Update shared content and sync across all views. */
@@ -131,8 +141,17 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Create and activate new Sandbox Note view. */
 	async activateView() {
+		return this.activateAbstractView(VIEW_TYPE);
+	}
+
+	/** Create and activate new In-Memory Note view. */
+	async activateInMemoryView() {
+		return this.activateAbstractView(VIEW_TYPE_IN_MEMORY);
+	}
+
+	private async activateAbstractView(type: string) {
 		const leaf = await activateView(this.app, {
-			type: VIEW_TYPE,
+			type,
 			active: true,
 		});
 

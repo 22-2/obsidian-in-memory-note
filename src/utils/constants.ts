@@ -10,4 +10,6 @@ export const DEFAULT_SETTINGS: SandboxNotePluginSettings = {
 
 export const APP_NAME = manifest.name || "SandboxNote";
 export const VIEW_TYPE = "sandbox-note-view";
+export const VIEW_TYPE_IN_MEMORY = "in-memory-note-view";
 export const SANDBOX_NOTE_ICON = "file-text";
+export const IN_MEMORY_NOTE_ICON = "file-edit";

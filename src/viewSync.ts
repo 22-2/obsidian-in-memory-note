@@ -1,12 +1,13 @@
 import type { SandboxNoteView } from "./SandboxNoteView";
+import { AbstractNoteView } from "./AbstractNoteView";
 
 /**
  * Set the editor content if it's different from the provided content.
  * This is used for synchronizing views.
- * @param view The instance of the SandboxNoteView.
+ * @param view The instance of the AbstractNoteView.
  * @param content The new content to set.
  */
-export function setContent(view: SandboxNoteView, content: string) {
+export function setContent(view: AbstractNoteView, content: string) {
 	if (view.editor && view.editor.getValue() !== content) {
 		view.editor.setValue(content);
 		// Update unsaved state when content is synchronized from other views

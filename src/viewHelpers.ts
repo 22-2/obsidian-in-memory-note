@@ -1,30 +1,17 @@
-import type { SandboxNoteView } from "./SandboxNoteView";
-
-/**
- * Get the display text for the view tab, showing an asterisk for unsaved changes.
- * @param view The instance of the SandboxNoteView.
- * @returns The display text for the tab.
- */
-export function getDisplayText(view: SandboxNoteView): string {
-	const baseTitle = "Sandbox note";
-	// Only show asterisk if save setting is enabled and there are unsaved changes
-	const shouldShowUnsaved =
-		view.plugin.settings.enableSaveNoteContent && view.hasUnsavedChanges;
-	return shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
-}
+import { AbstractNoteView } from "./AbstractNoteView";
 
 /**
  * Update the visibility and state of action buttons based on unsaved changes.
- * @param view The instance of the SandboxNoteView.
+ * @param view The instance of the AbstractNoteView.
  */
-export function updateActionButtons(view: SandboxNoteView): void {
+export function updateActionButtons(view: AbstractNoteView): void {
 	if (!view.plugin.settings.enableSaveNoteContent) {
 		view.saveActionEl?.hide();
 		return;
 	}
 
 	if (!view.saveActionEl) {
-		view.saveActionEl = view.addAction("save", "Save", view.save);
+		view.saveActionEl = view.addAction("save", "Save", () => view.save());
 	}
 	view.saveActionEl.show();
 

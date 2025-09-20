@@ -7,7 +7,7 @@ import { App } from "obsidian";
 
 const createMockView = (content: string): SandboxNoteView =>
 	({
-		sandboxEditor: {
+		wrapper: {
 			getContent: vi.fn().mockReturnValue(content),
 		},
 		markAsSaved: vi.fn(),

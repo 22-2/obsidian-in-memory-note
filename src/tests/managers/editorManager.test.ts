@@ -43,8 +43,8 @@ describe("EditorManager", () => {
 			};
 
 			mockView = {
-				sandboxEditor: {
-					inlineView: {
+				wrapper: {
+					virtualEditor: {
 						editor: {
 							cm: {
 								plugin: vi.fn().mockReturnValue(mockCmPlugin),
@@ -60,10 +60,10 @@ describe("EditorManager", () => {
 
 			// Check that we tried to get the correct plugin
 			expect(
-				mockView.wrapper.virtualEditor.editor.cm.plugin
+				mockView.wrapper.virtualEditor.editor.cm.plugin,
 			).toHaveBeenCalledOnce();
 			expect(
-				mockView.wrapper.virtualEditor.editor.cm.plugin
+				mockView.wrapper.virtualEditor.editor.cm.plugin,
 			).toHaveBeenCalledWith(watchEditorPlugin);
 
 			// Check that we connected the plugin to the view

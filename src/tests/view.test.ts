@@ -16,6 +16,9 @@ describe("SandboxNoteView", () => {
 		onload: ReturnType<typeof vi.fn>;
 		load: ReturnType<typeof vi.fn>;
 		content: string;
+		leaf: {
+			updateHeader: ReturnType<typeof vi.fn>;
+		};
 		getEditor: ReturnType<typeof vi.fn>;
 		inlineView: { editMode: {} };
 	};
@@ -45,6 +48,9 @@ describe("SandboxNoteView", () => {
 				getValue: vi.fn(),
 				setValue: vi.fn(),
 			})),
+			leaf: {
+				updateHeader: vi.fn(),
+			},
 			inlineView: {
 				editMode: {},
 			},

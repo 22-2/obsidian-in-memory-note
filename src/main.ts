@@ -50,6 +50,8 @@ export default class SandboxNotePlugin extends Plugin {
 		this.uiManager.setupUserInterface();
 		this.commandManager.updateSaveCommandMonkeyPatch();
 		this.app.workspace.onLayoutReady(() => this.onLayoutReady());
+		this.app.workspace.on("layout-change", () => this.onLayoutReady());
+		log.debug("Sandbox Note plugin loaded");
 	}
 
 	/** Fires once the workspace is ready. */

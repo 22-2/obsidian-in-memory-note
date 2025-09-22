@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf } from "obsidian";
+import { ItemView, Notice, WorkspaceLeaf } from "obsidian";
 import { EditorWrapper } from "src/views/editorWrapper";
 import type SandboxNotePlugin from "../main";
 import { updateActionButtons } from "../helpers/viewHelpers";
@@ -93,6 +93,8 @@ export abstract class AbstractNoteView extends ItemView {
 				"Sandbox Note: Failed to initialize inline editor.",
 				error
 			);
+			new Notice("Sandbox Note: Failed to initialize inline editor.");
+
 			// Display an error message to the user
 			this.contentEl.empty();
 			this.contentEl.createEl("div", {

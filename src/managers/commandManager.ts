@@ -2,6 +2,7 @@ import log from "loglevel";
 import type SandboxNotePlugin from "../main";
 import { SandboxNoteView } from "../views/SandboxNoteView";
 import { around } from "monkey-around";
+import { Notice } from "obsidian";
 
 /** Manages command overrides and monkey patches */
 export class CommandManager {
@@ -53,6 +54,10 @@ export class CommandManager {
 								"Sandbox-note: monkey patch for save command failed.",
 								error
 							);
+							new Notice(
+								"Sandbox-note: monkey patch for save command failed."
+							);
+
 							// Fallback to original command if our patch fails
 							return orig?.call(this, checking);
 						}

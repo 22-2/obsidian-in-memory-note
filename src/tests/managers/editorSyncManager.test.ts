@@ -1,7 +1,8 @@
-import type SandboxNotePlugin from "src/main";
 import { EditorSyncManager } from "src/managers/EditorSyncManager";
 import type { SandboxNoteView } from "src/views/SandboxNoteView";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { EventEmitter } from "src/utils/EventEmitter";
+import type { AppEvents } from "src/events/AppEvents";
 
 // Helper to create a mock view
 const createMockView = (): SandboxNoteView =>
@@ -15,18 +16,9 @@ const createMockView = (): SandboxNoteView =>
 		// Add other properties and methods as needed for tests
 	} as unknown as SandboxNoteView);
 
-// Mock logger
-const mockLogger = {
-	info: vi.fn(),
-	error: vi.fn(),
-	debug: vi.fn(),
-};
-
-// Mock plugin
-const mockPlugin = {} as SandboxNotePlugin;
-
-describe("ContentManager", () => {
-	let contentManager: EditorSyncManager;
+describe("EditorSyncManager", () => {
+	let editorSyncManager: EditorSyncManager;
+	let mockEmitter: EventEmitter<AppEvents>;
 	let view1: SandboxNoteView;
 	let view2: SandboxNoteView;
 	let view3: SandboxNoteView;
@@ -34,49 +26,57 @@ describe("ContentManager", () => {
 	beforeEach(() => {
 		// Reset mocks and create new instances for each test
 		vi.clearAllMocks();
-		contentManager = new EditorSyncManager(mockPlugin);
+		mockEmitter = new EventEmitter<AppEvents>();
+		mockEmitter.emit = vi.fn();
+		editorSyncManager = new EditorSyncManager(mockEmitter);
 		view1 = createMockView();
 		view2 = createMockView();
 		view3 = createMockView();
 	});
 
 	it("should be defined", () => {
-		expect(contentManager).toBeDefined();
+		expect(editorSyncManager).toBeDefined();
 	});
 
 	describe("View Management", () => {
 		it("should add an active view", () => {
-			contentManager.addActiveView(view1);
-			expect(contentManager.activeViews.has(view1)).toBe(true);
-			expect(contentManager.activeViews.size).toBe(1);
+			editorSyncManager.addActiveView(view1);
+			expect(editorSyncManager.activeViews.has(view1)).toBe(true);
+			expect(editorSyncManager.activeViews.size).toBe(1);
 		});
 
 		it("should remove an active view", () => {
-			contentManager.addActiveView(view1);
-			contentManager.addActiveView(view2);
-			contentManager.removeActiveView(view1);
-			expect(contentManager.activeViews.has(view1)).toBe(false);
-			expect(contentManager.activeViews.has(view2)).toBe(true);
-			expect(contentManager.activeViews.size).toBe(1);
+			editorSyncManager.addActiveView(view1);
+			editorSyncManager.addActiveView(view2);
+			editorSyncManager.removeActiveView(view1);
+			expect(editorSyncManager.activeViews.has(view1)).toBe(false);
+			expect(editorSyncManager.activeViews.has(view2)).toBe(true);
+			expect(editorSyncManager.activeViews.size).toBe(1);
 		});
 	});
 
 	describe("updateNoteContent", () => {
 		beforeEach(() => {
-			contentManager.addActiveView(view1);
-			contentManager.addActiveView(view2);
-			contentManager.addActiveView(view3);
+			editorSyncManager.addActiveView(view1);
+			editorSyncManager.addActiveView(view2);
+			editorSyncManager.addActiveView(view3);
 		});
 
-		it("should update the shared content", () => {
+		it("should update the shared content and emit event", () => {
 			const newContent = "This is the new shared content.";
-			contentManager.syncAll(newContent, view1);
-			expect(contentManager.currenSharedNoteContent).toBe(newContent);
+			editorSyncManager.syncAll(newContent, view1);
+			expect(editorSyncManager.currenSharedNoteContent).toBe(
+				newContent
+			);
+			expect(mockEmitter.emit).toHaveBeenCalledWith(
+				"unsaved-state-changed",
+				{ hasUnsavedChanges: true }
+			);
 		});
 
 		it("should synchronize content to all other views", () => {
 			const newContent = "Sync this content!";
-			contentManager.syncAll(newContent, view1);
+			editorSyncManager.syncAll(newContent, view1);
 
 			// The source view should not be updated
 			expect(view1.setContent).not.toHaveBeenCalled();
@@ -90,30 +90,32 @@ describe("ContentManager", () => {
 
 		it("should not fail if there are no other views", () => {
 			// Only one view is active
-			contentManager.removeActiveView(view2);
-			contentManager.removeActiveView(view3);
+			editorSyncManager.removeActiveView(view2);
+			editorSyncManager.removeActiveView(view3);
 
 			const newContent = "Content for a single view.";
 			expect(() =>
-				contentManager.syncAll(newContent, view1)
+				editorSyncManager.syncAll(newContent, view1)
 			).not.toThrow();
-			expect(contentManager.currenSharedNoteContent).toBe(newContent);
+			expect(editorSyncManager.currenSharedNoteContent).toBe(newContent);
 		});
 	});
 
 	describe("refreshAllViewTitles", () => {
 		it("should call updateHeader on all active views", () => {
-			contentManager.addActiveView(view1);
-			contentManager.addActiveView(view2);
+			editorSyncManager.addActiveView(view1);
+			editorSyncManager.addActiveView(view2);
 
-			contentManager.refreshAllViewTitles();
+			editorSyncManager.refreshAllViewTitles();
 
 			expect(view1.leaf.updateHeader).toHaveBeenCalledTimes(1);
 			expect(view2.leaf.updateHeader).toHaveBeenCalledTimes(1);
 		});
 
 		it("should not fail if there are no active views", () => {
-			expect(() => contentManager.refreshAllViewTitles()).not.toThrow();
+			expect(() =>
+				editorSyncManager.refreshAllViewTitles()
+			).not.toThrow();
 		});
 	});
 });

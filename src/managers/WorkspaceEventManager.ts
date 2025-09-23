@@ -1,15 +1,36 @@
 import { debounce } from "obsidian";
-import type SandboxNotePlugin from "src/main";
 import { SandboxNoteView } from "src/views/SandboxNoteView";
 import log from "loglevel";
+import type { App, Workspace } from "obsidian";
+import type { EventEmitter } from "src/utils/EventEmitter";
+import type { AppEvents } from "src/events/AppEvents";
+import type { EditorSyncManager } from "./EditorSyncManager";
+import type { EditorPluginConnector } from "./EditorPluginConnector";
+import type { SandboxNotePluginSettings } from "src/settings";
 
 /** Manages Obsidian workspace event handling */
 export class WorkspaceEventManager {
-	private plugin: SandboxNotePlugin;
+	private app: App;
+	private workspace: Workspace;
+	private emitter: EventEmitter<AppEvents>;
+	private editorSyncManager: EditorSyncManager;
+	private editorPluginConnector: EditorPluginConnector;
+	private settings: SandboxNotePluginSettings;
 	private debouncedSetupSandboxViews: () => void;
 
-	constructor(plugin: SandboxNotePlugin) {
-		this.plugin = plugin;
+	constructor(
+		app: App,
+		emitter: EventEmitter<AppEvents>,
+		editorSyncManager: EditorSyncManager,
+		editorPluginConnector: EditorPluginConnector,
+		settings: SandboxNotePluginSettings
+	) {
+		this.app = app;
+		this.workspace = app.workspace;
+		this.emitter = emitter;
+		this.editorSyncManager = editorSyncManager;
+		this.editorPluginConnector = editorPluginConnector;
+		this.settings = settings;
 		this.debouncedSetupSandboxViews = debounce(
 			this.setupSandboxViews.bind(this),
 			50
@@ -18,39 +39,35 @@ export class WorkspaceEventManager {
 
 	/** Set up all workspace event listeners */
 	public setupEventHandlers(): void {
-		this.plugin.app.workspace.onLayoutReady(() => this.setupSandboxViews());
+		this.workspace.onLayoutReady(() => this.setupSandboxViews());
 
-		this.plugin.registerEvent(
-			this.plugin.app.workspace.on(
-				"active-leaf-change",
-				this.handleActiveLeafChange.bind(this)
-			)
+		this.workspace.on(
+			"active-leaf-change",
+			this.handleActiveLeafChange.bind(this)
 		);
-		this.plugin.registerEvent(
-			this.plugin.app.workspace.on(
-				"layout-change",
-				this.debouncedSetupSandboxViews
-			)
+		this.workspace.on(
+			"layout-change",
+			this.debouncedSetupSandboxViews
 		);
 	}
 
 	/** Connects the editor plugin to any existing sandbox views on layout ready or change. */
 	private setupSandboxViews(): void {
 		log.debug("Workspace layout ready/changed, setting up sandbox views.");
-		this.plugin.editorSyncManager.activeViews.forEach((view) => {
+		this.editorSyncManager.activeViews.forEach((view) => {
 			log.debug(`Connecting to existing view: ${view.getViewType()}`);
-			this.plugin.editorPluginConnector.connectEditorPluginToView(view);
+			this.editorPluginConnector.connectEditorPluginToView(view);
 		});
 	}
 	/** Handle active leaf changes to connect the editor plugin and trigger auto-save. */
 	private async handleActiveLeafChange() {
 		// Auto-save when switching tabs if enabled and there are unsaved changes
 		if (
-			this.plugin.settings.enableAutoSave &&
-			this.plugin.editorSyncManager.hasUnsavedChanges
+			this.settings.enableAutoSave &&
+			this.editorSyncManager.hasUnsavedChanges
 		) {
 			// Get any active SandboxNoteView instance for saving
-			const anySandboxView = this.plugin.editorSyncManager.activeViews
+			const anySandboxView = this.editorSyncManager.activeViews
 				.values()
 				.next().value;
 
@@ -59,24 +76,23 @@ export class WorkspaceEventManager {
 					"Active leaf changed, triggering auto-save for Sandbox Note."
 				);
 
-				// Save immediately without waiting for debounce
-				await this.plugin.saveManager.saveNoteContentToFile(
-					anySandboxView
-				);
+				this.emitter.emit("save-requested", {
+					view: anySandboxView,
+				});
 
 				// Note: saveNoteContentToFile cancels any running debounce timer
-				this.plugin.editorSyncManager.refreshAllViewTitles();
+				this.editorSyncManager.refreshAllViewTitles();
 			}
 		}
 
 		// Only proceed if the new active view is a SandboxNoteView
 		const activeView =
-			this.plugin.app.workspace.getActiveViewOfType(SandboxNoteView);
+			this.workspace.getActiveViewOfType(SandboxNoteView);
 		if (!(activeView instanceof SandboxNoteView)) {
 			return;
 		}
 
 		// Connect the editor plugin to the new active view
-		this.plugin.editorPluginConnector.connectEditorPluginToView(activeView);
+		this.editorPluginConnector.connectEditorPluginToView(activeView);
 	}
 }

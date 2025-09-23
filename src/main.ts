@@ -7,10 +7,13 @@ import { UnsafeMarkdownView } from "./views/helpers/UnsafeMarkdownView";
 import { noop } from "./utils";
 import { DEFAULT_SETTINGS } from "./utils/constants";
 import log from "loglevel";
+import { EventEmitter } from "./utils/EventEmitter";
+import type { AppEvents } from "./events/AppEvents";
 import { EditorSyncManager } from "./managers/EditorSyncManager";
 import { EditorPluginConnector } from "./managers/EditorPluginConnector";
 import { SaveManager } from "./managers/SaveManager";
 import { UIManager } from "./managers/UIManager";
+import { EventManager } from "./managers/EventManager";
 import { ViewActivator } from "./managers/ViewActivator";
 import { WorkspaceEventManager } from "./managers/WorkspaceEventManager";
 import type { WorkspaceLeaf } from "obsidian";
@@ -26,7 +29,9 @@ export default class SandboxNotePlugin extends Plugin {
 	uiManager!: UIManager;
 	editorPluginConnector!: EditorPluginConnector;
 	viewActivator!: ViewActivator;
+	eventManager!: EventManager;
 	workspaceEventManager!: WorkspaceEventManager;
+	emitter!: EventEmitter<AppEvents>;
 
 	/** Initialize plugin on load. */
 	async onload() {
@@ -40,6 +45,11 @@ export default class SandboxNotePlugin extends Plugin {
 		await this.loadSettings();
 		this.initializeLogger();
 		this.initializeManagers();
+		this.eventManager.registerEventHandlers(
+			this.editorSyncManager,
+			this.saveManager,
+			this.settings
+		);
 
 		// Initialize content manager with saved content
 		const savedContent = this.settings.noteContent ?? "";
@@ -72,6 +82,7 @@ export default class SandboxNotePlugin extends Plugin {
 				getHistoryState: () => ({}),
 				open: noop,
 				updateHeader: noop,
+				workspace: {},
 			} as unknown as WorkspaceLeaf;
 
 			// @ts-ignore
@@ -92,12 +103,24 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Initialize all manager instances */
 	private initializeManagers() {
-		this.editorSyncManager = new EditorSyncManager(this);
-		this.saveManager = new SaveManager(this);
+		const saveData = (settings: SandboxNotePluginSettings) =>
+			this.saveData(settings);
+		const emitter = new EventEmitter<AppEvents>();
+		this.emitter = emitter;
+
+		this.editorSyncManager = new EditorSyncManager(emitter);
+		this.saveManager = new SaveManager(emitter, this.settings, saveData);
 		this.uiManager = new UIManager(this);
-		this.editorPluginConnector = new EditorPluginConnector(this);
+		this.editorPluginConnector = new EditorPluginConnector(this, emitter);
 		this.viewActivator = new ViewActivator(this);
-		this.workspaceEventManager = new WorkspaceEventManager(this);
+		this.workspaceEventManager = new WorkspaceEventManager(
+			this.app,
+			emitter,
+			this.editorSyncManager,
+			this.editorPluginConnector,
+			this.settings
+		);
+		this.eventManager = new EventManager(emitter);
 	}
 
 	/** Setup plugin settings tab. */

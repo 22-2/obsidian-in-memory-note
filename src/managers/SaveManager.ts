@@ -1,23 +1,31 @@
 import { SandboxNoteView } from "../views/SandboxNoteView";
 import { debounce, type DebouncedFunction } from "../utils";
-import type SandboxNotePlugin from "../main";
 import log from "loglevel";
-
-const SAVE_DEBOUNCE_DELAY = 1000;
+import type { EventEmitter } from "src/utils/EventEmitter";
+import type { AppEvents } from "src/events/AppEvents";
+import type { SandboxNotePluginSettings } from "src/settings";
 
 /** Manages content persistence and auto-save functionality */
 export class SaveManager {
-	private plugin: SandboxNotePlugin;
+	private emitter: EventEmitter<AppEvents>;
+	private settings: SandboxNotePluginSettings;
+	private saveData: (settings: SandboxNotePluginSettings) => Promise<void>;
 	private isSaving = false;
 
 	/** Debounced save function */
 	debouncedSave: DebouncedFunction<(view: SandboxNoteView) => Promise<void>>;
 
-	constructor(plugin: SandboxNotePlugin) {
-		this.plugin = plugin;
+	constructor(
+		emitter: EventEmitter<AppEvents>,
+		settings: SandboxNotePluginSettings,
+		saveData: (settings: SandboxNotePluginSettings) => Promise<void>
+	) {
+		this.emitter = emitter;
+		this.settings = settings;
+		this.saveData = saveData;
 		this.debouncedSave = debounce(
 			(view: SandboxNoteView) => this.saveNoteContentToFile(view),
-			SAVE_DEBOUNCE_DELAY
+			this.settings.autoSaveDebounceMs
 		);
 	}
 
@@ -77,14 +85,14 @@ export class SaveManager {
 	 */
 	private async persistContent(content: string): Promise<void> {
 		// Also update the in-memory settings to keep them in sync
-		this.plugin.settings.noteContent = content;
-		this.plugin.settings.lastSaved = new Date().toISOString();
+		this.settings.noteContent = content;
+		this.settings.lastSaved = new Date().toISOString();
 
 		// Save content to data.json using Obsidian API
-		await this.plugin.saveData(this.plugin.settings);
+		await this.saveData(this.settings);
 
 		// Mark the content as saved in the central manager
-		this.plugin.editorSyncManager.markAsSaved();
+		this.emitter.emit("content-saved");
 
 		log.debug("Auto-saved note content to data.json using Obsidian API");
 	}

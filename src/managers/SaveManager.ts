@@ -4,6 +4,7 @@ import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
 import type { SandboxNotePluginSettings } from "src/settings";
 import { debounce, type Debouncer } from "obsidian";
+import { Notice } from "src/tests/obsidian";
 /** Manages content persistence and auto-save functionality */
 export class SaveManager {
 	private emitter: EventEmitter<AppEvents>;
@@ -51,6 +52,7 @@ export class SaveManager {
 			await this.persistContent(content);
 		} catch (error) {
 			log.error(`Failed to auto-save note content: ${error}`);
+			new Notice("Failed to auto-save note content.");
 		} finally {
 			this.isSaving = false;
 		}

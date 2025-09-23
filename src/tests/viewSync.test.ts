@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { SandboxNoteView } from "../views/SandboxNoteView";
 import type { Editor } from "obsidian";
 import { setContent, synchronizeWithExistingViews } from "src/helpers/viewSync";
+import type { EditorSyncManager } from "src/managers/EditorSyncManager";
 
 describe("View Sync Helpers", () => {
 	let mockView: SandboxNoteView;
@@ -12,6 +13,7 @@ describe("View Sync Helpers", () => {
 	let mockLeaf: {
 		updateHeader: ReturnType<typeof vi.fn>;
 	};
+	let mockEditorSyncManager: EditorSyncManager;
 
 	beforeEach(() => {
 		mockEditor = {
@@ -21,6 +23,11 @@ describe("View Sync Helpers", () => {
 		mockLeaf = {
 			updateHeader: vi.fn(),
 		};
+		mockEditorSyncManager = {
+			activeViews: new Set(),
+			currenSharedNoteContent: "",
+			syncAll: vi.fn(),
+		} as unknown as EditorSyncManager;
 
 		mockView = {
 			editor: mockEditor as unknown as Editor,
@@ -28,15 +35,11 @@ describe("View Sync Helpers", () => {
 			containerEl: {
 				isShown: vi.fn().mockReturnValue(true),
 			},
-			updateUnsavedState: vi.fn(),
 			setContent: vi.fn(),
 			plugin: {
-				editorSyncManager: {
-					activeViews: new Set(),
-					sharedNoteContent: "",
-				},
+				editorSyncManager: mockEditorSyncManager,
 			},
-			initialContent: "",
+			loadInitialContent: vi.fn(),
 		} as unknown as SandboxNoteView;
 	});
 
@@ -54,13 +57,10 @@ describe("View Sync Helpers", () => {
 			expect(mockEditor.setValue).not.toHaveBeenCalled();
 		});
 
-		it("should set the value, update unsaved state, and refresh header if content is different", () => {
+		it("should set the value and refresh header if content is different", () => {
 			mockEditor.getValue.mockReturnValue("old content");
 			setContent(mockView, "new content");
 			expect(mockEditor.setValue).toHaveBeenCalledWith("new content");
-			expect(mockView.updateUnsavedState).toHaveBeenCalledWith(
-				"new content"
-			);
 			expect(mockLeaf.updateHeader).toHaveBeenCalledOnce();
 		});
 	});
@@ -85,7 +85,6 @@ describe("View Sync Helpers", () => {
 						.fn()
 						.mockReturnValue("content from other view"),
 				},
-				initialContent: "other initial content",
 			} as unknown as SandboxNoteView;
 
 			mockView.plugin.editorSyncManager.activeViews.add(mockView);
@@ -96,7 +95,6 @@ describe("View Sync Helpers", () => {
 			expect(
 				mockView.plugin.editorSyncManager.currenSharedNoteContent
 			).toBe("content from other view");
-			expect(mockView.initialContent).toBe("other initial content");
 			expect(mockView.setContent).toHaveBeenCalledWith(
 				"content from other view"
 			);
@@ -109,6 +107,8 @@ describe("View Sync Helpers", () => {
 
 			mockView.plugin.editorSyncManager.activeViews.add(mockView);
 			mockView.plugin.editorSyncManager.activeViews.add(mockOtherView);
+			mockView.plugin.editorSyncManager.currenSharedNoteContent = "";
+
 
 			synchronizeWithExistingViews(mockView);
 

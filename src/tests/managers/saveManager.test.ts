@@ -4,13 +4,13 @@ import { App } from "obsidian";
 import type SandboxNotePlugin from "src/main";
 import { SaveManager } from "src/managers/SaveManager";
 import type { SandboxNoteView } from "src/views/SandboxNoteView";
+import type { EditorSyncManager } from "src/managers/EditorSyncManager";
 
 const createMockView = (content: string): SandboxNoteView =>
 	({
 		wrapper: {
 			getContent: vi.fn().mockReturnValue(content),
 		},
-		markAsSaved: vi.fn(),
 		getViewType: vi.fn().mockReturnValue("sandbox-note"),
 	} as unknown as SandboxNoteView);
 
@@ -18,6 +18,7 @@ describe("SaveManager", () => {
 	let mockPlugin: SandboxNotePlugin;
 	let mockApp: App;
 	let saveManager: SaveManager;
+	let mockEditorSyncManager: EditorSyncManager;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -28,12 +29,17 @@ describe("SaveManager", () => {
 			},
 		} as unknown as App;
 
+		mockEditorSyncManager = {
+			markAsSaved: vi.fn(),
+		} as unknown as EditorSyncManager;
+
 		mockPlugin = {
 			app: mockApp,
 			settings: {
 				enableSaveNoteContent: true,
 			},
 			saveData: vi.fn().mockResolvedValue(undefined),
+			editorSyncManager: mockEditorSyncManager,
 		} as unknown as SandboxNotePlugin;
 
 		saveManager = new SaveManager(mockPlugin);
@@ -54,7 +60,7 @@ describe("SaveManager", () => {
 			expect(savedData.noteContent).toBe("Some note content");
 			expect(savedData.lastSaved).toBeDefined();
 
-			expect(view.markAsSaved).toHaveBeenCalledOnce();
+			expect(mockEditorSyncManager.markAsSaved).toHaveBeenCalledOnce();
 		});
 
 		it("should save content if it is empty", async () => {
@@ -62,7 +68,7 @@ describe("SaveManager", () => {
 			await saveManager.saveNoteContentToFile(view);
 
 			expect(mockPlugin.saveData).toHaveBeenCalledOnce();
-			expect(view.markAsSaved).toHaveBeenCalledOnce();
+			expect(mockEditorSyncManager.markAsSaved).toHaveBeenCalledOnce();
 		});
 
 		it("should save content if it is only whitespace", async () => {
@@ -70,7 +76,7 @@ describe("SaveManager", () => {
 			await saveManager.saveNoteContentToFile(view);
 
 			expect(mockPlugin.saveData).toHaveBeenCalledOnce();
-			expect(view.markAsSaved).toHaveBeenCalledOnce();
+			expect(mockEditorSyncManager.markAsSaved).toHaveBeenCalledOnce();
 		});
 
 		it("should log an error if saving fails", async () => {
@@ -82,7 +88,7 @@ describe("SaveManager", () => {
 
 			await saveManager.saveNoteContentToFile(view);
 
-			expect(view.markAsSaved).not.toHaveBeenCalled();
+			expect(mockEditorSyncManager.markAsSaved).not.toHaveBeenCalled();
 		});
 	});
 

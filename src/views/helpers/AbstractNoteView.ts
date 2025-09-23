@@ -156,6 +156,7 @@ export abstract class AbstractNoteView extends ItemView {
 			});
 			this.initialState = null;
 		}
+		this.markAsSaved();
 	}
 
 	private handleInitializationError(error: unknown) {

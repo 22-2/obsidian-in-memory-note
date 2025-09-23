@@ -86,6 +86,7 @@ describe("SandboxNoteView", () => {
 			},
 			editorPluginConnector: {
 				watchEditorPlugin: vi.fn(),
+				connectEditorPluginToView: vi.fn(),
 			},
 			saveManager: {
 				debouncedSave: vi.fn(),
@@ -122,6 +123,7 @@ describe("SandboxNoteView", () => {
 		// });
 
 		view.wrapper = {
+			initialize: vi.fn().mockResolvedValue(undefined),
 			onload: vi.fn().mockResolvedValue(undefined),
 			load: vi.fn(),
 			unload: vi.fn(),

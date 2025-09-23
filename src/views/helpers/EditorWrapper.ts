@@ -13,6 +13,27 @@ export class EditorWrapper {
 
 	constructor(public parentView: AbstractNoteView) {}
 
+	/** Initialize the editor and load content. */
+	async initialize(target: HTMLElement, initialState: any) {
+		await this.onload(); // Create virtual editor
+		const editorContainer = target.createEl("div", {
+			cls: "sandbox-note-container",
+		});
+		this.load(editorContainer); // Attach to DOM and focus
+
+		const initialContent =
+			initialState?.content ??
+			(await this.parentView.loadInitialContent());
+		this.content = initialContent;
+		this.parentView.setContent(initialContent);
+
+		if (initialState) {
+			await this.virtualEditor.setState(initialState, {
+				history: false,
+			});
+		}
+	}
+
 	getContent() {
 		return this.virtualEditor.editor.getValue();
 	}

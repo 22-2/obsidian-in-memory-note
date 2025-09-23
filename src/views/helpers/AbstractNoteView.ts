@@ -9,8 +9,11 @@ import {
 
 import log from "loglevel";
 import { around } from "monkey-around";
-import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
-import { updateActionButtons } from "src/helpers/viewHelpers";
+import {
+	handleClick,
+	handleContextMenu,
+	handleKeyDown,
+} from "src/helpers/clickHandler";
 import { setContent } from "src/helpers/viewSync";
 import type SandboxNotePlugin from "src/main";
 import { SANDBOX_NOTE_ICON } from "src/utils/constants";
@@ -21,7 +24,6 @@ export abstract class AbstractNoteView extends ItemView {
 	plugin: SandboxNotePlugin;
 	public wrapper: EditorWrapper;
 	saveActionEl!: HTMLElement;
-	private onloadCallbacks: (() => void)[] = [];
 	private initialState: any = null;
 	public isSourceMode = true;
 
@@ -114,10 +116,10 @@ export abstract class AbstractNoteView extends ItemView {
 		this.registerActiveLeafEvents();
 
 		try {
-			await this.initializeEditor();
-			await this.loadContent();
+			await this.wrapper.initialize(this.contentEl, this.initialState);
+			this.initialState = null;
 			this.setupEventHandlers();
-			this.connectEditorPlugin();
+			this.plugin.editorPluginConnector.connectEditorPluginToView(this);
 		} catch (error) {
 			this.handleInitializationError(error);
 		}
@@ -131,28 +133,6 @@ export abstract class AbstractNoteView extends ItemView {
 				}
 			})
 		);
-	}
-
-	private async initializeEditor() {
-		await this.wrapper.onload();
-		const editorContainer = this.contentEl.createEl("div", {
-			cls: "sandbox-note-container",
-		});
-		this.wrapper.load(editorContainer);
-	}
-
-	private async loadContent() {
-		const initialContent =
-			this.initialState?.content ?? (await this.loadInitialContent());
-		this.wrapper.content = initialContent;
-		this.setContent(initialContent);
-		if (this.initialState) {
-			await this.wrapper.virtualEditor.setState(this.initialState, {
-				history: false,
-			});
-			this.initialState = null;
-		}
-		// Initial state is considered "saved" by the manager
 	}
 
 	private handleInitializationError(error: unknown) {
@@ -183,46 +163,37 @@ export abstract class AbstractNoteView extends ItemView {
 		);
 
 		// Use the capture phase to reliably catch the Ctrl+S hotkey, which is otherwise difficult to intercept in Obsidian.
-		this.registerDomEvent(window, "keydown", this.onKeyDown, {
-			capture: true,
-		});
-	}
-
-	private onKeyDown = (e: KeyboardEvent) => {
-		const activeView = this.app.workspace.activeLeaf?.view;
-		if (activeView !== this) return;
-
-		if (!this.editor?.hasFocus()) return;
-		if (this.plugin.settings.enableCtrlS && e.ctrlKey && e.key === "s") {
-			e.preventDefault(); // Prevent default browser save action
-			log.debug("Saving note via Ctrl+S");
-			this.save();
-		}
-	};
-
-	private connectEditorPlugin() {
-		if (!this.editor) return;
-		this.onloadCallbacks.push(() => {
-			const editorPlugin = this.editor.cm.plugin(
-				this.plugin.editorPluginConnector.watchEditorPlugin
-			);
-			if (editorPlugin) {
-				editorPlugin.connectToPlugin(
-					this.plugin,
-					this,
-					this.plugin.emitter
-				);
+		this.registerDomEvent(
+			window,
+			"keydown",
+			(e) => handleKeyDown(this, e),
+			{
+				capture: true,
 			}
-		});
-	}
-
-	onload(): void {
-		this.onloadCallbacks.forEach((callback) => callback());
-		this.onloadCallbacks = [];
+		);
 	}
 
 	updateActionButtons() {
-		updateActionButtons(this);
+		if (!this.plugin.settings.enableAutoSave) {
+			this.saveActionEl?.hide();
+			return;
+		}
+
+		if (!this.saveActionEl) {
+			this.saveActionEl = this.addAction("save", "Save", () =>
+				this.save()
+			);
+		}
+		this.saveActionEl?.show();
+
+		const shouldShowUnsaved =
+			this.plugin.settings.enableAutoSave && this.hasUnsavedChanges;
+
+		this.saveActionEl?.toggleClass("is-disabled", !shouldShowUnsaved);
+		this.saveActionEl?.setAttribute(
+			"aria-disabled",
+			String(!shouldShowUnsaved)
+		);
 	}
 
 	async onClose() {

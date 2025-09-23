@@ -1,8 +1,8 @@
 import type SandboxNotePlugin from "src/main";
 import { syncEditorPlugin } from "src/views/helpers/SyncEditorPlugin";
-import type { SandboxNoteView } from "src/views/SandboxNoteView";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
+import type { AbstractNoteView } from "src/views/helpers/AbstractNoteView";
 
 /** Manages editor extensions and plugin connections */
 export class EditorPluginConnector {
@@ -23,9 +23,9 @@ export class EditorPluginConnector {
 	}
 
 	/** Connect watch editor plugin to view */
-	connectEditorPluginToView(view: SandboxNoteView) {
-		const editorPlugin =
-			view.wrapper.virtualEditor.editor.cm.plugin(syncEditorPlugin);
+	connectEditorPluginToView(view: AbstractNoteView) {
+		if (!view.editor) return;
+		const editorPlugin = view.editor.cm.plugin(syncEditorPlugin);
 		if (editorPlugin) {
 			editorPlugin.connectToPlugin(this.plugin, view, this.emitter);
 		}

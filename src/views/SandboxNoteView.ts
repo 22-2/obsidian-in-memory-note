@@ -32,19 +32,6 @@ export class SandboxNoteView extends AbstractNoteView {
 		return this.plugin.editorSyncManager.currenSharedNoteContent;
 	}
 
-	/** A change in this view should be broadcast to other sandbox views. */
-	override onContentChanged(content: string): void {
-		// Broadcast content changes to other views
-		this.plugin.editorSyncManager.syncAll(content, this);
-
-		console.log("onContentChanged");
-
-		// Trigger debounced save if the setting is enabled
-		if (this.plugin.settings.enableAutoSave) {
-			this.plugin.saveManager.debouncedSave(this);
-		}
-	}
-
 	/** Save the content using the SaveManager. */
 	async save(): Promise<void> {
 		await this.plugin.saveManager.saveNoteContentToFile(this);

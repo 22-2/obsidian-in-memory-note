@@ -1,6 +1,7 @@
 import type { SandboxNoteView } from "../views/SandboxNoteView";
 import type SandboxNotePlugin from "../main";
 import log from "loglevel";
+import type { AbstractNoteView } from "src/views/helpers/AbstractNoteView"; // 追記
 
 /** Manages shared content synchronization across views */
 export class EditorSyncManager {
@@ -23,7 +24,7 @@ export class EditorSyncManager {
 	}
 
 	/** Update shared content and sync across all views */
-	syncAll(content: string, sourceView: SandboxNoteView) {
+	syncAll(content: string, sourceView: AbstractNoteView) {
 		log.debug(
 			`Updating note content from view: ${sourceView.getViewType()}`
 		);

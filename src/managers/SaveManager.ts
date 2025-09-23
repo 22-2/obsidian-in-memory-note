@@ -92,7 +92,7 @@ export class SaveManager {
 		await this.saveData(this.settings);
 
 		// Mark the content as saved in the central manager
-		this.emitter.emit("content-saved");
+		this.emitter.emit("content-saved", undefined);
 
 		log.debug("Auto-saved note content to data.json using Obsidian API");
 	}

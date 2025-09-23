@@ -8,6 +8,7 @@ import type { SandboxNoteView } from "../views/SandboxNoteView";
  * @param content The new content to set.
  */
 export function setContent(view: AbstractNoteView, content: string) {
+	if (!view.containerEl.isShown()) return;
 	if (view.editor && view.editor.getValue() !== content) {
 		view.editor.setValue(content);
 		// Update unsaved state when content is synchronized from other views

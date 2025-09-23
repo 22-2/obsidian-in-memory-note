@@ -22,7 +22,7 @@ describe("View Helpers", () => {
 		mockView = {
 			plugin: {
 				settings: {
-					enableSaveNoteContent: true,
+					enableAutoSave: true,
 				},
 			},
 			hasUnsavedChanges: false,

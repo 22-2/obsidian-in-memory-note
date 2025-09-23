@@ -73,21 +73,23 @@ describe("SandboxNoteView", () => {
 		plugin = {
 			app: app,
 			registerEvent: vi.fn(),
-			contentManager: {
+			editorSyncManager: {
 				sharedNoteContent: "Initial Content From Plugin",
 				addActiveView: vi.fn(),
 				removeActiveView: vi.fn(),
-				updateNoteContent: vi.fn(),
+				syncAll: vi.fn(),
 			},
 			settings: {
+				enableAutoSave: true,
 				enableSaveNoteContent: true,
 				enableCtrlS: true,
 			},
-			editorManager: {
+			editorPluginConnector: {
 				watchEditorPlugin: vi.fn(),
 			},
 			saveManager: {
 				debouncedSave: vi.fn(),
+				saveNoteContentToFile: vi.fn(),
 			},
 		} as unknown as SandboxNotePlugin;
 

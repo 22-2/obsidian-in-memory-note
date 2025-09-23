@@ -6,7 +6,7 @@ import {
 	type ViewStateResult,
 	WorkspaceLeaf,
 } from "obsidian";
-import { EditorWrapper } from "src/views/editorWrapper";
+import { EditorWrapper } from "src/views/EditorWrapper";
 import type SandboxNotePlugin from "../main";
 import { updateActionButtons } from "../helpers/viewHelpers";
 import { setContent } from "../helpers/viewSync";

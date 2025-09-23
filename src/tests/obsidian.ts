@@ -1190,6 +1190,12 @@ export function createMockApp() {
 	return new App();
 }
 
+export function createDiv(cls?: string): HTMLElement {
+    const el = document.createElement('div');
+    if (cls) el.className = cls;
+    return el;
+}
+
 // Default export for compatibility
 export default {
 	TFile,
@@ -1229,6 +1235,7 @@ export default {
 	createTestFile,
 	getTestFiles,
 	createMockApp,
+    createDiv,
 	sleep: (ms: number) => {
 		return new Promise((resolve) => setTimeout(resolve, ms));
 	},

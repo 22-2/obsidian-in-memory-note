@@ -233,7 +233,11 @@ export abstract class AbstractNoteView extends ItemView {
 		this.hasUnsavedChanges = currentContent !== this.initialContent;
 		this.updateActionButtons();
 		if (wasUnsaved !== this.hasUnsavedChanges) {
-			this.leaf.updateHeader();
+			// Do not update the header if the view is not visible to avoid
+			// the asterisk showing up on inactive tabs.
+			if (this.app.workspace.activeLeaf === this.leaf) {
+				this.leaf.updateHeader();
+			}
 		}
 	}
 

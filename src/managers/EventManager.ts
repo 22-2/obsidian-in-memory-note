@@ -1,4 +1,6 @@
 import type { AppEvents } from "../events/AppEvents";
+import type { SandboxNotePluginSettings } from "../settings";
+import { SandboxNoteView } from "../views/SandboxNoteView";
 import type { EventEmitter } from "../utils/EventEmitter";
 import type { EditorSyncManager } from "./EditorSyncManager";
 import type { SaveManager } from "./SaveManager";
@@ -12,11 +14,19 @@ export class EventManager {
 
 	public registerEventHandlers(
 		editorSyncManager: EditorSyncManager,
-		saveManager: SaveManager
+		saveManager: SaveManager,
+		settings: SandboxNotePluginSettings
 	): void {
-		// When content changes, sync it
+		// When content changes, sync it and trigger auto-save
 		this.emitter.on("content-changed", (payload) => {
 			editorSyncManager.syncAll(payload.content, payload.sourceView);
+
+			if (
+				settings.enableAutoSave &&
+				payload.sourceView instanceof SandboxNoteView
+			) {
+				saveManager.debouncedSave(payload.sourceView);
+			}
 		});
 
 		// When a save is requested, save it

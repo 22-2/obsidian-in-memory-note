@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { SandboxNoteView } from "../views/SandboxNoteView";
 import type { Editor } from "obsidian";
-import { setContent, synchronizeWithExistingViews } from "src/helpers/viewSync";
+import { setContent, syncView } from "src/helpers/viewSync";
 import type { EditorSyncManager } from "src/managers/EditorSyncManager";
 
 describe("View Sync Helpers", () => {
@@ -71,7 +71,7 @@ describe("View Sync Helpers", () => {
 				"initial content from plugin";
 			mockView.plugin.editorSyncManager.activeViews.add(mockView);
 
-			synchronizeWithExistingViews(mockView);
+			syncView(mockView);
 
 			expect(mockView.setContent).toHaveBeenCalledWith(
 				"initial content from plugin"
@@ -90,7 +90,7 @@ describe("View Sync Helpers", () => {
 			mockView.plugin.editorSyncManager.activeViews.add(mockView);
 			mockView.plugin.editorSyncManager.activeViews.add(mockOtherView);
 
-			synchronizeWithExistingViews(mockView);
+			syncView(mockView);
 
 			expect(
 				mockView.plugin.editorSyncManager.currentSharedNoteContent
@@ -109,7 +109,7 @@ describe("View Sync Helpers", () => {
 			mockView.plugin.editorSyncManager.activeViews.add(mockOtherView);
 			mockView.plugin.editorSyncManager.currentSharedNoteContent = "";
 
-			synchronizeWithExistingViews(mockView);
+			syncView(mockView);
 
 			expect(
 				mockView.plugin.editorSyncManager.currentSharedNoteContent
@@ -119,7 +119,7 @@ describe("View Sync Helpers", () => {
 
 		it("should do nothing if no other views and no initial content", () => {
 			mockView.plugin.editorSyncManager.activeViews.add(mockView);
-			synchronizeWithExistingViews(mockView);
+			syncView(mockView);
 			expect(mockView.setContent).not.toHaveBeenCalled();
 		});
 	});

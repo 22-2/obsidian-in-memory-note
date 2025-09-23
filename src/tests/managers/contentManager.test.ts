@@ -1,5 +1,5 @@
 import type SandboxNotePlugin from "src/main";
-import { SharedContentManager } from "src/managers/SharedContentManager";
+import { EditorSyncManager } from "src/managers/EditorSyncManager";
 import type { SandboxNoteView } from "src/views/SandboxNoteView";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -25,7 +25,7 @@ const mockLogger = {
 const mockPlugin = {} as SandboxNotePlugin;
 
 describe("ContentManager", () => {
-	let contentManager: SharedContentManager;
+	let contentManager: EditorSyncManager;
 	let view1: SandboxNoteView;
 	let view2: SandboxNoteView;
 	let view3: SandboxNoteView;
@@ -33,7 +33,7 @@ describe("ContentManager", () => {
 	beforeEach(() => {
 		// Reset mocks and create new instances for each test
 		vi.clearAllMocks();
-		contentManager = new SharedContentManager(mockPlugin);
+		contentManager = new EditorSyncManager(mockPlugin);
 		view1 = createMockView();
 		view2 = createMockView();
 		view3 = createMockView();
@@ -69,13 +69,13 @@ describe("ContentManager", () => {
 
 		it("should update the shared content", () => {
 			const newContent = "This is the new shared content.";
-			contentManager.updateNoteContent(newContent, view1);
-			expect(contentManager.noteContent).toBe(newContent);
+			contentManager.syncAll(newContent, view1);
+			expect(contentManager.sharedNoteContent).toBe(newContent);
 		});
 
 		it("should synchronize content to all other views", () => {
 			const newContent = "Sync this content!";
-			contentManager.updateNoteContent(newContent, view1);
+			contentManager.syncAll(newContent, view1);
 
 			// The source view should not be updated
 			expect(view1.setContent).not.toHaveBeenCalled();
@@ -94,9 +94,9 @@ describe("ContentManager", () => {
 
 			const newContent = "Content for a single view.";
 			expect(() =>
-				contentManager.updateNoteContent(newContent, view1)
+				contentManager.syncAll(newContent, view1)
 			).not.toThrow();
-			expect(contentManager.noteContent).toBe(newContent);
+			expect(contentManager.sharedNoteContent).toBe(newContent);
 		});
 	});
 

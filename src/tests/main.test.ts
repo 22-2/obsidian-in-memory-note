@@ -74,8 +74,8 @@ describe("SandboxNotePlugin", () => {
 			() => {}
 		);
 		// We need to have the managers on the plugin instance for the spies to work
-		plugin.contentManager = { sharedNoteContent: "" } as any;
-		plugin.editorManager = { setupEditorExtension: vi.fn() } as any;
+		plugin.editorSyncManager = { sharedNoteContent: "" } as any;
+		plugin.editorPluginConnector = { setupEditorExtension: vi.fn() } as any;
 		plugin.uiManager = { setupUserInterface: vi.fn() } as any;
 	});
 
@@ -122,7 +122,7 @@ describe("SandboxNotePlugin", () => {
 		expect((plugin as any).initializeManagers).toHaveBeenCalledOnce();
 		expect((plugin as any).setupSettingsTab).toHaveBeenCalledOnce();
 		expect(
-			plugin.editorManager.setupEditorExtension
+			plugin.editorPluginConnector.setupEditorExtension
 		).toHaveBeenCalledOnce();
 	});
 });

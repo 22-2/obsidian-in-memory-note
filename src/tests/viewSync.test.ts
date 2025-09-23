@@ -67,9 +67,9 @@ describe("View Sync Helpers", () => {
 
 	describe("synchronizeWithExistingViews", () => {
 		it("should set content from shared content if no other views are open", () => {
-			mockView.plugin.contentManager.noteContent =
+			mockView.plugin.editorSyncManager.sharedNoteContent =
 				"initial content from plugin";
-			mockView.plugin.contentManager.activeViews.add(mockView);
+			mockView.plugin.editorSyncManager.activeViews.add(mockView);
 
 			synchronizeWithExistingViews(mockView);
 
@@ -88,12 +88,12 @@ describe("View Sync Helpers", () => {
 				initialContent: "other initial content",
 			} as unknown as SandboxNoteView;
 
-			mockView.plugin.contentManager.activeViews.add(mockView);
-			mockView.plugin.contentManager.activeViews.add(mockOtherView);
+			mockView.plugin.editorSyncManager.activeViews.add(mockView);
+			mockView.plugin.editorSyncManager.activeViews.add(mockOtherView);
 
 			synchronizeWithExistingViews(mockView);
 
-			expect(mockView.plugin.contentManager.noteContent).toBe(
+			expect(mockView.plugin.editorSyncManager.sharedNoteContent).toBe(
 				"content from other view"
 			);
 			expect(mockView.initialContent).toBe("other initial content");
@@ -107,17 +107,19 @@ describe("View Sync Helpers", () => {
 				editor: undefined,
 			} as unknown as SandboxNoteView;
 
-			mockView.plugin.contentManager.activeViews.add(mockView);
-			mockView.plugin.contentManager.activeViews.add(mockOtherView);
+			mockView.plugin.editorSyncManager.activeViews.add(mockView);
+			mockView.plugin.editorSyncManager.activeViews.add(mockOtherView);
 
 			synchronizeWithExistingViews(mockView);
 
-			expect(mockView.plugin.contentManager.noteContent).toBe("");
+			expect(mockView.plugin.editorSyncManager.sharedNoteContent).toBe(
+				""
+			);
 			expect(mockView.setContent).not.toHaveBeenCalled();
 		});
 
 		it("should do nothing if no other views and no initial content", () => {
-			mockView.plugin.contentManager.activeViews.add(mockView);
+			mockView.plugin.editorSyncManager.activeViews.add(mockView);
 			synchronizeWithExistingViews(mockView);
 			expect(mockView.setContent).not.toHaveBeenCalled();
 		});

@@ -1,12 +1,12 @@
 import type SandboxNotePlugin from "src/main";
-import { EditorSyncManager } from "src/managers/EditorSyncManager";
+import { EditorPluginConnector } from "src/managers/EditorPluginConnector";
 import { syncEditorPlugin } from "src/views/helpers/SyncEditorPlugin";
 import { SandboxNoteView } from "src/views/SandboxNoteView";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("EditorManager", () => {
 	let mockPlugin: SandboxNotePlugin;
-	let editorManager: EditorSyncManager;
+	let editorManager: EditorPluginConnector;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -15,7 +15,7 @@ describe("EditorManager", () => {
 			registerEditorExtension: vi.fn(),
 		} as unknown as SandboxNotePlugin;
 
-		editorManager = new EditorSyncManager(mockPlugin);
+		editorManager = new EditorPluginConnector(mockPlugin);
 	});
 
 	it("should be defined", () => {

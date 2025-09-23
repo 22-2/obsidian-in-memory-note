@@ -14,9 +14,9 @@ import { activateView } from "./utils/obsidian";
 import { SandboxNoteView } from "./views/SandboxNoteView";
 import { InMemoryNoteView } from "./views/InMemoryNoteView";
 import log from "loglevel";
-import { SharedContentManager } from "./managers/SharedContentManager";
 import { EditorSyncManager } from "./managers/EditorSyncManager";
-import { AutoSaveHandler } from "./managers/AutoSaveHandler";
+import { EditorPluginConnector } from "./managers/EditorPluginConnector";
+import { SaveManager } from "./managers/SaveManager";
 import { UIManager } from "./managers/UIManager";
 
 /** Main plugin class for Sandbox Note functionality. */
@@ -24,11 +24,10 @@ export default class SandboxNotePlugin extends Plugin {
 	settings: SandboxNotePluginSettings = DEFAULT_SETTINGS;
 
 	// Managers
-	contentManager!: SharedContentManager;
-	saveManager!: AutoSaveHandler;
+	editorSyncManager!: EditorSyncManager;
+	saveManager!: SaveManager;
 	uiManager!: UIManager;
-	// commandManager!: CommandManager;
-	editorManager!: EditorSyncManager;
+	editorPluginConnector!: EditorPluginConnector;
 
 	debouncedSetupSandboxViews = () => {};
 
@@ -44,9 +43,10 @@ export default class SandboxNotePlugin extends Plugin {
 		await this.loadSettings();
 		this.initializeLogger();
 		this.initializeManagers();
-		this.contentManager.noteContent = this.settings.noteContent ?? "";
+		this.editorSyncManager.sharedNoteContent =
+			this.settings.noteContent ?? "";
 		this.setupSettingsTab();
-		this.editorManager.setupEditorExtension();
+		this.editorPluginConnector.setupEditorExtension();
 		this.setupWorkspaceEventHandlers();
 		this.registerViewType();
 		this.uiManager.setupUserInterface();
@@ -64,11 +64,11 @@ export default class SandboxNotePlugin extends Plugin {
 	private setupSandboxViews(): void {
 		log.debug("Workspace layout ready.");
 		// Connect to any existing sandbox views that were restored on startup
-		this.contentManager.activeViews.forEach((view) => {
+		this.editorSyncManager.activeViews.forEach((view) => {
 			log.debug(
 				`Connecting to existing view on layout ready: ${view.getViewType()}`
 			);
-			this.editorManager.connectEditorPluginToView(view);
+			this.editorPluginConnector.connectEditorPluginToView(view);
 		});
 	}
 
@@ -109,11 +109,11 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Initialize all manager instances */
 	private initializeManagers() {
-		this.contentManager = new SharedContentManager(this);
-		this.saveManager = new AutoSaveHandler(this);
+		this.editorSyncManager = new EditorSyncManager(this);
+		this.saveManager = new SaveManager(this);
 		this.uiManager = new UIManager(this);
 		// this.commandManager = new CommandManager(this);
-		this.editorManager = new EditorSyncManager(this);
+		this.editorPluginConnector = new EditorPluginConnector(this);
 	}
 
 	/** Setup plugin settings tab. */
@@ -134,11 +134,11 @@ export default class SandboxNotePlugin extends Plugin {
 			this.app.workspace.getActiveViewOfType(SandboxNoteView);
 
 		// Delegate to save manager
-		this.saveManager.handleActiveLeafChange();
+		this.editorSyncManager;
 
 		// Connect the editor plugin to the new active view
 		if (activeView instanceof SandboxNoteView) {
-			this.editorManager.connectEditorPluginToView(activeView);
+			this.editorPluginConnector.connectEditorPluginToView(activeView);
 		}
 	}
 
@@ -156,7 +156,7 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Update shared content and sync across all views. */
 	updateNoteContent(content: string, sourceView: SandboxNoteView) {
-		this.contentManager.updateNoteContent(content, sourceView);
+		this.editorSyncManager.syncAll(content, sourceView);
 	}
 
 	/** Cleanup on plugin unload. */
@@ -209,10 +209,10 @@ export default class SandboxNotePlugin extends Plugin {
 	async saveSettings() {
 		const settingsToSave = {
 			...this.settings,
-			noteContent: this.contentManager.noteContent,
+			noteContent: this.editorSyncManager.sharedNoteContent,
 		};
 		await this.saveData(settingsToSave);
 		// Refresh all view titles when settings change
-		this.contentManager.refreshAllViewTitles();
+		this.editorSyncManager.refreshAllViewTitles();
 	}
 }

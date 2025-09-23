@@ -1,5 +1,5 @@
-// E:\Desktop\coding\pub\obsidian-sandbox-note\src/views/editorWrapper.ts
-import { type Editor, type ViewStateResult, WorkspaceLeaf } from "obsidian";
+// E:\Desktop\coding\pub\obsidian-sandbox-note\src\views\helpers\EditorWrapper.ts
+import { type Editor, WorkspaceLeaf } from "obsidian";
 import { noop } from "../../utils";
 import type { AbstractNoteView } from "./AbstractNoteView";
 import { UnsafeMarkdownView } from "./UnsafeMarkdownView";
@@ -57,27 +57,27 @@ export class EditorWrapper {
 		this.containerEl = document.createElement("div");
 		this.containerEl.addClasses(["sandbox-inline-editor"]);
 
-		// --- ✨ ここからが核心的な修正 ✨ ---
-		// 本物のleafオブジェクトを汚染する代わりに、
-		// `containerEl`プロパティだけを差し替えた「偽物のleaf」オブジェクトを作成する。
+		// --- The Magic ---
+		// We create a "fake" leaf object to trick the MarkdownView constructor.
+		// The goal is to make it render inside our `containerEl` instead of the
+		// leaf's main container. This avoids modifying the real leaf,
+		// preventing crashes and instability.
 		const fakeLeaf = {
-			...this.parentView.leaf, // 本物のleafからすべてのプロパティをコピー
-			containerEl: this.containerEl, // containerElだけを私たちのラッパーDIVに差し替える
+			...this.parentView.leaf,
+			containerEl: this.containerEl,
+			// Prevent the virtual view from causing side effects
 			getHistoryState: () => ({}),
 			open: noop,
 			getRoot: noop,
 			updateHeader: noop,
 		};
 
-		// `MarkdownView`のコンストラクタを、この偽物のleafで騙す。
-		// これで、MarkdownViewは私たちのDIVの中にレンダリングされるが、
-		// 本物のleafオブジェクトは無傷のままでいられる。
 		this.virtualEditor = new UnsafeMarkdownView(
-			fakeLeaf as unknown as WorkspaceLeaf, // 型アサーションでコンパイラにも納得してもらう
+			fakeLeaf as unknown as WorkspaceLeaf,
 			this
 		);
+		// @ts-ignore
 		fakeLeaf.working = false;
-		// --- ✨ ここまで ✨ ---
 
 		this.disableSaveOperations();
 		await this.ensureSourceMode();

@@ -6,14 +6,15 @@ import {
 	type ViewStateResult,
 	WorkspaceLeaf,
 } from "obsidian";
-import { EditorWrapper } from "./EditorWrapper";
-import type SandboxNotePlugin from "../../main";
-import { updateActionButtons } from "../../helpers/viewHelpers";
-import { setContent } from "../../helpers/viewSync";
-import { SANDBOX_NOTE_ICON } from "../../utils/constants";
-import { handleClick, handleContextMenu } from "../..//helpers/clickHandler";
+
 import log from "loglevel";
 import { around } from "monkey-around";
+import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
+import { updateActionButtons } from "src/helpers/viewHelpers";
+import { setContent } from "src/helpers/viewSync";
+import type SandboxNotePlugin from "src/main";
+import { SANDBOX_NOTE_ICON } from "src/utils/constants";
+import { EditorWrapper } from "./EditorWrapper";
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
@@ -26,7 +27,7 @@ export abstract class AbstractNoteView extends ItemView {
 	private initialState: any = null;
 	public isSourceMode = true;
 
-	navigation = true; // Prevent renaming prompts
+	navigation = true;
 
 	constructor(leaf: WorkspaceLeaf, plugin: SandboxNotePlugin) {
 		super(leaf);
@@ -43,6 +44,7 @@ export abstract class AbstractNoteView extends ItemView {
 	abstract save(): Promise<void>;
 	onContentChanged(content: string): void {}
 	abstract getBaseTitle(): string;
+
 	getDisplayText(): string {
 		const baseTitle = this.getBaseTitle();
 		const shouldShowUnsaved =
@@ -50,9 +52,11 @@ export abstract class AbstractNoteView extends ItemView {
 			this.hasUnsavedChanges;
 		return shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
 	}
+
 	getIcon() {
 		return SANDBOX_NOTE_ICON;
 	}
+
 	setContent(content: string) {
 		setContent(this, content);
 	}
@@ -87,15 +91,11 @@ export abstract class AbstractNoteView extends ItemView {
 		await super.setState(state, result);
 	}
 
-	// --- ✨ ここからが修正点 ✨ ---
 	/**
-	 * `editor:toggle-source`のような内部コマンドが`type:"markdown"`で
-	 * `setViewState`を呼び出す問題を解決するためのパッチ。
-	 *
-	 * 呼び出しをインターセプトし、`type`が`"markdown"`であれば、
-	 * このビューの正しいタイプに書き換える。これにより、`setViewState`が
-	 * ビューの再生成（`close`->`open`）を行わず、`setState`のみを
-	 * 呼び出すようにする。
+	 * Patches leaf.setViewState to handle calls from internal commands.
+	 * Commands like `editor:toggle-source` call setViewState with `type: "markdown"`.
+	 * This patch intercepts the call and corrects the type to our view's actual type,
+	 * preventing the view from being closed and re-opened unnecessarily.
 	 */
 	private applyViewStatePatch() {
 		const view = this;
@@ -103,21 +103,16 @@ export abstract class AbstractNoteView extends ItemView {
 			around(this.leaf, {
 				setViewState: (originalSetViewState) =>
 					async function (this: WorkspaceLeaf, state, result) {
-						// 内部コマンドによる`type:"markdown"`を検知したら...
 						if (state.type === "markdown") {
-							// ...私たちの正しいビュータイプに書き換える
 							state.type = view.getViewType();
 						}
-						// 修正したstateで元の処理を呼び出す
 						return originalSetViewState.call(this, state, result);
 					},
 			})
 		);
 	}
-	// --- ✨ ここまで ✨ ---
 
 	async onOpen() {
-		// --- ✨ 修正点: パッチの呼び出しを復活させる ✨ ---
 		this.applyViewStatePatch();
 
 		this.plugin.registerEvent(

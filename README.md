@@ -10,9 +10,16 @@ This plugin gives you two special notes: "Sandbox Note" and "In-Memory Note." Wr
 
 ## How It Works
 
-*   **No Files Created**: Write freely without making new `.md` files.
-*   **Familiar Editor**: Works like Obsidian's own editor. Markdown, links, and commands are mostly supported.
-*   **Safe for Your Session**: Your Sandbox Note content stays safe as long as Obsidian is open. Close a tab by accident? Just open a new one to get your text back. In-Memory Notes, however, are gone when you close their tab.
+This plugin offers two distinct temporary note types:
+
+*   **Sandbox Note**: This is a **session-persistent scratchpad**. Its content is shared across all Sandbox Note tabs and is saved within the plugin's data, allowing it to persist even if you close and reopen Obsidian (with auto-save enabled). Useful for ongoing thoughts you don't want to save as a file but also don't want to lose quickly.
+
+*   **In-Memory Note**: This is a **truly ephemeral scratchpad**. Each In-Memory Note tab is independent, and its content is **permanently discarded** when the tab is closed or Obsidian is restarted. Perfect for quick calculations, fleeting ideas, or anything you want gone without a trace.
+
+**Common features for both:**
+
+*   **No Files Created**: Write freely without making new `.md` files in your vault.
+*   **Familiar Editor**: Works just like Obsidian's own markdown editor, supporting markdown, links, and commands.
 
 ## How to Use
 

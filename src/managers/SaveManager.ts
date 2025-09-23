@@ -22,18 +22,31 @@ export class AutoSaveHandler {
 		);
 	}
 
-	/** Handle active leaf changes and auto-save if enabled */
+	/**
+	 * Handles the active leaf change event. It orchestrates saving the
+	 * previous view and updating the reference to the new active view.
+	 */
 	handleActiveLeafChange() {
-		const activeView =
+		const currentActiveView =
 			this.plugin.app.workspace.getActiveViewOfType(SandboxNoteView);
 
 		log.debug(
 			`Handling active leaf change. Previous: ${
 				this.previousActiveView?.getViewType() ?? "none"
-			}, Current: ${activeView?.getViewType() ?? "none"}`
+			}, Current: ${currentActiveView?.getViewType() ?? "none"}`
 		);
 
-		// Auto-save content from previous view when save setting is enabled
+		// Save the content of the view we are navigating away from, if applicable
+		this.autoSavePreviousViewIfNeeded();
+
+		// Update the reference to the new active view for the next change
+		this.previousActiveView = currentActiveView;
+	}
+
+	/**
+	 * Checks if the previous view should be auto-saved and triggers the save if so.
+	 */
+	private autoSavePreviousViewIfNeeded(): void {
 		if (
 			this.plugin.settings.enableSaveNoteContent &&
 			this.previousActiveView
@@ -43,8 +56,6 @@ export class AutoSaveHandler {
 			);
 			this.saveNoteContentToFile(this.previousActiveView);
 		}
-
-		this.previousActiveView = activeView;
 	}
 
 	/**
@@ -52,21 +63,21 @@ export class AutoSaveHandler {
 	 * This method orchestrates the save operation.
 	 */
 	async saveNoteContentToFile(view: SandboxNoteView) {
-		// 保留中のデバウンスされた保存があればキャンセルする
+		// Cancel any pending debounced save
 		this.debouncedSave.cancel();
 
-		// 保存処理を実行できるかチェック
+		// Check if a save operation can be performed
 		if (!this.canSave(view)) {
 			return;
 		}
 
-		// canSaveでチェック済みのため、型アサーションを使用
+		// content is validated in canSave, so we can assert the type
 		const content = view.wrapper.getContent() as string;
 
 		log.debug(`Save triggered for view: ${view.getViewType()}`);
 		try {
 			this.isSaving = true;
-			// 実際の保存処理を実行
+			// Perform the actual persistence
 			await this.persistContent(content, view);
 		} catch (error) {
 			log.error(`Failed to auto-save note content: ${error}`);
@@ -81,13 +92,13 @@ export class AutoSaveHandler {
 	 * @returns True if saving is possible, false otherwise.
 	 */
 	private canSave(view: SandboxNoteView): boolean {
-		// 保存処理がすでに進行中の場合はスキップ
+		// Skip if a save is already in progress
 		if (this.isSaving) {
 			log.debug("Skipping save: A save is already in progress.");
 			return false;
 		}
 
-		// コンテンツが不正な場合はスキップ
+		// Skip if the content is invalid
 		const content = view.wrapper.getContent();
 		if (typeof content !== "string") {
 			log.debug("Skipping save: Sandbox note content is invalid.");
@@ -106,14 +117,14 @@ export class AutoSaveHandler {
 		content: string,
 		view: SandboxNoteView
 	): Promise<void> {
-		// インメモリのsettingsを更新して同期を保つ
+		// Also update the in-memory settings to keep them in sync
 		this.plugin.settings.noteContent = content;
 		this.plugin.settings.lastSaved = new Date().toISOString();
 
-		// Obsidian APIを使用してcontentをdata.jsonに保存
+		// Save content to data.json using Obsidian API
 		await this.plugin.saveData(this.plugin.settings);
 
-		// コンテンツが永続化されたので、viewを保存済みとしてマーク
+		// Mark the view as saved since content was persisted
 		view.markAsSaved();
 
 		log.debug("Auto-saved note content to data.json using Obsidian API");

@@ -23,39 +23,6 @@ export class AutoSaveHandler {
 	}
 
 	/**
-	 * Handles the active leaf change event. It orchestrates saving the
-	 * previous view and updating the reference to the new active view.
-	 */
-	handleActiveLeafChange() {
-		const currentActiveView =
-			this.plugin.app.workspace.getActiveViewOfType(SandboxNoteView);
-
-		log.debug(
-			`Handling active leaf change. Previous: ${
-				this.previousActiveView?.getViewType() ?? "none"
-			}, Current: ${currentActiveView?.getViewType() ?? "none"}`
-		);
-
-		// Save the content of the view we are navigating away from, if applicable
-		this.autoSavePreviousViewIfNeeded();
-
-		// Update the reference to the new active view for the next change
-		this.previousActiveView = currentActiveView;
-	}
-
-	/**
-	 * Checks if the previous view should be auto-saved and triggers the save if so.
-	 */
-	private autoSavePreviousViewIfNeeded(): void {
-		if (this.plugin.settings.enableAutoSave && this.previousActiveView) {
-			log.debug(
-				`Triggering save for previous view: ${this.previousActiveView.getViewType()}`
-			);
-			this.saveNoteContentToFile(this.previousActiveView);
-		}
-	}
-
-	/**
 	 * Save note content to data.json after performing necessary checks.
 	 * This method orchestrates the save operation.
 	 */

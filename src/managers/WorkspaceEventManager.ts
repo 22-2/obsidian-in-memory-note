@@ -47,12 +47,16 @@ export class WorkspaceEventManager {
 	private handleActiveLeafChange() {
 		const activeView =
 			this.plugin.app.workspace.getActiveViewOfType(SandboxNoteView);
+		if (!(activeView instanceof SandboxNoteView)) {
+			return;
+		}
+
+		// if (this.plugin.settings.enableAutoSave && !this.plugin.editorSyncManager.hasUnsavedChanges) {
+		// 	this.plugin.saveManager.debouncedSave(activeView);
+		// }
 
 		// Connect the editor plugin to the new active view
-		if (activeView instanceof SandboxNoteView) {
-			this.plugin.editorPluginConnector.connectEditorPluginToView(
-				activeView
-			);
-		}
+		this.plugin.editorPluginConnector.connectEditorPluginToView(activeView);
+		// this.plugin.editorSyncManager.refreshAllViewTitles();
 	}
 }

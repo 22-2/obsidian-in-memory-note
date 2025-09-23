@@ -1,11 +1,12 @@
 import type { SandboxNoteView } from "../views/SandboxNoteView";
-import type SandboxNotePlugin from "../main";
 import log from "loglevel";
 import type { AbstractNoteView } from "src/views/helpers/AbstractNoteView"; // 追記
+import type { EventEmitter } from "src/utils/EventEmitter";
+import type { AppEvents } from "src/events/AppEvents";
 
 /** Manages shared content synchronization across views */
 export class EditorSyncManager {
-	private plugin: SandboxNotePlugin;
+	private emitter: EventEmitter<AppEvents>;
 
 	/** Shared content across all views */
 	currenSharedNoteContent = "";
@@ -19,8 +20,8 @@ export class EditorSyncManager {
 	/** Currently active views */
 	activeViews: Set<SandboxNoteView> = new Set();
 
-	constructor(plugin: SandboxNotePlugin) {
-		this.plugin = plugin;
+	constructor(emitter: EventEmitter<AppEvents>) {
+		this.emitter = emitter;
 	}
 
 	/** Update shared content and sync across all views */
@@ -48,8 +49,9 @@ export class EditorSyncManager {
 
 		if (wasUnsaved !== this.hasUnsavedChanges) {
 			log.debug(`Unsaved state changed to: ${this.hasUnsavedChanges}`);
-			this.refreshAllViewTitles();
-			this.refreshAllViewActionButtons();
+			this.emitter.emit("unsaved-state-changed", {
+				hasUnsavedChanges: this.hasUnsavedChanges,
+			});
 		}
 	}
 
@@ -90,7 +92,7 @@ export class EditorSyncManager {
 	}
 
 	/** Refresh all view action buttons. */
-	private refreshAllViewActionButtons() {
+	public refreshAllViewActionButtons() {
 		for (const view of this.activeViews) {
 			view.updateActionButtons();
 		}

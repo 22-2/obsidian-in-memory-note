@@ -72,6 +72,7 @@ describe("SandboxNotePlugin", () => {
 		plugin.editorPluginConnector = { setupEditorExtension: vi.fn() } as any;
 		plugin.viewActivator = { registerViews: vi.fn() } as any;
 		plugin.workspaceEventManager = { setupEventHandlers: vi.fn() } as any;
+		plugin.eventManager = { registerEventHandlers: vi.fn() } as any;
 
 		vi.spyOn(plugin as any, "setupSettingsTab").mockImplementation(
 			() => {}
@@ -120,6 +121,9 @@ describe("SandboxNotePlugin", () => {
 				plugin.workspaceEventManager = {
 					setupEventHandlers: vi.fn(),
 				} as any;
+				plugin.eventManager = {
+					registerEventHandlers: vi.fn(),
+				} as any;
 			});
 
 		await plugin.onload();
@@ -128,6 +132,7 @@ describe("SandboxNotePlugin", () => {
 		expect(plugin.loadSettings).toHaveBeenCalledOnce();
 		expect(initializeManagersSpy).toHaveBeenCalledOnce();
 		expect((plugin as any).setupSettingsTab).toHaveBeenCalledOnce();
+		expect(plugin.eventManager.registerEventHandlers).toHaveBeenCalledOnce();
 		expect(
 			plugin.editorPluginConnector.setupEditorExtension
 		).toHaveBeenCalledOnce();

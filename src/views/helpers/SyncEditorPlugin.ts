@@ -3,17 +3,20 @@ import type SandboxNotePlugin from "../../main";
 import { type Debouncer, debounce } from "obsidian";
 import { AbstractNoteView } from "./AbstractNoteView";
 import { SandboxNoteView } from "src/views/SandboxNoteView";
+import type { EventEmitter } from "src/utils/EventEmitter";
+import type { AppEvents } from "src/events/AppEvents";
 
 /** CodeMirror plugin for syncing content across views. */
 export class SyncEditorPlugin implements PluginValue {
 	private connectedPlugin: SandboxNotePlugin | null = null;
 	private connectedView: AbstractNoteView | null = null;
 	private debouncer: Debouncer<[], void> | null = null;
+	private emitter: EventEmitter<AppEvents> | null = null;
 
 	/** Handle editor updates and propagate changes. */
 	update(update: ViewUpdate): void {
 		// Only proceed if plugin and view are connected
-		if (!this.connectedPlugin || !this.connectedView) {
+		if (!this.emitter || !this.connectedView) {
 			return;
 		}
 
@@ -21,10 +24,10 @@ export class SyncEditorPlugin implements PluginValue {
 		if (update.docChanged) {
 			const updatedContent = update.state.doc.toString();
 
-			this.connectedPlugin.editorSyncManager.syncAll(
-				updatedContent,
-				this.connectedView as SandboxNoteView
-			);
+			this.emitter.emit("content-changed", {
+				content: updatedContent,
+				sourceView: this.connectedView,
+			});
 
 			// Trigger debounced save if enabled
 			this.debouncer?.();
@@ -32,9 +35,14 @@ export class SyncEditorPlugin implements PluginValue {
 	}
 
 	/** Connect to main plugin and view. */
-	connectToPlugin(plugin: SandboxNotePlugin, view: AbstractNoteView): void {
+	connectToPlugin(
+		plugin: SandboxNotePlugin,
+		view: AbstractNoteView,
+		emitter: EventEmitter<AppEvents>
+	): void {
 		this.connectedPlugin = plugin;
 		this.connectedView = view;
+		this.emitter = emitter;
 
 		// SandboxNoteViewの場合だけオートセーブを有効にする
 		if (
@@ -60,6 +68,7 @@ export class SyncEditorPlugin implements PluginValue {
 		this.debouncer = null;
 		this.connectedPlugin = null;
 		this.connectedView = null;
+		this.emitter = null;
 	}
 }
 

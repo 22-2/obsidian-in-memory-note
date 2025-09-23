@@ -3,28 +3,35 @@ import { EditorPluginConnector } from "src/managers/EditorPluginConnector";
 import { syncEditorPlugin } from "src/views/helpers/SyncEditorPlugin";
 import { SandboxNoteView } from "src/views/SandboxNoteView";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { EventEmitter } from "src/utils/EventEmitter";
+import type { AppEvents } from "src/events/AppEvents";
 
-describe("EditorManager", () => {
+describe("EditorPluginConnector", () => {
 	let mockPlugin: SandboxNotePlugin;
-	let editorManager: EditorPluginConnector;
+	let editorPluginConnector: EditorPluginConnector;
+	let mockEmitter: EventEmitter<AppEvents>;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 
+		mockEmitter = new EventEmitter<AppEvents>();
 		mockPlugin = {
 			registerEditorExtension: vi.fn(),
 		} as unknown as SandboxNotePlugin;
 
-		editorManager = new EditorPluginConnector(mockPlugin);
+		editorPluginConnector = new EditorPluginConnector(
+			mockPlugin,
+			mockEmitter
+		);
 	});
 
 	it("should be defined", () => {
-		expect(editorManager).toBeDefined();
+		expect(editorPluginConnector).toBeDefined();
 	});
 
 	describe("setupEditorExtension", () => {
 		it("should register the watchEditorPlugin", () => {
-			editorManager.setupEditorExtension();
+			editorPluginConnector.setupEditorExtension();
 
 			expect(mockPlugin.registerEditorExtension).toHaveBeenCalledOnce();
 			expect(mockPlugin.registerEditorExtension).toHaveBeenCalledWith(
@@ -56,7 +63,7 @@ describe("EditorManager", () => {
 		});
 
 		it("should get the plugin instance and connect it to the view", () => {
-			editorManager.connectEditorPluginToView(mockView);
+			editorPluginConnector.connectEditorPluginToView(mockView);
 
 			// Check that we tried to get the correct plugin
 			expect(
@@ -70,7 +77,8 @@ describe("EditorManager", () => {
 			expect(mockCmPlugin.connectToPlugin).toHaveBeenCalledOnce();
 			expect(mockCmPlugin.connectToPlugin).toHaveBeenCalledWith(
 				mockPlugin,
-				mockView
+				mockView,
+				mockEmitter
 			);
 		});
 
@@ -84,7 +92,7 @@ describe("EditorManager", () => {
 
 			// Act & Assert
 			expect(() => {
-				editorManager.connectEditorPluginToView(mockView);
+				editorPluginConnector.connectEditorPluginToView(mockView);
 			}).not.toThrow();
 
 			// Assert that connectToPlugin was not called

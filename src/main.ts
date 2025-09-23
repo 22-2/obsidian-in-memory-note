@@ -82,7 +82,7 @@ export default class SandboxNotePlugin extends Plugin {
 		// to create an editor without a file. This check attempts to create a
 		// dummy view to see if the required APIs are available.
 		try {
-			const dummyEl = document.createElement("div");
+			const dummyEl = createDiv("div");
 			const leaf = {
 				...(this.app.workspace.activeLeaf ?? {}),
 				containerEl: dummyEl,

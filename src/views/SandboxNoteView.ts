@@ -3,6 +3,7 @@ import { VIEW_TYPE_SANDBOX } from "src/utils/constants";
 import type SandboxNotePlugin from "../main";
 import { synchronizeWithExistingViews } from "../helpers/viewSync";
 import { AbstractNoteView } from "./helpers/AbstractNoteView";
+import log from "loglevel";
 
 /** View for a synchronized, persistent sandbox note. */
 export class SandboxNoteView extends AbstractNoteView {
@@ -64,25 +65,22 @@ export class SandboxNoteView extends AbstractNoteView {
 	/** On open, register this view with the ContentManager. */
 	async onOpen() {
 		this.plugin.contentManager.addActiveView(this);
-		this.plugin.registerDomEvent(
-			this.containerEl,
-			"keydown",
-			this.onKeyDown,
-			{
-				capture: true,
-			}
-		);
-		// console.trace("onOpen");
+		this.plugin.registerDomEvent(window, "keydown", this.onKeyDown, {
+			capture: true,
+		});
 		await super.onOpen();
 	}
 
 	onKeyDown = (e: KeyboardEvent) => {
+		const activeView =
+			this.app.workspace.getActiveViewOfType(AbstractNoteView);
 		if (
+			activeView &&
 			this.plugin.settings.enableCtrlS &&
 			e.ctrlKey &&
-			e.key === "s" &&
-			e.preventDefault()
+			e.key === "s"
 		) {
+			log.debug("save!");
 			this.save();
 		}
 	};

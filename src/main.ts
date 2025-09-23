@@ -16,7 +16,7 @@ import { InMemoryNoteView } from "./views/InMemoryNoteView";
 import log from "loglevel";
 import { SharedContentManager } from "./managers/SharedContentManager";
 import { EditorSyncManager } from "./managers/EditorSyncManager";
-import { AutoSaveHandler } from "./managers/SaveManager";
+import { AutoSaveHandler } from "./managers/AutoSaveHandler";
 import { UIManager } from "./managers/UIManager";
 
 /** Main plugin class for Sandbox Note functionality. */

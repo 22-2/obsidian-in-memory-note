@@ -32,7 +32,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 		this.addDebugLoggingSetting();
 		this.addAutoSaveSetting();
 		this.addAutoSaveDebounceSetting();
-		// this.addUnsafeCtrlSSetting();
+		this.addCtrlSSetting();
 	}
 
 	/** Add debug logging toggle. */
@@ -124,20 +124,19 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 	// 		});
 	// }
 	/** Add Ctrl+S save setting. */
-	// private addCtrlSSetting() {
-	// 	new Setting(this.containerEl)
-	// 		.setName("Enable Ctrl+S to save sandbox note")
-	// 		.setDesc(
-	// 			"Overrides the default save command (Ctrl+S) to save the content of the sandbox note. "
-	// 		)
-	// 		.addToggle((toggle) => {
-	// 			toggle
-	// 				.setValue(this.plugin.data.settings.enableCtrlS)
-	// 				.onChange(async (enabled) => {
-	// 					this.plugin.data.settings.enableCtrlS = enabled;
-	// 					await this.plugin.saveSettings();
-	// 					// this.plugin.commandManager.updateSaveCommandMonkeyPatch();
-	// 				});
-	// 		});
-	// }
+	private addCtrlSSetting() {
+		new Setting(this.containerEl)
+			.setName("Enable Ctrl+S to save sandbox note")
+			.setDesc(
+				"Overrides the default save command (Ctrl+S) to save the content of the sandbox note. "
+			)
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this.plugin.data.settings.enableCtrlS)
+					.onChange(async (enabled) => {
+						this.plugin.data.settings.enableCtrlS = enabled;
+						await this.plugin.saveSettings();
+					});
+			});
+	}
 }

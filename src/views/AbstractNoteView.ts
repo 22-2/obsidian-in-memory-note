@@ -102,7 +102,7 @@ export abstract class AbstractNoteView extends ItemView {
 		this.register(
 			around(this.leaf, {
 				setViewState: (originalSetViewState) =>
-					async function (state, result) {
+					async function (this: WorkspaceLeaf, state, result) {
 						// 内部コマンドによる`type:"markdown"`を検知したら...
 						if (state.type === "markdown") {
 							// ...私たちの正しいビュータイプに書き換える

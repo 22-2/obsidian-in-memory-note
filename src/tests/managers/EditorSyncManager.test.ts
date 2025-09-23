@@ -65,9 +65,7 @@ describe("EditorSyncManager", () => {
 		it("should update the shared content and emit event", () => {
 			const newContent = "This is the new shared content.";
 			editorSyncManager.syncAll(newContent, view1);
-			expect(editorSyncManager.currenSharedNoteContent).toBe(
-				newContent
-			);
+			expect(editorSyncManager.currentSharedNoteContent).toBe(newContent);
 			expect(mockEmitter.emit).toHaveBeenCalledWith(
 				"unsaved-state-changed",
 				{ hasUnsavedChanges: true }
@@ -97,7 +95,7 @@ describe("EditorSyncManager", () => {
 			expect(() =>
 				editorSyncManager.syncAll(newContent, view1)
 			).not.toThrow();
-			expect(editorSyncManager.currenSharedNoteContent).toBe(newContent);
+			expect(editorSyncManager.currentSharedNoteContent).toBe(newContent);
 		});
 	});
 

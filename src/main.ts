@@ -1,4 +1,4 @@
-import { Notice, Plugin, WorkspaceLeaf } from "obsidian";
+import { debounce, Notice, Plugin, WorkspaceLeaf } from "obsidian";
 import {
 	type SandboxNotePluginSettings,
 	SandboxNoteSettingTab,
@@ -30,6 +30,8 @@ export default class SandboxNotePlugin extends Plugin {
 	// commandManager!: CommandManager;
 	editorManager!: EditorManager;
 
+	debouncedSetupSandboxViews = () => {};
+
 	/** Initialize plugin on load. */
 	async onload() {
 		if (!this.checkCompatibility()) {
@@ -49,13 +51,14 @@ export default class SandboxNotePlugin extends Plugin {
 		this.registerViewType();
 		this.uiManager.setupUserInterface();
 		// this.commandManager.updateSaveCommandMonkeyPatch();
-		this.app.workspace.onLayoutReady(() => this.onLayoutReady());
-		this.app.workspace.on("layout-change", () => this.onLayoutReady());
+		this.app.workspace.onLayoutReady(() => this.setupSandboxViews());
+		this.debouncedSetupSandboxViews = debounce(this.setupSandboxViews, 100);
+		this.app.workspace.on("layout-change", this.debouncedSetupSandboxViews);
 		log.debug("Sandbox Note plugin loaded");
 	}
 
 	/** Fires once the workspace is ready. */
-	private onLayoutReady(): void {
+	private setupSandboxViews(): void {
 		log.debug("Workspace layout ready.");
 		// Connect to any existing sandbox views that were restored on startup
 		this.app.workspace

@@ -184,6 +184,8 @@ export abstract class AbstractNoteView extends ItemView {
 				this.wrapper.virtualEditor.editMode
 			)
 		);
+
+		// Use the capture phase to reliably catch the Ctrl+S hotkey, which is otherwise difficult to intercept in Obsidian.
 		this.registerDomEvent(window, "keydown", this.onKeyDown, {
 			capture: true,
 		});

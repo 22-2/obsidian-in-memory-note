@@ -46,7 +46,7 @@ export const handleKeyDown = (view: AbstractNoteView, e: KeyboardEvent) => {
 
 	if (!view.editor?.hasFocus()) return;
 	if (
-		view.plugin.settings.enableCtrlS &&
+		view.plugin.data.settings.enableCtrlS &&
 		(e.ctrlKey || e.metaKey) &&
 		e.key === "s"
 	) {

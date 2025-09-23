@@ -42,9 +42,9 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			.setDesc("Enable or disable debug messages in the console.")
 			.addToggle((toggle) => {
 				toggle
-					.setValue(this.plugin.settings.enableLogger)
+					.setValue(this.plugin.data.settings.enableLogger)
 					.onChange(async (enabled) => {
-						this.plugin.settings.enableLogger = enabled;
+						this.plugin.data.settings.enableLogger = enabled;
 						this.plugin.initializeLogger();
 						await this.plugin.saveSettings();
 					});
@@ -61,9 +61,9 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			)
 			.addToggle((toggle) => {
 				toggle
-					.setValue(this.plugin.settings.enableAutoSave)
+					.setValue(this.plugin.data.settings.enableAutoSave)
 					.onChange(async (enabled) => {
-						this.plugin.settings.enableAutoSave = enabled;
+						this.plugin.data.settings.enableAutoSave = enabled;
 						await this.plugin.saveSettings();
 						// Re-render the dependent setting
 						this.display();
@@ -73,7 +73,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 
 	/** Add auto-save debounce delay setting. */
 	private addAutoSaveDebounceSetting() {
-		if (!this.plugin.settings.enableAutoSave) {
+		if (!this.plugin.data.settings.enableAutoSave) {
 			return;
 		}
 
@@ -94,9 +94,11 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			.addDropdown((dropdown) => {
 				dropdown
 					.addOptions(options)
-					.setValue(String(this.plugin.settings.autoSaveDebounceMs))
+					.setValue(
+						String(this.plugin.data.settings.autoSaveDebounceMs)
+					)
 					.onChange(async (value) => {
-						this.plugin.settings.autoSaveDebounceMs =
+						this.plugin.data.settings.autoSaveDebounceMs =
 							Number.parseInt(value, 10);
 						await this.plugin.saveSettings();
 					});
@@ -113,9 +115,9 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 	// 		)
 	// 		.addToggle((toggle) => {
 	// 			toggle
-	// 				.setValue(this.plugin.settings.enableUnsafeCtrlS)
+	// 				.setValue(this.plugin.data.settings.enableUnsafeCtrlS)
 	// 				.onChange(async (enabled) => {
-	// 					this.plugin.settings.enableUnsafeCtrlS = enabled;
+	// 					this.plugin.data.settings.enableUnsafeCtrlS = enabled;
 	// 					await this.plugin.saveSettings();
 	// 					// this.plugin.commandManager.updateSaveCommandMonkeyPatch();
 	// 				});
@@ -130,9 +132,9 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 	// 		)
 	// 		.addToggle((toggle) => {
 	// 			toggle
-	// 				.setValue(this.plugin.settings.enableCtrlS)
+	// 				.setValue(this.plugin.data.settings.enableCtrlS)
 	// 				.onChange(async (enabled) => {
-	// 					this.plugin.settings.enableCtrlS = enabled;
+	// 					this.plugin.data.settings.enableCtrlS = enabled;
 	// 					await this.plugin.saveSettings();
 	// 					// this.plugin.commandManager.updateSaveCommandMonkeyPatch();
 	// 				});

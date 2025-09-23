@@ -174,7 +174,7 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	updateActionButtons() {
-		if (!this.plugin.settings.enableAutoSave) {
+		if (!this.plugin.data.settings.enableAutoSave) {
 			this.saveActionEl?.hide();
 			return;
 		}
@@ -187,7 +187,7 @@ export abstract class AbstractNoteView extends ItemView {
 		this.saveActionEl?.show();
 
 		const shouldShowUnsaved =
-			this.plugin.settings.enableAutoSave && this.hasUnsavedChanges;
+			this.plugin.data.settings.enableAutoSave && this.hasUnsavedChanges;
 
 		this.saveActionEl?.toggleClass("is-disabled", !shouldShowUnsaved);
 		this.saveActionEl?.setAttribute(

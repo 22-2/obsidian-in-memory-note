@@ -25,11 +25,6 @@ import type { SandboxNoteView } from "./views/SandboxNoteView";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
-	/**
-	 * @deprecated
-	 * */
-	settings: SandboxNotePluginSettings = DEFAULT_SETTINGS;
-
 	data: PluginData = DEFAULT_PLUGIN_DATA;
 
 	// Managers

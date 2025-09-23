@@ -782,6 +782,23 @@ export class ItemView extends Component {
 	}
 }
 
+// MarkdownView mock class
+export class MarkdownView extends ItemView {
+	constructor(leaf: any) {
+		super(leaf);
+	}
+
+	// Add any specific MarkdownView properties or methods you need to mock
+	// For example, an editor property
+	editor: any = {
+		// Mock editor methods as needed
+		getSelection: vi.fn(() => ""),
+		replaceSelection: vi.fn(),
+		getLine: vi.fn((n) => "line " + n),
+		lastLine: vi.fn(() => 0),
+	};
+}
+
 // --- UI Components used by FilterBar ---
 
 // Setting mock class
@@ -1191,6 +1208,7 @@ export default {
 	FuzzySuggestModal,
 	AbstractInputSuggest,
 	ItemView,
+	MarkdownView,
 	Setting,
 	PluginSettingTab,
 	Menu,

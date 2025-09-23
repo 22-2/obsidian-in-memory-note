@@ -47,43 +47,75 @@ export class AutoSaveHandler {
 		this.previousActiveView = activeView;
 	}
 
-	/** Save note content to data.json using Obsidian API */
+	/**
+	 * Save note content to data.json after performing necessary checks.
+	 * This method orchestrates the save operation.
+	 */
 	async saveNoteContentToFile(view: SandboxNoteView) {
-		// Once a save is in progress, cancel any other debounced saves
+		// 保留中のデバウンスされた保存があればキャンセルする
 		this.debouncedSave.cancel();
+
+		// 保存処理を実行できるかチェック
+		if (!this.canSave(view)) {
+			return;
+		}
+
+		// canSaveでチェック済みのため、型アサーションを使用
+		const content = view.wrapper.getContent() as string;
 
 		log.debug(`Save triggered for view: ${view.getViewType()}`);
 		try {
-			if (this.isSaving) {
-				log.debug("Skipping save: A save is already in progress.");
-				return;
-			}
 			this.isSaving = true;
-			const content = view.wrapper.getContent();
-
-			// Skip saving if content is invalid
-			if (typeof content !== "string") {
-				log.debug("Skipping save: Sandbox note content is invalid.");
-				return;
-			}
-
-			// Also update the in-memory settings to keep them in sync
-			this.plugin.settings.noteContent = content;
-			this.plugin.settings.lastSaved = new Date().toISOString();
-
-			// Save content to data.json using Obsidian API
-			await this.plugin.saveData(this.plugin.settings);
-
-			// Mark the view as saved since content was persisted
-			view.markAsSaved();
-
-			log.debug(
-				"Auto-saved note content to data.json using Obsidian API"
-			);
+			// 実際の保存処理を実行
+			await this.persistContent(content, view);
 		} catch (error) {
 			log.error(`Failed to auto-save note content: ${error}`);
 		} finally {
 			this.isSaving = false;
 		}
+	}
+
+	/**
+	 * Checks if the content of the view can be saved.
+	 * @param view The view to check.
+	 * @returns True if saving is possible, false otherwise.
+	 */
+	private canSave(view: SandboxNoteView): boolean {
+		// 保存処理がすでに進行中の場合はスキップ
+		if (this.isSaving) {
+			log.debug("Skipping save: A save is already in progress.");
+			return false;
+		}
+
+		// コンテンツが不正な場合はスキップ
+		const content = view.wrapper.getContent();
+		if (typeof content !== "string") {
+			log.debug("Skipping save: Sandbox note content is invalid.");
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Persists the given content to the plugin's data file and updates the view state.
+	 * @param content The content to save.
+	 * @param view The view to mark as saved.
+	 */
+	private async persistContent(
+		content: string,
+		view: SandboxNoteView
+	): Promise<void> {
+		// インメモリのsettingsを更新して同期を保つ
+		this.plugin.settings.noteContent = content;
+		this.plugin.settings.lastSaved = new Date().toISOString();
+
+		// Obsidian APIを使用してcontentをdata.jsonに保存
+		await this.plugin.saveData(this.plugin.settings);
+
+		// コンテンツが永続化されたので、viewを保存済みとしてマーク
+		view.markAsSaved();
+
+		log.debug("Auto-saved note content to data.json using Obsidian API");
 	}
 }

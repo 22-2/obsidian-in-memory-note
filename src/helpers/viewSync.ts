@@ -8,7 +8,7 @@ import type { SandboxNoteView } from "../views/SandboxNoteView";
  * @param content The new content to set.
  */
 export function setContent(view: AbstractNoteView, content: string) {
-	if (!view.containerEl.isShown()) return;
+	if (!view.containerEl?.isShown()) return;
 	if (view.editor && view.editor.getValue() !== content) {
 		view.editor.setValue(content);
 		// Update unsaved state when content is synchronized from other views
@@ -23,7 +23,8 @@ export function setContent(view: AbstractNoteView, content: string) {
  * @param view The instance of the SandboxNoteView to synchronize.
  */
 export function synchronizeWithExistingViews(view: SandboxNoteView) {
-	const existingViews = Array.from(view.plugin.contentManager.activeViews);
+	const active = view.plugin.contentManager.activeViews || [];
+	const existingViews = Array.from(active);
 	const sourceView = existingViews.find((v) => v !== view);
 
 	if (sourceView?.editor) {

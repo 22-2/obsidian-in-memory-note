@@ -12,10 +12,9 @@ import { around } from "monkey-around";
 import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
 import { updateActionButtons } from "src/helpers/viewHelpers";
 import { setContent } from "src/helpers/viewSync";
-import SandboxNotePlugin from "src/main";
+import type SandboxNotePlugin from "src/main";
 import { SANDBOX_NOTE_ICON } from "src/utils/constants";
 import { EditorWrapper } from "./EditorWrapper";
-import { SandboxNoteView } from "../SandboxNoteView";
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
@@ -188,22 +187,22 @@ export abstract class AbstractNoteView extends ItemView {
 		);
 
 		// Use the capture phase to reliably catch the Ctrl+S hotkey, which is otherwise difficult to intercept in Obsidian.
-		this.registerDomEvent(window, "keydown", this.onKeyDown, {
+		this.registerDomEvent(window, "keydown", this.onKeyDown.bind(this), {
 			capture: true,
 		});
 	}
 
-	private onKeyDown = (e: KeyboardEvent) => {
-		const activeView =
-			this.app.workspace.getActiveViewOfType(SandboxNoteView);
-		if (activeView === this) return;
-		if (!activeView?.editor.hasFocus()) return;
+	private onKeyDown(e: KeyboardEvent) {
+		const activeView = this.app.workspace.activeLeaf?.view;
+		if (activeView !== this) return;
+
+		if (!this.editor?.hasFocus()) return;
 		if (this.plugin.settings.enableCtrlS && e.ctrlKey && e.key === "s") {
 			e.preventDefault(); // Prevent default browser save action
 			log.debug("Saving note via Ctrl+S");
 			this.save();
 		}
-	};
+	}
 
 	private connectEditorPlugin() {
 		if (!this.editor) return;

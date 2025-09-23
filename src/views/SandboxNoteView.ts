@@ -37,6 +37,8 @@ export class SandboxNoteView extends AbstractNoteView {
 		// Broadcast content changes to other views
 		this.plugin.editorSyncManager.syncAll(content, this);
 
+		console.log("onContentChanged");
+
 		// Trigger debounced save if the setting is enabled
 		if (this.plugin.settings.enableAutoSave) {
 			this.plugin.saveManager.debouncedSave(this);

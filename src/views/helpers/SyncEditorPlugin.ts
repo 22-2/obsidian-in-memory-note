@@ -2,6 +2,7 @@ import { ViewUpdate, type PluginValue, ViewPlugin } from "@codemirror/view";
 import type SandboxNotePlugin from "../../main";
 import { type Debouncer, debounce } from "obsidian";
 import { AbstractNoteView } from "./AbstractNoteView";
+import { SandboxNoteView } from "src/views/SandboxNoteView";
 
 /** CodeMirror plugin for syncing content across views. */
 export class SyncEditorPlugin implements PluginValue {
@@ -20,9 +21,10 @@ export class SyncEditorPlugin implements PluginValue {
 		if (update.docChanged) {
 			const updatedContent = update.state.doc.toString();
 
-			// The unsaved state is now managed centrally.
-			// Let the view handle the content change.
-			this.connectedView.onContentChanged(updatedContent);
+			this.connectedPlugin.editorSyncManager.syncAll(
+				updatedContent,
+				this.connectedView as SandboxNoteView
+			);
 
 			// Trigger debounced save if enabled
 			this.debouncer?.();
@@ -34,9 +36,14 @@ export class SyncEditorPlugin implements PluginValue {
 		this.connectedPlugin = plugin;
 		this.connectedView = view;
 
-		if (this.connectedPlugin.settings.enableAutoSave) {
+		// SandboxNoteViewの場合だけオートセーブを有効にする
+		if (
+			this.connectedPlugin.settings.enableAutoSave &&
+			view instanceof SandboxNoteView
+		) {
 			this.debouncer = debounce(
 				() => {
+					// ここでview.save()を呼ぶことで、オートセーブが機能する
 					if (this.connectedView) {
 						this.connectedView.save();
 					}
@@ -45,6 +52,7 @@ export class SyncEditorPlugin implements PluginValue {
 				true // Save on leading edge is false by default
 			);
 		}
+		// ▲▲▲▲▲ 変更点 ▲▲▲▲▲
 	}
 
 	/** Cleanup on destroy. */

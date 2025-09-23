@@ -3,7 +3,7 @@ import manifest from "../../manifest.json";
 
 export const DEFAULT_SETTINGS: SandboxNotePluginSettings = {
 	enableLogger: false,
-	enableAutoSave: false,
+	enableAutoSave: true,
 	autoSaveDebounceMs: 3000,
 	// enableUnsafeCtrlS: false,
 	enableCtrlS: false,

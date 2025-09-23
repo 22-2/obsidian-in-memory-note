@@ -19,6 +19,11 @@ export class InMemoryNoteView extends AbstractNoteView {
 		return "In-Memory Note";
 	}
 
+	/** In-memory notes are never considered "unsaved". */
+	get hasUnsavedChanges(): boolean {
+		return false;
+	}
+
 	/** Get the icon for the view. */
 	override getIcon(): string {
 		return IN_MEMORY_NOTE_ICON;

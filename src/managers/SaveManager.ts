@@ -41,7 +41,7 @@ export class SaveManager {
 		try {
 			this.isSaving = true;
 			// Perform the actual persistence
-			await this.persistContent(content, view);
+			await this.persistContent(content);
 		} catch (error) {
 			log.error(`Failed to auto-save note content: ${error}`);
 		} finally {
@@ -74,12 +74,8 @@ export class SaveManager {
 	/**
 	 * Persists the given content to the plugin's data file and updates the view state.
 	 * @param content The content to save.
-	 * @param view The view to mark as saved.
 	 */
-	private async persistContent(
-		content: string,
-		view: SandboxNoteView
-	): Promise<void> {
+	private async persistContent(content: string): Promise<void> {
 		// Also update the in-memory settings to keep them in sync
 		this.plugin.settings.noteContent = content;
 		this.plugin.settings.lastSaved = new Date().toISOString();
@@ -87,8 +83,8 @@ export class SaveManager {
 		// Save content to data.json using Obsidian API
 		await this.plugin.saveData(this.plugin.settings);
 
-		// Mark the view as saved since content was persisted
-		view.markAsSaved();
+		// Mark the content as saved in the central manager
+		this.plugin.editorSyncManager.markAsSaved();
 
 		log.debug("Auto-saved note content to data.json using Obsidian API");
 	}

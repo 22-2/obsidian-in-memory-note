@@ -20,10 +20,8 @@ export class SyncEditorPlugin implements PluginValue {
 		if (update.docChanged) {
 			const updatedContent = update.state.doc.toString();
 
-			// Update the unsaved state for the current view
-			this.connectedView.updateUnsavedState(updatedContent);
-
-			// Let the view handle the content change
+			// The unsaved state is now managed centrally.
+			// Let the view handle the content change.
 			this.connectedView.onContentChanged(updatedContent);
 
 			// Trigger debounced save if enabled

@@ -21,10 +21,15 @@ export class SandboxNoteView extends AbstractNoteView {
 		return "Sandbox Note";
 	}
 
+	/** Returns whether this view has unsaved changes. */
+	get hasUnsavedChanges(): boolean {
+		return this.plugin.editorSyncManager.hasUnsavedChanges;
+	}
+
 	/** Load content from the shared ContentManager and synchronize. */
 	async loadInitialContent(): Promise<string> {
 		synchronizeWithExistingViews(this);
-		return this.plugin.editorSyncManager.sharedNoteContent;
+		return this.plugin.editorSyncManager.currenSharedNoteContent;
 	}
 
 	/** A change in this view should be broadcast to other sandbox views. */

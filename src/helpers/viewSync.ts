@@ -8,12 +8,10 @@ import type { SandboxNoteView } from "../views/SandboxNoteView";
  * @param content The new content to set.
  */
 export function setContent(view: AbstractNoteView, content: string) {
-	if (!view.containerEl?.isShown()) return;
 	if (view.editor && view.editor.getValue() !== content) {
 		view.editor.setValue(content);
-		// Update unsaved state when content is synchronized from other views
-		view.updateUnsavedState(content);
-		// Refresh the tab title
+		// The central manager now handles the unsaved state.
+		// Refresh the tab title to reflect any state changes from the manager.
 		view.leaf.updateHeader();
 	}
 }
@@ -29,15 +27,15 @@ export function synchronizeWithExistingViews(view: SandboxNoteView) {
 
 	if (sourceView?.editor) {
 		const content = sourceView.editor.getValue();
-		view.plugin.editorSyncManager.sharedNoteContent = content;
-		view.initialContent = sourceView.initialContent;
+		view.plugin.editorSyncManager.currenSharedNoteContent = content;
 		// Directly set the content in the new view's editor
 		view.setContent(content);
 		return;
 	}
 
 	// If no other views are open, but there's initial content from startup, use it.
-	const initialContent = view.plugin.editorSyncManager.sharedNoteContent;
+	const initialContent =
+		view.plugin.editorSyncManager.currenSharedNoteContent;
 	if (initialContent) {
 		view.setContent(initialContent);
 	}

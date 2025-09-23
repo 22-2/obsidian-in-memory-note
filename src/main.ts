@@ -41,8 +41,10 @@ export default class SandboxNotePlugin extends Plugin {
 		this.initializeLogger();
 		this.initializeManagers();
 
-		this.editorSyncManager.sharedNoteContent =
-			this.settings.noteContent ?? "";
+		// Initialize content manager with saved content
+		const savedContent = this.settings.noteContent ?? "";
+		this.editorSyncManager.currenSharedNoteContent = savedContent;
+		this.editorSyncManager.lastSavedContent = savedContent;
 
 		this.setupSettingsTab();
 		this.editorPluginConnector.setupEditorExtension();
@@ -146,7 +148,7 @@ export default class SandboxNotePlugin extends Plugin {
 	async saveSettings() {
 		const settingsToSave = {
 			...this.settings,
-			noteContent: this.editorSyncManager.sharedNoteContent,
+			noteContent: this.editorSyncManager.currenSharedNoteContent,
 		};
 		await this.saveData(settingsToSave);
 		// Refresh all view titles when settings change

@@ -7,7 +7,13 @@ export class EditorSyncManager {
 	private plugin: SandboxNotePlugin;
 
 	/** Shared content across all views */
-	sharedNoteContent = "";
+	currenSharedNoteContent = "";
+
+	/** Content that was last saved */
+	lastSavedContent = "";
+
+	/** Whether the current content has unsaved changes */
+	hasUnsavedChanges = false;
 
 	/** Currently active views */
 	activeViews: Set<SandboxNoteView> = new Set();
@@ -21,7 +27,8 @@ export class EditorSyncManager {
 		log.debug(
 			`Updating note content from view: ${sourceView.getViewType()}`
 		);
-		this.sharedNoteContent = content;
+		this.currenSharedNoteContent = content;
+		this.updateUnsavedState();
 
 		// Synchronize content to all other active views
 		for (const view of this.activeViews) {
@@ -32,6 +39,26 @@ export class EditorSyncManager {
 		}
 	}
 
+	/** Updates the unsaved state and notifies views if it changed. */
+	private updateUnsavedState() {
+		const wasUnsaved = this.hasUnsavedChanges;
+		this.hasUnsavedChanges =
+			this.currenSharedNoteContent !== this.lastSavedContent;
+
+		if (wasUnsaved !== this.hasUnsavedChanges) {
+			log.debug(`Unsaved state changed to: ${this.hasUnsavedChanges}`);
+			this.refreshAllViewTitles();
+			this.refreshAllViewActionButtons();
+		}
+	}
+
+	/** Marks the current content as saved. */
+	markAsSaved() {
+		this.lastSavedContent = this.currenSharedNoteContent;
+		this.updateUnsavedState();
+		log.debug("Content marked as saved.");
+	}
+
 	/** Register a view as active */
 	addActiveView(view: SandboxNoteView) {
 		log.debug(
@@ -40,6 +67,8 @@ export class EditorSyncManager {
 			}`
 		);
 		this.activeViews.add(view);
+		// Ensure new view has correct button state
+		view.updateActionButtons();
 	}
 
 	/** Unregister a view */
@@ -56,6 +85,13 @@ export class EditorSyncManager {
 	refreshAllViewTitles() {
 		for (const view of this.activeViews) {
 			view.leaf.updateHeader();
+		}
+	}
+
+	/** Refresh all view action buttons. */
+	private refreshAllViewActionButtons() {
+		for (const view of this.activeViews) {
+			view.updateActionButtons();
 		}
 	}
 }

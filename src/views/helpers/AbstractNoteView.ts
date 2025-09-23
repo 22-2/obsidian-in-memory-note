@@ -20,8 +20,6 @@ import { EditorWrapper } from "./EditorWrapper";
 export abstract class AbstractNoteView extends ItemView {
 	plugin: SandboxNotePlugin;
 	public wrapper: EditorWrapper;
-	hasUnsavedChanges = false;
-	initialContent = "";
 	saveActionEl!: HTMLElement;
 	private onloadCallbacks: (() => void)[] = [];
 	private initialState: any = null;
@@ -44,11 +42,11 @@ export abstract class AbstractNoteView extends ItemView {
 	abstract save(): Promise<void>;
 	onContentChanged(content: string): void {}
 	abstract getBaseTitle(): string;
+	abstract get hasUnsavedChanges(): boolean;
 
 	getDisplayText(): string {
 		const baseTitle = this.getBaseTitle();
-		const shouldShowUnsaved =
-			this.plugin.settings.enableAutoSave && this.hasUnsavedChanges;
+		const shouldShowUnsaved = this.hasUnsavedChanges;
 		return shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
 	}
 
@@ -70,7 +68,7 @@ export abstract class AbstractNoteView extends ItemView {
 			state.content = this.editor.getValue();
 			state.source = this.isSourceMode;
 		} else {
-			state.content = this.initialContent;
+			state.content = this.wrapper.content;
 			state.source = this.isSourceMode;
 		}
 		return state;
@@ -84,7 +82,7 @@ export abstract class AbstractNoteView extends ItemView {
 		this.initialState = state;
 		if (this.editor && state.content != null) {
 			this.setContent(state.content);
-			this.markAsSaved();
+			// The unsaved state is now managed centrally
 			await this.wrapper.virtualEditor.setState(state, result);
 		}
 		await super.setState(state, result);
@@ -146,7 +144,6 @@ export abstract class AbstractNoteView extends ItemView {
 	private async loadContent() {
 		const initialContent =
 			this.initialState?.content ?? (await this.loadInitialContent());
-		this.initialContent = initialContent;
 		this.wrapper.content = initialContent;
 		this.setContent(initialContent);
 		if (this.initialState) {
@@ -155,7 +152,7 @@ export abstract class AbstractNoteView extends ItemView {
 			});
 			this.initialState = null;
 		}
-		this.markAsSaved();
+		// Initial state is considered "saved" by the manager
 	}
 
 	private handleInitializationError(error: unknown) {
@@ -222,27 +219,6 @@ export abstract class AbstractNoteView extends ItemView {
 
 	updateActionButtons() {
 		updateActionButtons(this);
-	}
-
-	updateUnsavedState(currentContent: string) {
-		if (!this.plugin.settings.enableAutoSave) {
-			this.hasUnsavedChanges = false;
-			this.updateActionButtons();
-			return;
-		}
-		const wasUnsaved = this.hasUnsavedChanges;
-		this.hasUnsavedChanges = currentContent !== this.initialContent;
-		this.updateActionButtons();
-		if (wasUnsaved !== this.hasUnsavedChanges) {
-			this.leaf.updateHeader();
-		}
-	}
-
-	markAsSaved() {
-		if (this.editor) {
-			this.initialContent = this.editor.getValue();
-			this.updateUnsavedState(this.initialContent);
-		}
 	}
 
 	async onClose() {

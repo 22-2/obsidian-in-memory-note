@@ -70,7 +70,7 @@ describe("ContentManager", () => {
 		it("should update the shared content", () => {
 			const newContent = "This is the new shared content.";
 			contentManager.syncAll(newContent, view1);
-			expect(contentManager.sharedNoteContent).toBe(newContent);
+			expect(contentManager.currenSharedNoteContent).toBe(newContent);
 		});
 
 		it("should synchronize content to all other views", () => {
@@ -96,7 +96,7 @@ describe("ContentManager", () => {
 			expect(() =>
 				contentManager.syncAll(newContent, view1)
 			).not.toThrow();
-			expect(contentManager.sharedNoteContent).toBe(newContent);
+			expect(contentManager.currenSharedNoteContent).toBe(newContent);
 		});
 	});
 

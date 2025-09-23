@@ -42,21 +42,41 @@ export class WorkspaceEventManager {
 			this.plugin.editorPluginConnector.connectEditorPluginToView(view);
 		});
 	}
+	/** Handle active leaf changes to connect the editor plugin and trigger auto-save. */
+	private async handleActiveLeafChange() {
+		// Auto-save when switching tabs if enabled and there are unsaved changes
+		if (
+			this.plugin.settings.enableAutoSave &&
+			this.plugin.editorSyncManager.hasUnsavedChanges
+		) {
+			// Get any active SandboxNoteView instance for saving
+			const anySandboxView = this.plugin.editorSyncManager.activeViews
+				.values()
+				.next().value;
 
-	/** Handle active leaf changes to connect the editor plugin. */
-	private handleActiveLeafChange() {
+			if (anySandboxView) {
+				log.debug(
+					"Active leaf changed, triggering auto-save for Sandbox Note."
+				);
+
+				// Save immediately without waiting for debounce
+				await this.plugin.saveManager.saveNoteContentToFile(
+					anySandboxView
+				);
+
+				// Note: saveNoteContentToFile cancels any running debounce timer
+				this.plugin.editorSyncManager.refreshAllViewTitles();
+			}
+		}
+
+		// Only proceed if the new active view is a SandboxNoteView
 		const activeView =
 			this.plugin.app.workspace.getActiveViewOfType(SandboxNoteView);
 		if (!(activeView instanceof SandboxNoteView)) {
 			return;
 		}
 
-		// if (this.plugin.settings.enableAutoSave && !this.plugin.editorSyncManager.hasUnsavedChanges) {
-		// 	this.plugin.saveManager.debouncedSave(activeView);
-		// }
-
 		// Connect the editor plugin to the new active view
 		this.plugin.editorPluginConnector.connectEditorPluginToView(activeView);
-		// this.plugin.editorSyncManager.refreshAllViewTitles();
 	}
 }

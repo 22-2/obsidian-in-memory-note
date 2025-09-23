@@ -52,7 +52,7 @@ export default class SandboxNotePlugin extends Plugin {
 		this.uiManager.setupUserInterface();
 		// this.commandManager.updateSaveCommandMonkeyPatch();
 		this.app.workspace.onLayoutReady(() => this.setupSandboxViews());
-		this.debouncedSetupSandboxViews = debounce(this.setupSandboxViews, 100);
+		this.debouncedSetupSandboxViews = debounce(this.setupSandboxViews, 50);
 		this.app.workspace.on("layout-change", this.debouncedSetupSandboxViews);
 		log.debug("Sandbox Note plugin loaded");
 	}
@@ -61,16 +61,12 @@ export default class SandboxNotePlugin extends Plugin {
 	private setupSandboxViews(): void {
 		log.debug("Workspace layout ready.");
 		// Connect to any existing sandbox views that were restored on startup
-		this.app.workspace
-			.getLeavesOfType(VIEW_TYPE_SANDBOX)
-			.forEach((leaf) => {
-				if (leaf.view instanceof SandboxNoteView) {
-					log.debug(
-						`Connecting to existing view on layout ready: ${leaf.view.getViewType()}`
-					);
-					this.editorManager.connectEditorPluginToView(leaf.view);
-				}
-			});
+		this.contentManager.activeViews.forEach((view) => {
+			log.debug(
+				`Connecting to existing view on layout ready: ${view.getViewType()}`
+			);
+			this.editorManager.connectEditorPluginToView(view);
+		});
 	}
 
 	/**

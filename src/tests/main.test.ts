@@ -68,9 +68,9 @@ describe("SandboxNotePlugin", () => {
 			refreshAllViewTitles: vi.fn(),
 		} as any;
 		plugin.saveManager = {} as any;
-		plugin.uiManager = { setupUserInterface: vi.fn() } as any;
+		plugin.interactionManager = { setupUserInterface: vi.fn() } as any;
 		plugin.editorPluginConnector = { setupEditorExtension: vi.fn() } as any;
-		plugin.viewActivator = { registerViews: vi.fn() } as any;
+		plugin.viewFactory = { registerViews: vi.fn() } as any;
 		plugin.workspaceEventManager = { setupEventHandlers: vi.fn() } as any;
 		plugin.eventManager = { registerEventHandlers: vi.fn() } as any;
 
@@ -97,7 +97,9 @@ describe("SandboxNotePlugin", () => {
 		);
 
 		expect(plugin.loadSettings).not.toHaveBeenCalled();
-		expect(plugin.uiManager.setupUserInterface).not.toHaveBeenCalled();
+		expect(
+			plugin.interactionManager.setupUserInterface
+		).not.toHaveBeenCalled();
 	});
 
 	it("should proceed with initialization if compatibility check passes", async () => {
@@ -113,11 +115,13 @@ describe("SandboxNotePlugin", () => {
 					refreshAllViewTitles: vi.fn(),
 				} as any;
 				plugin.saveManager = {} as any;
-				plugin.uiManager = { setupUserInterface: vi.fn() } as any;
+				plugin.interactionManager = {
+					setupUserInterface: vi.fn(),
+				} as any;
 				plugin.editorPluginConnector = {
 					setupEditorExtension: vi.fn(),
 				} as any;
-				plugin.viewActivator = { registerViews: vi.fn() } as any;
+				plugin.viewFactory = { registerViews: vi.fn() } as any;
 				plugin.workspaceEventManager = {
 					setupEventHandlers: vi.fn(),
 				} as any;
@@ -138,8 +142,10 @@ describe("SandboxNotePlugin", () => {
 		expect(
 			plugin.editorPluginConnector.setupEditorExtension
 		).toHaveBeenCalledOnce();
-		expect(plugin.uiManager.setupUserInterface).toHaveBeenCalledOnce();
-		expect(plugin.viewActivator.registerViews).toHaveBeenCalledOnce();
+		expect(
+			plugin.interactionManager.setupUserInterface
+		).toHaveBeenCalledOnce();
+		expect(plugin.viewFactory.registerViews).toHaveBeenCalledOnce();
 		expect(
 			plugin.workspaceEventManager.setupEventHandlers
 		).toHaveBeenCalledOnce();

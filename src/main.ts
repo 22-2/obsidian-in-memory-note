@@ -12,9 +12,9 @@ import type { AppEvents } from "./events/AppEvents";
 import { EditorSyncManager } from "./managers/EditorSyncManager";
 import { EditorPluginConnector } from "./managers/EditorPluginConnector";
 import { SaveManager } from "./managers/SaveManager";
-import { UIManager } from "./managers/UIManager";
+import { InteractionManager } from "./managers/InteractionManager";
 import { EventManager } from "./managers/EventManager";
-import { ViewActivator } from "./managers/ViewActivator";
+import { ViewFactory } from "./managers/ViewFactory";
 import { WorkspaceEventManager } from "./managers/WorkspaceEventManager";
 import type { WorkspaceLeaf } from "obsidian";
 import type { SandboxNoteView } from "./views/SandboxNoteView";
@@ -26,9 +26,9 @@ export default class SandboxNotePlugin extends Plugin {
 	// Managers
 	editorSyncManager!: EditorSyncManager;
 	saveManager!: SaveManager;
-	uiManager!: UIManager;
+	interactionManager!: InteractionManager;
 	editorPluginConnector!: EditorPluginConnector;
-	viewActivator!: ViewActivator;
+	viewFactory!: ViewFactory;
 	eventManager!: EventManager;
 	workspaceEventManager!: WorkspaceEventManager;
 	emitter!: EventEmitter<AppEvents>;
@@ -58,8 +58,8 @@ export default class SandboxNotePlugin extends Plugin {
 
 		this.setupSettingsTab();
 		this.editorPluginConnector.setupEditorExtension();
-		this.uiManager.setupUserInterface();
-		this.viewActivator.registerViews();
+		this.interactionManager.setupUserInterface();
+		this.viewFactory.registerViews();
 		this.workspaceEventManager.setupEventHandlers();
 
 		log.debug("Sandbox Note plugin loaded");
@@ -110,9 +110,9 @@ export default class SandboxNotePlugin extends Plugin {
 
 		this.editorSyncManager = new EditorSyncManager(emitter);
 		this.saveManager = new SaveManager(emitter, this.settings, saveData);
-		this.uiManager = new UIManager(this);
+		this.interactionManager = new InteractionManager(this);
 		this.editorPluginConnector = new EditorPluginConnector(this, emitter);
-		this.viewActivator = new ViewActivator(this);
+		this.viewFactory = new ViewFactory(this);
 		this.workspaceEventManager = new WorkspaceEventManager(
 			this.app,
 			emitter,
@@ -140,12 +140,12 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Create and activate new Sandbox Note view. */
 	async activateSandboxView() {
-		return this.viewActivator.activateSandboxView();
+		return this.viewFactory.activateSandboxView();
 	}
 
 	/** Create and activate new In-Memory Note view. */
 	async activateInMemoryView() {
-		return this.viewActivator.activateInMemoryView();
+		return this.viewFactory.activateInMemoryView();
 	}
 
 	/** Initialize logger with current settings. */

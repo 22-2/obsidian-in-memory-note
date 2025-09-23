@@ -5,7 +5,7 @@ import { InMemoryNoteView } from "src/views/InMemoryNoteView";
 import { SandboxNoteView } from "src/views/SandboxNoteView";
 
 /** Manages registration and activation of custom views */
-export class ViewActivator {
+export class ViewFactory {
 	private plugin: SandboxNotePlugin;
 
 	constructor(plugin: SandboxNotePlugin) {

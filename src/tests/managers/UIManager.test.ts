@@ -1,11 +1,11 @@
 import type SandboxNotePlugin from "src/main";
-import { UIManager } from "src/managers/UIManager";
+import { InteractionManager } from "src/managers/InteractionManager";
 import { IN_MEMORY_NOTE_ICON, SANDBOX_NOTE_ICON } from "src/utils/constants";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("UIManager", () => {
 	let mockPlugin: SandboxNotePlugin;
-	let uiManager: UIManager;
+	let uiManager: InteractionManager;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -22,7 +22,7 @@ describe("UIManager", () => {
 			},
 		} as unknown as SandboxNotePlugin;
 
-		uiManager = new UIManager(mockPlugin);
+		uiManager = new InteractionManager(mockPlugin);
 	});
 
 	it("should be defined", () => {

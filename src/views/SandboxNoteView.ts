@@ -3,7 +3,7 @@ import { WorkspaceLeaf } from "obsidian";
 import { VIEW_TYPE_SANDBOX } from "src/utils/constants";
 import type SandboxNotePlugin from "../main";
 import { synchronizeWithExistingViews } from "../helpers/viewSync";
-import { AbstractNoteView } from "./helpers/AbstractNoteView";
+import { AbstractNoteView } from "./internal/AbstractNoteView";
 
 /** View for a synchronized, persistent sandbox note. */
 export class SandboxNoteView extends AbstractNoteView {

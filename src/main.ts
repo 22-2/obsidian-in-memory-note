@@ -3,7 +3,7 @@ import {
 	type SandboxNotePluginSettings,
 	SandboxNoteSettingTab,
 } from "./settings";
-import { UnsafeMarkdownView } from "./views/helpers/UnsafeMarkdownView";
+import { UnsafeMarkdownView } from "./views/internal/UnsafeMarkdownView";
 import { noop } from "./utils";
 import { DEFAULT_SETTINGS } from "./utils/constants";
 import log from "loglevel";

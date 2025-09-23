@@ -1,8 +1,8 @@
 import type SandboxNotePlugin from "src/main";
-import { syncEditorPlugin } from "src/views/helpers/SyncEditorPlugin";
+import { syncEditorPlugin } from "src/views/internal/SyncEditorPlugin";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
-import type { AbstractNoteView } from "src/views/helpers/AbstractNoteView";
+import type { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 
 /** Manages editor extensions and plugin connections */
 export class EditorPluginConnector {

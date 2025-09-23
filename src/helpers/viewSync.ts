@@ -1,4 +1,4 @@
-import type { AbstractNoteView } from "src/views/helpers/AbstractNoteView";
+import type { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 import type { SandboxNoteView } from "../views/SandboxNoteView";
 
 /**

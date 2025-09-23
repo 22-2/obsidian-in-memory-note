@@ -1,6 +1,6 @@
 import type { SandboxNoteView } from "../views/SandboxNoteView";
 import log from "loglevel";
-import type { AbstractNoteView } from "src/views/helpers/AbstractNoteView"; // 追記
+import type { AbstractNoteView } from "src/views/internal/AbstractNoteView"; // 追記
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
 

@@ -1,10 +1,10 @@
 import type SandboxNotePlugin from "src/main";
 import { EditorPluginConnector } from "src/managers/EditorPluginConnector";
-import { syncEditorPlugin } from "src/views/helpers/SyncEditorPlugin";
+import { syncEditorPlugin } from "src/views/internal/SyncEditorPlugin";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
-import type { AbstractNoteView } from "src/views/helpers/AbstractNoteView";
+import type { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 
 describe("EditorPluginConnector", () => {
 	let mockPlugin: SandboxNotePlugin;

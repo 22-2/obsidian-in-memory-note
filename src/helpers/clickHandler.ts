@@ -1,7 +1,7 @@
 import { Editor, MarkdownEditView } from "obsidian";
 import type { Commands } from "obsidian-typings";
 import log from "loglevel";
-import type { AbstractNoteView } from "src/views/helpers/AbstractNoteView";
+import type { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 import { waitForElement } from "../utils/dom";
 
 /** Handle right-click context menu events. */

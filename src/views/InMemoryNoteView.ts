@@ -1,7 +1,7 @@
 import { WorkspaceLeaf } from "obsidian";
 import { IN_MEMORY_NOTE_ICON, VIEW_TYPE_IN_MEMORY } from "src/utils/constants";
 import type SandboxNotePlugin from "../main";
-import { AbstractNoteView } from "./helpers/AbstractNoteView";
+import { AbstractNoteView } from "./internal/AbstractNoteView";
 
 /** View for an in-memory, non-persistent note. */
 export class InMemoryNoteView extends AbstractNoteView {

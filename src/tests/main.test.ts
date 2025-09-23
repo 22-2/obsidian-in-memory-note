@@ -9,7 +9,7 @@ import {
 } from "vitest";
 import SandboxNotePlugin from "../main";
 import { App, Notice } from "obsidian";
-import { UnsafeMarkdownView } from "../views/helpers/UnsafeMarkdownView";
+import { UnsafeMarkdownView } from "../views/internal/UnsafeMarkdownView";
 
 vi.mock("../views/helpers/UnsafeMarkdownView", () => {
 	const UnsafeMarkdownView = vi.fn();
@@ -132,7 +132,9 @@ describe("SandboxNotePlugin", () => {
 		expect(plugin.loadSettings).toHaveBeenCalledOnce();
 		expect(initializeManagersSpy).toHaveBeenCalledOnce();
 		expect((plugin as any).setupSettingsTab).toHaveBeenCalledOnce();
-		expect(plugin.eventManager.registerEventHandlers).toHaveBeenCalledOnce();
+		expect(
+			plugin.eventManager.registerEventHandlers
+		).toHaveBeenCalledOnce();
 		expect(
 			plugin.editorPluginConnector.setupEditorExtension
 		).toHaveBeenCalledOnce();

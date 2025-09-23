@@ -1,4 +1,4 @@
-import type { AbstractNoteView } from "../views/helpers/AbstractNoteView";
+import type { AbstractNoteView } from "../views/internal/AbstractNoteView";
 import type { SandboxNoteView } from "../views/SandboxNoteView";
 
 export interface AppEvents {

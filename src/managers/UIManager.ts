@@ -1,4 +1,4 @@
-import { AbstractNoteView } from "src/views/helpers/AbstractNoteView";
+import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 import type SandboxNotePlugin from "../main";
 import { IN_MEMORY_NOTE_ICON, SANDBOX_NOTE_ICON } from "../utils/constants";
 

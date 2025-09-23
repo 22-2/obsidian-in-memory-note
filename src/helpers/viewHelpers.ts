@@ -11,9 +11,7 @@ export function updateActionButtons(view: AbstractNoteView): void {
 	}
 
 	if (!view.saveActionEl) {
-		if (typeof view.addAction === "function") {
-			view.saveActionEl = view.addAction("save", "Save", () => view.save());
-		}
+		view.saveActionEl = view.addAction("save", "Save", () => view.save());
 	}
 	view.saveActionEl?.show();
 
@@ -21,5 +19,8 @@ export function updateActionButtons(view: AbstractNoteView): void {
 		view.plugin.settings.enableSaveNoteContent && view.hasUnsavedChanges;
 
 	view.saveActionEl?.toggleClass("is-disabled", !shouldShowUnsaved);
-	view.saveActionEl?.setAttribute("aria-disabled", String(!shouldShowUnsaved));
+	view.saveActionEl?.setAttribute(
+		"aria-disabled",
+		String(!shouldShowUnsaved)
+	);
 }

@@ -187,12 +187,12 @@ export abstract class AbstractNoteView extends ItemView {
 		);
 
 		// Use the capture phase to reliably catch the Ctrl+S hotkey, which is otherwise difficult to intercept in Obsidian.
-		this.registerDomEvent(window, "keydown", this.onKeyDown.bind(this), {
+		this.registerDomEvent(window, "keydown", this.onKeyDown, {
 			capture: true,
 		});
 	}
 
-	private onKeyDown(e: KeyboardEvent) {
+	private onKeyDown = (e: KeyboardEvent) => {
 		const activeView = this.app.workspace.activeLeaf?.view;
 		if (activeView !== this) return;
 
@@ -202,7 +202,7 @@ export abstract class AbstractNoteView extends ItemView {
 			log.debug("Saving note via Ctrl+S");
 			this.save();
 		}
-	}
+	};
 
 	private connectEditorPlugin() {
 		if (!this.editor) return;

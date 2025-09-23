@@ -61,7 +61,7 @@ export default class SandboxNotePlugin extends Plugin {
 		);
 
 		// Initialize content manager with saved content
-		const savedContent = this.data.settings.noteContent ?? "";
+		const savedContent = this.data.data.noteContent ?? "";
 		this.editorSyncManager.currentSharedNoteContent = savedContent;
 		this.editorSyncManager.lastSavedContent = savedContent;
 

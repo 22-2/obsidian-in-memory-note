@@ -1185,26 +1185,27 @@ export interface DebouncedFunction<T extends (...args: any[]) => any> {
  * @returns A new debounced function with a `cancel` method.
  */
 export function debounce<T extends (...args: any[]) => any>(
-	func: T,
-	wait: number
-): DebouncedFunction<T> {
-	let timeout: NodeJS.Timeout;
+	fn: T,
+	wait?: number,
+): T & { cancel: () => void } {
+	let timeout: NodeJS.Timeout | null;
 
-	const debounced = function (
-		this: ThisParameterType<T>,
-		...args: Parameters<T>
-	) {
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const context = this;
-		clearTimeout(timeout);
-		timeout = setTimeout(() => func.apply(context, args), wait);
-	} as DebouncedFunction<T>;
-
-	debounced.cancel = () => {
-		clearTimeout(timeout);
+	const debounced = (...args: Parameters<T>): void => {
+		if (timeout) {
+			clearTimeout(timeout);
+		}
+		timeout = setTimeout(() => {
+			fn(...args);
+		}, wait);
 	};
 
-	return debounced;
+	debounced.cancel = () => {
+		if (timeout) {
+			clearTimeout(timeout);
+		}
+	};
+
+	return debounced as T & { cancel: () => void };
 }
 // Helper to create test files
 export function createTestFile(path: string, content: string) {

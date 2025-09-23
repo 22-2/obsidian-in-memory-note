@@ -51,7 +51,7 @@ describe("SaveManager", () => {
 			expect(savedSettings.noteContent).toBe("Some note content");
 			expect(savedSettings.lastSaved).toBeDefined();
 
-			expect(mockEmitter.emit).toHaveBeenCalledWith("content-saved");
+			expect(mockEmitter.emit).toHaveBeenCalledWith("content-saved", undefined);
 		});
 
 		it("should save content if it is empty", async () => {
@@ -59,7 +59,7 @@ describe("SaveManager", () => {
 			await saveManager.saveNoteContentToFile(view);
 
 			expect(mockSaveData).toHaveBeenCalledOnce();
-			expect(mockEmitter.emit).toHaveBeenCalledWith("content-saved");
+			expect(mockEmitter.emit).toHaveBeenCalledWith("content-saved", undefined);
 		});
 
 		it("should save content if it is only whitespace", async () => {
@@ -67,7 +67,7 @@ describe("SaveManager", () => {
 			await saveManager.saveNoteContentToFile(view);
 
 			expect(mockSaveData).toHaveBeenCalledOnce();
-			expect(mockEmitter.emit).toHaveBeenCalledWith("content-saved");
+			expect(mockEmitter.emit).toHaveBeenCalledWith("content-saved", undefined);
 		});
 
 		it("should log an error if saving fails", async () => {

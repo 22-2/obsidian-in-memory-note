@@ -3,8 +3,7 @@ import log from "loglevel";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
 import type { PluginData, SandboxNotePluginSettings } from "src/settings";
-import { debounce, type Debouncer } from "obsidian";
-import { Notice } from "src/tests/obsidian";
+import { debounce, Notice, type Debouncer } from "obsidian";
 /** Manages content persistence and auto-save functionality */
 export class SaveManager {
 	private emitter: EventEmitter<AppEvents>;

@@ -8,7 +8,14 @@ import {
 	type Mock,
 } from "vitest";
 import SandboxNotePlugin from "../main";
-import { App, MarkdownView, Notice } from "obsidian";
+import { App, Notice } from "obsidian";
+import { UnsafeMarkdownView } from "../views/helpers/UnsafeMarkdownView";
+
+vi.mock("../views/helpers/UnsafeMarkdownView", () => {
+	const UnsafeMarkdownView = vi.fn();
+	UnsafeMarkdownView.prototype.unload = vi.fn();
+	return { UnsafeMarkdownView };
+});
 
 // Mock only the necessary parts of the 'obsidian' module
 vi.mock("obsidian", async (importOriginal) => {
@@ -29,7 +36,6 @@ vi.mock("obsidian", async (importOriginal) => {
 			registerDomEvent = vi.fn();
 		},
 		Notice: vi.fn(),
-		MarkdownView: vi.fn(),
 	};
 });
 
@@ -81,9 +87,9 @@ describe("SandboxNotePlugin", () => {
 	});
 
 	it("should disable the plugin and show a notice if compatibility check fails", async () => {
-		// Arrange: Make the MarkdownView constructor throw an error
+		// Arrange: Make the UnsafeMarkdownView constructor throw an error
 		const error = new Error("Incompatible version");
-		(MarkdownView as Mock).mockImplementation(() => {
+		(UnsafeMarkdownView as Mock).mockImplementation(() => {
 			throw error;
 		});
 
@@ -103,8 +109,8 @@ describe("SandboxNotePlugin", () => {
 	});
 
 	it("should proceed with initialization if compatibility check passes", async () => {
-		// Arrange: Make the MarkdownView constructor succeed
-		(MarkdownView as Mock).mockImplementation(() => ({
+		// Arrange: Make the UnsafeMarkdownView constructor succeed
+		(UnsafeMarkdownView as Mock).mockImplementation(() => ({
 			unload: vi.fn(), // Mock the unload method on the instance
 		}));
 

@@ -1,8 +1,10 @@
-import { MarkdownView, Notice, Plugin } from "obsidian";
+import { Notice, Plugin, WorkspaceLeaf } from "obsidian";
 import {
 	type SandboxNotePluginSettings,
 	SandboxNoteSettingTab,
 } from "./settings";
+import { UnsafeMarkdownView } from "./views/helpers/UnsafeMarkdownView";
+import { noop } from "./utils";
 import {
 	DEFAULT_SETTINGS,
 	VIEW_TYPE_SANDBOX,
@@ -79,13 +81,17 @@ export default class SandboxNotePlugin extends Plugin {
 		// dummy view to see if the required APIs are available.
 		try {
 			const dummyEl = document.createElement("div");
-			// @ts-ignore - We are intentionally accessing a private constructor.
-			const view = new MarkdownView({
+			const leaf = {
+				...(this.app.workspace.activeLeaf ?? {}),
 				containerEl: dummyEl,
-				app: this.app,
-				workspace: this.app.workspace,
-				history: { backHistory: [], forwardHistory: [] },
-			} as any);
+				getRoot: () => this.app.workspace.rootSplit,
+				getHistoryState: () => ({}),
+				open: noop,
+				updateHeader: noop,
+			} as unknown as WorkspaceLeaf;
+
+			// @ts-ignore
+			const view = new UnsafeMarkdownView(leaf, null);
 
 			view.unload();
 			dummyEl.remove();

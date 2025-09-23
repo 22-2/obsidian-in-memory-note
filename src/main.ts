@@ -52,7 +52,10 @@ export default class SandboxNotePlugin extends Plugin {
 		this.uiManager.setupUserInterface();
 		// this.commandManager.updateSaveCommandMonkeyPatch();
 		this.app.workspace.onLayoutReady(() => this.setupSandboxViews());
-		this.debouncedSetupSandboxViews = debounce(this.setupSandboxViews, 50);
+		this.debouncedSetupSandboxViews = debounce(
+			this.setupSandboxViews.bind(this),
+			50
+		);
 		this.app.workspace.on("layout-change", this.debouncedSetupSandboxViews);
 		log.debug("Sandbox Note plugin loaded");
 	}

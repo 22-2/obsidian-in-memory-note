@@ -4,7 +4,7 @@ import {
 	SandboxNoteSettingTab,
 } from "./settings";
 import { UnsafeMarkdownView } from "./views/internal/UnsafeMarkdownView";
-import { noop } from "./utils";
+import { noop } from "./utils/noop";
 import { DEFAULT_SETTINGS } from "./utils/constants";
 import log from "loglevel";
 import { EventEmitter } from "./utils/EventEmitter";

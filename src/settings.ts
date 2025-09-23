@@ -6,7 +6,7 @@ export interface SandboxNotePluginSettings {
 	enableLogger: boolean;
 	enableSaveNoteContent: boolean;
 	autoSaveDebounceMs: number;
-	enableUnsafeCtrlS: boolean;
+	// enableUnsafeCtrlS: boolean;
 	enableCtrlS: boolean;
 	noteContent: string;
 	lastSaved: string;

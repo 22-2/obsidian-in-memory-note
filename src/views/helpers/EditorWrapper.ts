@@ -56,7 +56,7 @@ export class EditorWrapper {
 		this.containerEl.addClasses(["sandbox-inline-editor"]);
 
 		this.virtualEditor = new UnsafeMarkdownView(
-			this.unsafeCreateFakeLeaf(),
+			this.createFakeLeaf(),
 			this
 		);
 		this.virtualEditor.leaf.working = false;
@@ -81,7 +81,7 @@ export class EditorWrapper {
 	// 	}
 	// }
 
-	private unsafeCreateFakeLeaf() {
+	private createFakeLeaf() {
 		// --- The Magic ---
 		// We create a "fake" leaf object to trick the MarkdownView constructor.
 		// The goal is to make it render inside our `containerEl` instead of the

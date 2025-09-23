@@ -14,7 +14,6 @@ import { activateView } from "./utils/obsidian";
 import { SandboxNoteView } from "./views/SandboxNoteView";
 import { InMemoryNoteView } from "./views/InMemoryNoteView";
 import log from "loglevel";
-import { CommandManager } from "./managers/CommandManager";
 import { ContentManager } from "./managers/ContentManager";
 import { EditorManager } from "./managers/EditorManager";
 import { SaveManager } from "./managers/SaveManager";
@@ -28,7 +27,7 @@ export default class SandboxNotePlugin extends Plugin {
 	contentManager!: ContentManager;
 	saveManager!: SaveManager;
 	uiManager!: UIManager;
-	commandManager!: CommandManager;
+	// commandManager!: CommandManager;
 	editorManager!: EditorManager;
 
 	/** Initialize plugin on load. */
@@ -111,7 +110,7 @@ export default class SandboxNotePlugin extends Plugin {
 		this.contentManager = new ContentManager(this);
 		this.saveManager = new SaveManager(this);
 		this.uiManager = new UIManager(this);
-		this.commandManager = new CommandManager(this);
+		// this.commandManager = new CommandManager(this);
 		this.editorManager = new EditorManager(this);
 	}
 

@@ -47,7 +47,8 @@ export default class SandboxNotePlugin extends Plugin {
 		this.initializeManagers();
 		this.eventManager.registerEventHandlers(
 			this.editorSyncManager,
-			this.saveManager
+			this.saveManager,
+			this.settings
 		);
 
 		// Initialize content manager with saved content

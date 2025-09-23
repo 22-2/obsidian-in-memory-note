@@ -5,8 +5,6 @@ import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
 import type { SandboxNotePluginSettings } from "src/settings";
 
-const SAVE_DEBOUNCE_DELAY = 1000;
-
 /** Manages content persistence and auto-save functionality */
 export class SaveManager {
 	private emitter: EventEmitter<AppEvents>;
@@ -27,7 +25,7 @@ export class SaveManager {
 		this.saveData = saveData;
 		this.debouncedSave = debounce(
 			(view: SandboxNoteView) => this.saveNoteContentToFile(view),
-			SAVE_DEBOUNCE_DELAY
+			this.settings.autoSaveDebounceMs
 		);
 	}
 

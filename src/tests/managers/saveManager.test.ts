@@ -27,6 +27,7 @@ describe("SaveManager", () => {
 
 		mockSettings = {
 			enableAutoSave: true,
+			autoSaveDebounceMs: 1000,
 		} as SandboxNotePluginSettings;
 
 		mockSaveData = vi.fn().mockResolvedValue(undefined);

@@ -1,23 +1,20 @@
-import { debounce, Notice, Plugin, WorkspaceLeaf } from "obsidian";
+import { Notice, Plugin } from "obsidian";
 import {
 	type SandboxNotePluginSettings,
 	SandboxNoteSettingTab,
 } from "./settings";
 import { UnsafeMarkdownView } from "./views/helpers/UnsafeMarkdownView";
 import { noop } from "./utils";
-import {
-	DEFAULT_SETTINGS,
-	VIEW_TYPE_SANDBOX,
-	VIEW_TYPE_IN_MEMORY,
-} from "./utils/constants";
-import { activateView } from "./utils/obsidian";
-import { SandboxNoteView } from "./views/SandboxNoteView";
-import { InMemoryNoteView } from "./views/InMemoryNoteView";
+import { DEFAULT_SETTINGS } from "./utils/constants";
 import log from "loglevel";
 import { EditorSyncManager } from "./managers/EditorSyncManager";
 import { EditorPluginConnector } from "./managers/EditorPluginConnector";
 import { SaveManager } from "./managers/SaveManager";
 import { UIManager } from "./managers/UIManager";
+import { ViewActivator } from "./managers/ViewActivator";
+import { WorkspaceEventManager } from "./managers/WorkspaceEventManager";
+import type { WorkspaceLeaf } from "obsidian";
+import type { SandboxNoteView } from "./views/SandboxNoteView";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
@@ -28,8 +25,8 @@ export default class SandboxNotePlugin extends Plugin {
 	saveManager!: SaveManager;
 	uiManager!: UIManager;
 	editorPluginConnector!: EditorPluginConnector;
-
-	debouncedSetupSandboxViews = () => {};
+	viewActivator!: ViewActivator;
+	workspaceEventManager!: WorkspaceEventManager;
 
 	/** Initialize plugin on load. */
 	async onload() {
@@ -43,33 +40,17 @@ export default class SandboxNotePlugin extends Plugin {
 		await this.loadSettings();
 		this.initializeLogger();
 		this.initializeManagers();
+
 		this.editorSyncManager.sharedNoteContent =
 			this.settings.noteContent ?? "";
+
 		this.setupSettingsTab();
 		this.editorPluginConnector.setupEditorExtension();
-		this.setupWorkspaceEventHandlers();
-		this.registerViewType();
 		this.uiManager.setupUserInterface();
-		// this.commandManager.updateSaveCommandMonkeyPatch();
-		this.app.workspace.onLayoutReady(() => this.setupSandboxViews());
-		this.debouncedSetupSandboxViews = debounce(
-			this.setupSandboxViews.bind(this),
-			50
-		);
-		this.app.workspace.on("layout-change", this.debouncedSetupSandboxViews);
-		log.debug("Sandbox Note plugin loaded");
-	}
+		this.viewActivator.registerViews();
+		this.workspaceEventManager.setupEventHandlers();
 
-	/** Fires once the workspace is ready. */
-	private setupSandboxViews(): void {
-		log.debug("Workspace layout ready.");
-		// Connect to any existing sandbox views that were restored on startup
-		this.editorSyncManager.activeViews.forEach((view) => {
-			log.debug(
-				`Connecting to existing view on layout ready: ${view.getViewType()}`
-			);
-			this.editorPluginConnector.connectEditorPluginToView(view);
-		});
+		log.debug("Sandbox Note plugin loaded");
 	}
 
 	/**
@@ -112,46 +93,14 @@ export default class SandboxNotePlugin extends Plugin {
 		this.editorSyncManager = new EditorSyncManager(this);
 		this.saveManager = new SaveManager(this);
 		this.uiManager = new UIManager(this);
-		// this.commandManager = new CommandManager(this);
 		this.editorPluginConnector = new EditorPluginConnector(this);
+		this.viewActivator = new ViewActivator(this);
+		this.workspaceEventManager = new WorkspaceEventManager(this);
 	}
 
 	/** Setup plugin settings tab. */
 	private setupSettingsTab() {
 		this.addSettingTab(new SandboxNoteSettingTab(this));
-	}
-
-	/** Setup workspace event handlers. */
-	private setupWorkspaceEventHandlers() {
-		this.app.workspace.on("active-leaf-change", () => {
-			this.handleActiveLeafChange();
-		});
-	}
-
-	/** Handle active leaf changes and auto-save if enabled. */
-	private handleActiveLeafChange() {
-		const activeView =
-			this.app.workspace.getActiveViewOfType(SandboxNoteView);
-
-		// Delegate to save manager
-		this.editorSyncManager;
-
-		// Connect the editor plugin to the new active view
-		if (activeView instanceof SandboxNoteView) {
-			this.editorPluginConnector.connectEditorPluginToView(activeView);
-		}
-	}
-
-	/** Register custom view type. */
-	private registerViewType() {
-		this.registerView(
-			VIEW_TYPE_SANDBOX,
-			(leaf) => new SandboxNoteView(leaf, this)
-		);
-		this.registerView(
-			VIEW_TYPE_IN_MEMORY,
-			(leaf) => new InMemoryNoteView(leaf, this)
-		);
 	}
 
 	/** Update shared content and sync across all views. */
@@ -162,28 +111,16 @@ export default class SandboxNotePlugin extends Plugin {
 	/** Cleanup on plugin unload. */
 	async onunload() {
 		log.debug("Sandbox Note plugin unloaded");
-		// The `around` utility automatically registers a cleanup function
-		// that reverts the monkey patch when the plugin is unloaded.
-		// No manual unpatching is required here.
 	}
 
 	/** Create and activate new Sandbox Note view. */
 	async activateSandboxView() {
-		return this.activateAbstractView(VIEW_TYPE_SANDBOX);
+		return this.viewActivator.activateSandboxView();
 	}
 
 	/** Create and activate new In-Memory Note view. */
 	async activateInMemoryView() {
-		return this.activateAbstractView(VIEW_TYPE_IN_MEMORY);
-	}
-
-	private async activateAbstractView(type: string) {
-		const leaf = await activateView(this.app, {
-			type,
-			active: true,
-		});
-
-		return leaf;
+		return this.viewActivator.activateInMemoryView();
 	}
 
 	/** Initialize logger with current settings. */

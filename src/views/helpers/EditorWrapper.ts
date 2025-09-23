@@ -16,9 +16,7 @@ export class EditorWrapper {
 	getContent() {
 		return this.virtualEditor.editor.getValue();
 	}
-	getEditor(): Editor {
-		return this.virtualEditor.editor;
-	}
+
 	setContent(content: string) {
 		this.virtualEditor.__setViewData__(content, true);
 	}
@@ -57,6 +55,33 @@ export class EditorWrapper {
 		this.containerEl = document.createElement("div");
 		this.containerEl.addClasses(["sandbox-inline-editor"]);
 
+		this.virtualEditor = new UnsafeMarkdownView(
+			this.unsafeCreateFakeLeaf(),
+			this
+		);
+
+		this.disableSaveOperations();
+		// await this.ensureSourceMode();
+	}
+
+	private disableSaveOperations() {
+		this.virtualEditor.save = noop;
+		this.virtualEditor.saveTitle = noop;
+		this.virtualEditor.requestSave = noop;
+		this.virtualEditor.__setViewData__ = this.virtualEditor.setViewData;
+		this.virtualEditor.setViewData = noop;
+	}
+
+	// private async ensureSourceMode() {
+	// 	if (this.virtualEditor.getMode() === "preview") {
+	// 		await this.virtualEditor.setState(
+	// 			{ mode: "source" },
+	// 			{ history: false }
+	// 		);
+	// 	}
+	// }
+
+	private unsafeCreateFakeLeaf() {
 		// --- The Magic ---
 		// We create a "fake" leaf object to trick the MarkdownView constructor.
 		// The goal is to make it render inside our `containerEl` instead of the
@@ -71,32 +96,6 @@ export class EditorWrapper {
 			getRoot: noop,
 			updateHeader: noop,
 		};
-
-		this.virtualEditor = new UnsafeMarkdownView(
-			fakeLeaf as unknown as WorkspaceLeaf,
-			this
-		);
-		// @ts-ignore
-		fakeLeaf.working = false;
-
-		this.disableSaveOperations();
-		await this.ensureSourceMode();
-	}
-
-	private disableSaveOperations() {
-		this.virtualEditor.save = noop;
-		this.virtualEditor.saveTitle = noop;
-		this.virtualEditor.requestSave = noop;
-		this.virtualEditor.__setViewData__ = this.virtualEditor.setViewData;
-		this.virtualEditor.setViewData = noop;
-	}
-
-	private async ensureSourceMode() {
-		if (this.virtualEditor.getMode() === "preview") {
-			await this.virtualEditor.setState(
-				{ mode: "source" },
-				{ history: false }
-			);
-		}
+		return fakeLeaf as unknown as WorkspaceLeaf;
 	}
 }

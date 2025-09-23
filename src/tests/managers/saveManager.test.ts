@@ -103,7 +103,7 @@ describe("SaveManager", () => {
 
 		it("should save previous view's content when switching views and auto-save is on", () => {
 			const viewA = createMockView("View A content");
-			mockPlugin.settings.enableSaveNoteContent = true;
+			mockPlugin.settings.enableAutoSave = true;
 
 			// 1. Open View A
 			(
@@ -135,7 +135,7 @@ describe("SaveManager", () => {
 
 		it("should not save previous view's content if auto-save is off", () => {
 			const viewA = createMockView("View A content");
-			mockPlugin.settings.enableSaveNoteContent = false; // Auto-save disabled
+			mockPlugin.settings.enableAutoSave = false; // Auto-save disabled
 
 			// 1. Open View A
 			(

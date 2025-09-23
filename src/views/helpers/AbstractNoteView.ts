@@ -48,8 +48,7 @@ export abstract class AbstractNoteView extends ItemView {
 	getDisplayText(): string {
 		const baseTitle = this.getBaseTitle();
 		const shouldShowUnsaved =
-			this.plugin.settings.enableSaveNoteContent &&
-			this.hasUnsavedChanges;
+			this.plugin.settings.enableAutoSave && this.hasUnsavedChanges;
 		return shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
 	}
 
@@ -226,7 +225,7 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	updateUnsavedState(currentContent: string) {
-		if (!this.plugin.settings.enableSaveNoteContent) {
+		if (!this.plugin.settings.enableAutoSave) {
 			this.hasUnsavedChanges = false;
 			this.updateActionButtons();
 			return;

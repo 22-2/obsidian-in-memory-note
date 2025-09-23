@@ -33,7 +33,7 @@ export class SandboxNoteView extends AbstractNoteView {
 		this.plugin.contentManager.updateNoteContent(content, this);
 
 		// Trigger debounced save if the setting is enabled
-		if (this.plugin.settings.enableSaveNoteContent) {
+		if (this.plugin.settings.enableAutoSave) {
 			this.plugin.saveManager.debouncedSave(this);
 		}
 	}

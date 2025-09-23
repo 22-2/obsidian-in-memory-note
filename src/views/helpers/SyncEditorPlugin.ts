@@ -36,7 +36,7 @@ export class SyncEditorPlugin implements PluginValue {
 		this.connectedPlugin = plugin;
 		this.connectedView = view;
 
-		if (this.connectedPlugin.settings.enableSaveNoteContent) {
+		if (this.connectedPlugin.settings.enableAutoSave) {
 			this.debouncer = debounce(
 				() => {
 					if (this.connectedView) {

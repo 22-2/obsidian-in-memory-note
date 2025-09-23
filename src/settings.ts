@@ -4,7 +4,7 @@ import type SandboxNotePlugin from "./main";
 /** Plugin settings interface. */
 export interface SandboxNotePluginSettings {
 	enableLogger: boolean;
-	enableSaveNoteContent: boolean;
+	enableAutoSave: boolean;
 	autoSaveDebounceMs: number;
 	// enableUnsafeCtrlS: boolean;
 	enableCtrlS: boolean;
@@ -53,9 +53,9 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			)
 			.addToggle((toggle) => {
 				toggle
-					.setValue(this.plugin.settings.enableSaveNoteContent)
+					.setValue(this.plugin.settings.enableAutoSave)
 					.onChange(async (enabled) => {
-						this.plugin.settings.enableSaveNoteContent = enabled;
+						this.plugin.settings.enableAutoSave = enabled;
 						await this.plugin.saveSettings();
 						// Re-render the dependent setting
 						this.display();
@@ -65,7 +65,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 
 	/** Add auto-save debounce delay setting. */
 	private addAutoSaveDebounceSetting() {
-		if (!this.plugin.settings.enableSaveNoteContent) {
+		if (!this.plugin.settings.enableAutoSave) {
 			return;
 		}
 

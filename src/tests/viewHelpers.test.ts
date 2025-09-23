@@ -34,7 +34,7 @@ describe("View Helpers", () => {
 
 	describe("updateActionButtons", () => {
 		it("should hide the save button if saving is disabled", () => {
-			mockView.plugin.settings.enableSaveNoteContent = false;
+			mockView.plugin.settings.enableAutoSave = false;
 			updateActionButtons(mockView);
 			expect(mockSaveActionEl.hide).toHaveBeenCalledOnce();
 		});

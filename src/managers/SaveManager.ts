@@ -47,10 +47,7 @@ export class AutoSaveHandler {
 	 * Checks if the previous view should be auto-saved and triggers the save if so.
 	 */
 	private autoSavePreviousViewIfNeeded(): void {
-		if (
-			this.plugin.settings.enableSaveNoteContent &&
-			this.previousActiveView
-		) {
+		if (this.plugin.settings.enableAutoSave && this.previousActiveView) {
 			log.debug(
 				`Triggering save for previous view: ${this.previousActiveView.getViewType()}`
 			);

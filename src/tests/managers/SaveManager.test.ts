@@ -3,7 +3,7 @@ import { SaveManager } from "src/managers/SaveManager";
 import type { SandboxNoteView } from "src/views/SandboxNoteView";
 import { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
-import type { SandboxNotePluginSettings } from "src/settings";
+import type { PluginData, SandboxNotePluginSettings } from "src/settings";
 
 const createMockView = (content: string): SandboxNoteView =>
 	({
@@ -17,7 +17,8 @@ describe("SaveManager", () => {
 	let saveManager: SaveManager;
 	let mockEmitter: EventEmitter<AppEvents>;
 	let mockSettings: SandboxNotePluginSettings;
-	let mockSaveData: (settings: SandboxNotePluginSettings) => Promise<void>;
+	let mockData: PluginData;
+	let mockSaveData: (data: PluginData) => Promise<void>;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -29,10 +30,17 @@ describe("SaveManager", () => {
 			enableAutoSave: true,
 			autoSaveDebounceMs: 1000,
 		} as SandboxNotePluginSettings;
+		mockData = {
+			settings: mockSettings,
+			data: {
+				noteContent: "",
+				lastSaved: "",
+			},
+		};
 
 		mockSaveData = vi.fn().mockResolvedValue(undefined);
 
-		saveManager = new SaveManager(mockEmitter, mockSettings, mockSaveData);
+		saveManager = new SaveManager(mockEmitter, mockData, mockSaveData);
 	});
 
 	it("should be defined", () => {
@@ -45,13 +53,15 @@ describe("SaveManager", () => {
 			await saveManager.saveNoteContentToFile(view);
 
 			expect(mockSaveData).toHaveBeenCalledOnce();
-			const savedSettings = (
-				mockSaveData as ReturnType<typeof vi.fn>
-			).mock.calls[0][0];
-			expect(savedSettings.noteContent).toBe("Some note content");
-			expect(savedSettings.lastSaved).toBeDefined();
+			const savedSettings = (mockSaveData as ReturnType<typeof vi.fn>)
+				.mock.calls[0][0];
+			expect(savedSettings.data.noteContent).toBe("Some note content");
+			expect(savedSettings.data.lastSaved).toBeDefined();
 
-			expect(mockEmitter.emit).toHaveBeenCalledWith("content-saved", undefined);
+			expect(mockEmitter.emit).toHaveBeenCalledWith(
+				"content-saved",
+				undefined
+			);
 		});
 
 		it("should save content if it is empty", async () => {
@@ -59,7 +69,10 @@ describe("SaveManager", () => {
 			await saveManager.saveNoteContentToFile(view);
 
 			expect(mockSaveData).toHaveBeenCalledOnce();
-			expect(mockEmitter.emit).toHaveBeenCalledWith("content-saved", undefined);
+			expect(mockEmitter.emit).toHaveBeenCalledWith(
+				"content-saved",
+				undefined
+			);
 		});
 
 		it("should save content if it is only whitespace", async () => {
@@ -67,21 +80,20 @@ describe("SaveManager", () => {
 			await saveManager.saveNoteContentToFile(view);
 
 			expect(mockSaveData).toHaveBeenCalledOnce();
-			expect(mockEmitter.emit).toHaveBeenCalledWith("content-saved", undefined);
+			expect(mockEmitter.emit).toHaveBeenCalledWith(
+				"content-saved",
+				undefined
+			);
 		});
 
 		it("should log an error if saving fails", async () => {
 			const error = new Error("Failed to write to disk");
-			(mockSaveData as ReturnType<typeof vi.fn>).mockRejectedValue(
-				error
-			);
+			(mockSaveData as ReturnType<typeof vi.fn>).mockRejectedValue(error);
 			const view = createMockView("Some content");
 
 			await saveManager.saveNoteContentToFile(view);
 
-			expect(mockEmitter.emit).not.toHaveBeenCalledWith(
-				"content-saved"
-			);
+			expect(mockEmitter.emit).not.toHaveBeenCalledWith("content-saved");
 		});
 	});
 
@@ -108,9 +120,8 @@ describe("SaveManager", () => {
 			await vi.advanceTimersByTimeAsync(1000);
 
 			expect(mockSaveData).toHaveBeenCalledOnce();
-			const savedSettings = (
-				mockSaveData as ReturnType<typeof vi.fn>
-			).mock.calls[0][0];
+			const savedSettings = (mockSaveData as ReturnType<typeof vi.fn>)
+				.mock.calls[0][0];
 			expect(savedSettings.noteContent).toBe("Debounced content");
 		});
 
@@ -124,9 +135,8 @@ describe("SaveManager", () => {
 			await vi.advanceTimersByTimeAsync(1000);
 
 			expect(mockSaveData).toHaveBeenCalledOnce();
-			const savedSettings = (
-				mockSaveData as ReturnType<typeof vi.fn>
-			).mock.calls[0][0];
+			const savedSettings = (mockSaveData as ReturnType<typeof vi.fn>)
+				.mock.calls[0][0];
 			expect(savedSettings.noteContent).toBe("Final content");
 		});
 
@@ -146,10 +156,9 @@ describe("SaveManager", () => {
 			await vi.advanceTimersByTimeAsync(1000);
 
 			expect(mockSaveData).toHaveBeenCalledOnce();
-			const savedSettings = (
-				mockSaveData as ReturnType<typeof vi.fn>
-			).mock.calls[0][0];
-			expect(savedSettings.noteContent).toBe("Content 2");
+			const savedSettings = (mockSaveData as ReturnType<typeof vi.fn>)
+				.mock.calls[0][0];
+			expect(savedSettings.data.noteContent).toBe("Content 2");
 		});
 
 		it("should cancel debounced save if a direct save is triggered", async () => {
@@ -165,10 +174,9 @@ describe("SaveManager", () => {
 
 			// The direct save should have been executed
 			expect(mockSaveData).toHaveBeenCalledOnce();
-			const savedSettings = (
-				mockSaveData as ReturnType<typeof vi.fn>
-			).mock.calls[0][0];
-			expect(savedSettings.noteContent).toBe("Direct call");
+			const savedSettings = (mockSaveData as ReturnType<typeof vi.fn>)
+				.mock.calls[0][0];
+			expect(savedSettings.data.noteContent).toBe("Direct call");
 
 			// Fast-forward time to see if the debounced save also fires
 			await vi.advanceTimersByTimeAsync(1000);

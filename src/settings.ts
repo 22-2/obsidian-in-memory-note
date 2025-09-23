@@ -1,6 +1,14 @@
 import { PluginSettingTab, Setting } from "obsidian";
 import type SandboxNotePlugin from "./main";
 
+export interface PluginData {
+	settings: SandboxNotePluginSettings;
+	data: {
+		noteContent: string;
+		lastSaved: string;
+	};
+}
+
 /** Plugin settings interface. */
 export interface SandboxNotePluginSettings {
 	enableLogger: boolean;

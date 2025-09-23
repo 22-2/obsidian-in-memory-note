@@ -2,14 +2,14 @@ import { SandboxNoteView } from "../views/SandboxNoteView";
 import log from "loglevel";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
-import type { SandboxNotePluginSettings } from "src/settings";
+import type { PluginData, SandboxNotePluginSettings } from "src/settings";
 import { debounce, type Debouncer } from "obsidian";
 import { Notice } from "src/tests/obsidian";
 /** Manages content persistence and auto-save functionality */
 export class SaveManager {
 	private emitter: EventEmitter<AppEvents>;
-	private settings: SandboxNotePluginSettings;
-	private saveData: (settings: SandboxNotePluginSettings) => Promise<void>;
+	private data: PluginData;
+	private saveData: (data: PluginData) => Promise<void>;
 	private isSaving = false;
 
 	/** Debounced save function */
@@ -17,15 +17,15 @@ export class SaveManager {
 
 	constructor(
 		emitter: EventEmitter<AppEvents>,
-		settings: SandboxNotePluginSettings,
-		saveData: (settings: SandboxNotePluginSettings) => Promise<void>
+		data: PluginData,
+		saveData: (data: PluginData) => Promise<void>
 	) {
 		this.emitter = emitter;
-		this.settings = settings;
+		this.data = data;
 		this.saveData = saveData;
 		this.debouncedSave = debounce(
 			(view: SandboxNoteView) => this.saveNoteContentToFile(view),
-			this.settings.autoSaveDebounceMs
+			this.data.settings.autoSaveDebounceMs
 		);
 	}
 
@@ -86,11 +86,11 @@ export class SaveManager {
 	 */
 	private async persistContent(content: string): Promise<void> {
 		// Also update the in-memory settings to keep them in sync
-		this.settings.noteContent = content;
-		this.settings.lastSaved = new Date().toISOString();
+		this.data.settings.noteContent = content;
+		this.data.settings.lastSaved = new Date().toISOString();
 
 		// Save content to data.json using Obsidian API
-		await this.saveData(this.settings);
+		await this.saveData(this.data);
 
 		// Mark the content as saved in the central manager
 		this.emitter.emit("content-saved", undefined);

@@ -1,11 +1,15 @@
 import { Notice, Plugin } from "obsidian";
 import {
+	type PluginData,
 	type SandboxNotePluginSettings,
 	SandboxNoteSettingTab,
 } from "./settings";
 import { UnsafeMarkdownView } from "./views/internal/UnsafeMarkdownView";
 import { noop } from "./utils/noop";
-import { DEFAULT_SETTINGS } from "./utils/constants";
+import {
+	DEFAULT_DATA as DEFAULT_PLUGIN_DATA,
+	DEFAULT_SETTINGS,
+} from "./utils/constants";
 import log from "loglevel";
 import { EventEmitter } from "./utils/EventEmitter";
 import type { AppEvents } from "./events/AppEvents";
@@ -21,7 +25,12 @@ import type { SandboxNoteView } from "./views/SandboxNoteView";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
+	/**
+	 * @deprecated
+	 * */
 	settings: SandboxNotePluginSettings = DEFAULT_SETTINGS;
+
+	data: PluginData = DEFAULT_PLUGIN_DATA;
 
 	// Managers
 	editorSyncManager!: EditorSyncManager;
@@ -48,11 +57,11 @@ export default class SandboxNotePlugin extends Plugin {
 		this.eventManager.registerEventHandlers(
 			this.editorSyncManager,
 			this.saveManager,
-			this.settings
+			this.data.settings
 		);
 
 		// Initialize content manager with saved content
-		const savedContent = this.settings.noteContent ?? "";
+		const savedContent = this.data.settings.noteContent ?? "";
 		this.editorSyncManager.currentSharedNoteContent = savedContent;
 		this.editorSyncManager.lastSavedContent = savedContent;
 
@@ -103,13 +112,12 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Initialize all manager instances */
 	private initializeManagers() {
-		const saveData = (settings: SandboxNotePluginSettings) =>
-			this.saveData(settings);
+		const saveData = (data: PluginData) => this.saveData(data);
 		const emitter = new EventEmitter<AppEvents>();
 		this.emitter = emitter;
 
 		this.editorSyncManager = new EditorSyncManager(emitter);
-		this.saveManager = new SaveManager(emitter, this.settings, saveData);
+		this.saveManager = new SaveManager(emitter, this.data, saveData);
 		this.interactionManager = new InteractionManager(this);
 		this.editorPluginConnector = new EditorPluginConnector(this, emitter);
 		this.viewFactory = new ViewFactory(this);
@@ -118,7 +126,7 @@ export default class SandboxNotePlugin extends Plugin {
 			emitter,
 			this.editorSyncManager,
 			this.editorPluginConnector,
-			this.settings
+			this.data.settings
 		);
 		this.eventManager = new EventManager(emitter);
 	}
@@ -150,7 +158,7 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Initialize logger with current settings. */
 	initializeLogger(): void {
-		if (this.settings.enableLogger) {
+		if (this.data.settings.enableLogger) {
 			log.enableAll();
 		} else {
 			log.disableAll();
@@ -160,9 +168,9 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Load plugin settings from storage. */
 	async loadSettings() {
-		this.settings = Object.assign(
+		this.data.settings = Object.assign(
 			{},
-			DEFAULT_SETTINGS,
+			DEFAULT_PLUGIN_DATA,
 			await this.loadData()
 		);
 	}
@@ -170,8 +178,11 @@ export default class SandboxNotePlugin extends Plugin {
 	/** Save current plugin settings to storage. */
 	async saveSettings() {
 		const settingsToSave = {
-			...this.settings,
-			noteContent: this.editorSyncManager.currentSharedNoteContent,
+			...this.data,
+			data: {
+				noteContent: this.editorSyncManager.currentSharedNoteContent,
+				lastSaved: this.editorSyncManager.lastSavedContent,
+			},
 		};
 		await this.saveData(settingsToSave);
 		// Refresh all view titles when settings change

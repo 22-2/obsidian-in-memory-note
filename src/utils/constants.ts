@@ -1,4 +1,4 @@
-import { type SandboxNotePluginSettings } from "../settings";
+import { type PluginData, type SandboxNotePluginSettings } from "../settings";
 import manifest from "../../manifest.json";
 
 export const DEFAULT_SETTINGS: SandboxNotePluginSettings = {
@@ -9,6 +9,14 @@ export const DEFAULT_SETTINGS: SandboxNotePluginSettings = {
 	enableCtrlS: false,
 	noteContent: "",
 	lastSaved: "",
+};
+
+export const DEFAULT_DATA: PluginData = {
+	settings: DEFAULT_SETTINGS,
+	data: {
+		noteContent: "",
+		lastSaved: "",
+	},
 };
 
 export const APP_NAME = manifest.name || "SandboxNote";

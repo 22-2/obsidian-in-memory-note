@@ -77,9 +77,6 @@ describe("SandboxNotePlugin", () => {
 		plugin.contentManager = { sharedNoteContent: "" } as any;
 		plugin.editorManager = { setupEditorExtension: vi.fn() } as any;
 		plugin.uiManager = { setupUserInterface: vi.fn() } as any;
-		plugin.commandManager = {
-			updateSaveCommandMonkeyPatch: vi.fn(),
-		} as any;
 	});
 
 	afterEach(() => {

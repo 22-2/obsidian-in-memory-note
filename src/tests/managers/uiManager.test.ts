@@ -1,5 +1,5 @@
 import type SandboxNotePlugin from "src/main";
-import { UIManager } from "src/managers/uiManager";
+import { UIManager } from "src/managers/UIManager";
 import { IN_MEMORY_NOTE_ICON, SANDBOX_NOTE_ICON } from "src/utils/constants";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -77,9 +77,7 @@ describe("UIManager", () => {
 
 			const sandboxRibbonCallback = (
 				mockPlugin.addRibbonIcon as ReturnType<typeof vi.fn>
-			).mock.calls.find(
-				(call) => call[1] === "Open sandbox note"
-			)?.[2];
+			).mock.calls.find((call) => call[1] === "Open sandbox note")?.[2];
 			sandboxRibbonCallback();
 
 			expect(mockPlugin.activateSandboxView).toHaveBeenCalledOnce();
@@ -90,9 +88,7 @@ describe("UIManager", () => {
 
 			const inMemoryRibbonCallback = (
 				mockPlugin.addRibbonIcon as ReturnType<typeof vi.fn>
-			).mock.calls.find(
-				(call) => call[1] === "Open in-memory note"
-			)?.[2];
+			).mock.calls.find((call) => call[1] === "Open in-memory note")?.[2];
 			inMemoryRibbonCallback();
 
 			expect(mockPlugin.activateInMemoryView).toHaveBeenCalledOnce();

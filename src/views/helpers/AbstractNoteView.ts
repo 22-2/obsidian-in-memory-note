@@ -6,12 +6,12 @@ import {
 	type ViewStateResult,
 	WorkspaceLeaf,
 } from "obsidian";
-import { EditorWrapper } from "src/views/EditorWrapper";
-import type SandboxNotePlugin from "../main";
-import { updateActionButtons } from "../helpers/viewHelpers";
-import { setContent } from "../helpers/viewSync";
-import { SANDBOX_NOTE_ICON } from "../utils/constants";
-import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
+import { EditorWrapper } from "./EditorWrapper";
+import type SandboxNotePlugin from "../../main";
+import { updateActionButtons } from "../../helpers/viewHelpers";
+import { setContent } from "../../helpers/viewSync";
+import { SANDBOX_NOTE_ICON } from "../../utils/constants";
+import { handleClick, handleContextMenu } from "../..//helpers/clickHandler";
 import log from "loglevel";
 import { around } from "monkey-around";
 

@@ -1,6 +1,6 @@
+import { AbstractNoteView } from "src/views/helpers/AbstractNoteView";
 import type SandboxNotePlugin from "../main";
 import { IN_MEMORY_NOTE_ICON, SANDBOX_NOTE_ICON } from "../utils/constants";
-import { AbstractNoteView } from "../views/AbstractNoteView";
 
 /** Manages UI elements like ribbon icons and commands */
 export class UIManager {

@@ -1,5 +1,5 @@
 import type SandboxNotePlugin from "src/main";
-import { ContentManager } from "src/managers/contentManager";
+import { ContentManager } from "src/managers/ContentManager";
 import type { SandboxNoteView } from "src/views/SandboxNoteView";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

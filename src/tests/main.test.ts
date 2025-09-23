@@ -34,6 +34,9 @@ vi.mock("obsidian", async (importOriginal) => {
 			addSettingTab = vi.fn();
 			registerView = vi.fn();
 			registerDomEvent = vi.fn();
+			addCommand = vi.fn();
+			addRibbonIcon = vi.fn();
+			registerEvent = vi.fn();
 		},
 		Notice: vi.fn(),
 	};
@@ -46,7 +49,6 @@ describe("SandboxNotePlugin", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 
-		// A more realistic mock of the App object
 		mockApp = {
 			workspace: {
 				on: vi.fn(),
@@ -54,29 +56,26 @@ describe("SandboxNotePlugin", () => {
 			},
 		} as unknown as App;
 
-		// Create a new plugin instance for each test
 		plugin = new SandboxNotePlugin(mockApp, {} as any);
 
-		// Spy on methods that would be called during initialization instead of replacing them
 		vi.spyOn(plugin, "loadSettings").mockResolvedValue(undefined);
 		vi.spyOn(plugin, "initializeLogger").mockImplementation(() => {});
-		vi.spyOn(plugin as any, "initializeManagers").mockImplementation(
-			() => {}
-		);
+		// We are not spying on initializeManagers, but we need to mock the managers
+		// because the real initializeManagers is not called in this test setup.
+		// Instead, we will check that the methods on the managers are called.
+		plugin.editorSyncManager = {
+			sharedNoteContent: "",
+			refreshAllViewTitles: vi.fn(),
+		} as any;
+		plugin.saveManager = {} as any;
+		plugin.uiManager = { setupUserInterface: vi.fn() } as any;
+		plugin.editorPluginConnector = { setupEditorExtension: vi.fn() } as any;
+		plugin.viewActivator = { registerViews: vi.fn() } as any;
+		plugin.workspaceEventManager = { setupEventHandlers: vi.fn() } as any;
+
 		vi.spyOn(plugin as any, "setupSettingsTab").mockImplementation(
 			() => {}
 		);
-		vi.spyOn(
-			plugin as any,
-			"setupWorkspaceEventHandlers"
-		).mockImplementation(() => {});
-		vi.spyOn(plugin as any, "registerViewType").mockImplementation(
-			() => {}
-		);
-		// We need to have the managers on the plugin instance for the spies to work
-		plugin.editorSyncManager = { sharedNoteContent: "" } as any;
-		plugin.editorPluginConnector = { setupEditorExtension: vi.fn() } as any;
-		plugin.uiManager = { setupUserInterface: vi.fn() } as any;
 	});
 
 	afterEach(() => {
@@ -84,45 +83,58 @@ describe("SandboxNotePlugin", () => {
 	});
 
 	it("should disable the plugin and show a notice if compatibility check fails", async () => {
-		// Arrange: Make the UnsafeMarkdownView constructor throw an error
 		const error = new Error("Incompatible version");
 		(UnsafeMarkdownView as Mock).mockImplementation(() => {
 			throw error;
 		});
 
-		// Act: Call the onload method
 		await plugin.onload();
 
-		// Assert: Check that a notice was shown and initialization was halted
 		expect(Notice).toHaveBeenCalledOnce();
 		expect(Notice).toHaveBeenCalledWith(
 			"Sandbox Note plugin: Incompatible with this version of Obsidian. The plugin has been disabled."
 		);
 
-		// Assert that further initialization methods were NOT called
 		expect(plugin.loadSettings).not.toHaveBeenCalled();
-		expect((plugin as any).initializeManagers).not.toHaveBeenCalled();
-		expect((plugin as any).setupSettingsTab).not.toHaveBeenCalled();
+		expect(plugin.uiManager.setupUserInterface).not.toHaveBeenCalled();
 	});
 
 	it("should proceed with initialization if compatibility check passes", async () => {
-		// Arrange: Make the UnsafeMarkdownView constructor succeed
 		(UnsafeMarkdownView as Mock).mockImplementation(() => ({
-			unload: vi.fn(), // Mock the unload method on the instance
+			unload: vi.fn(),
 		}));
 
-		// Act: Call the onload method
+		const initializeManagersSpy = vi
+			.spyOn(plugin as any, "initializeManagers")
+			.mockImplementation(() => {
+				plugin.editorSyncManager = {
+					sharedNoteContent: "",
+					refreshAllViewTitles: vi.fn(),
+				} as any;
+				plugin.saveManager = {} as any;
+				plugin.uiManager = { setupUserInterface: vi.fn() } as any;
+				plugin.editorPluginConnector = {
+					setupEditorExtension: vi.fn(),
+				} as any;
+				plugin.viewActivator = { registerViews: vi.fn() } as any;
+				plugin.workspaceEventManager = {
+					setupEventHandlers: vi.fn(),
+				} as any;
+			});
+
 		await plugin.onload();
 
-		// Assert: Check that no notice was shown and initialization proceeded
 		expect(Notice).not.toHaveBeenCalled();
-
-		// Assert that initialization methods were called
 		expect(plugin.loadSettings).toHaveBeenCalledOnce();
-		expect((plugin as any).initializeManagers).toHaveBeenCalledOnce();
+		expect(initializeManagersSpy).toHaveBeenCalledOnce();
 		expect((plugin as any).setupSettingsTab).toHaveBeenCalledOnce();
 		expect(
 			plugin.editorPluginConnector.setupEditorExtension
+		).toHaveBeenCalledOnce();
+		expect(plugin.uiManager.setupUserInterface).toHaveBeenCalledOnce();
+		expect(plugin.viewActivator.registerViews).toHaveBeenCalledOnce();
+		expect(
+			plugin.workspaceEventManager.setupEventHandlers
 		).toHaveBeenCalledOnce();
 	});
 });

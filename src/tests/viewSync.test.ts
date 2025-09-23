@@ -31,7 +31,7 @@ describe("View Sync Helpers", () => {
 			updateUnsavedState: vi.fn(),
 			setContent: vi.fn(),
 			plugin: {
-				contentManager: {
+				editorSyncManager: {
 					activeViews: new Set(),
 					sharedNoteContent: "",
 				},

@@ -338,14 +338,14 @@ export class Vault {
 	// Event management
 	on(
 		event: "create" | "modify" | "delete" | "rename",
-		callback: (...args: any[]) => void,
+		callback: (...args: any[]) => void
 	): void {
 		this.emitter.on(event, callback);
 	}
 
 	off(
 		event: "create" | "modify" | "delete" | "rename",
-		callback: (...args: any[]) => void,
+		callback: (...args: any[]) => void
 	): void {
 		this.emitter.off(event, callback);
 	}
@@ -381,14 +381,14 @@ export class MetadataCache {
 	// Event management
 	on(
 		event: "changed" | "resolve" | "resolved",
-		callback: (...args: any[]) => void,
+		callback: (...args: any[]) => void
 	): void {
 		this.emitter.on(event, callback);
 	}
 
 	off(
 		event: "changed" | "resolve" | "resolved",
-		callback: (...args: any[]) => void,
+		callback: (...args: any[]) => void
 	): void {
 		this.emitter.off(event, callback);
 	}
@@ -402,14 +402,14 @@ export class MetadataCache {
 export class FileManager {
 	async generateMarkdownLink(
 		file: TFile,
-		sourcePath?: string,
+		sourcePath?: string
 	): Promise<string> {
 		return `[[${file.basename}]]`;
 	}
 
 	async processFrontMatter(
 		file: TFile,
-		fn: (frontmatter: any) => void,
+		fn: (frontmatter: any) => void
 	): Promise<void> {
 		// Mock implementation
 		const content = mockFileSystem.read(file.path);
@@ -448,7 +448,7 @@ export class Workspace {
 
 	getViewsOfType(type: string): any[] {
 		return Array.from(this.views.values()).filter(
-			(view) => view.getViewType() === type,
+			(view) => view.getViewType() === type
 		);
 	}
 
@@ -497,7 +497,7 @@ export class App {
 	loadLocalStorage = vi.fn((key: string) => {
 		try {
 			return JSON.parse(
-				localStorage.getItem(`obsidian-app-${key}`) || "null",
+				localStorage.getItem(`obsidian-app-${key}`) || "null"
 			);
 		} catch {
 			return null;
@@ -517,14 +517,14 @@ export class App {
 		mockFileSystem.on("create", (file: MockFile) => {
 			this.metadataCache.setCache(
 				file.path,
-				this.parseFileMetadata(file.content),
+				this.parseFileMetadata(file.content)
 			);
 		});
 
 		mockFileSystem.on("modify", (file: MockFile) => {
 			this.metadataCache.setCache(
 				file.path,
-				this.parseFileMetadata(file.content),
+				this.parseFileMetadata(file.content)
 			);
 		});
 
@@ -626,7 +626,7 @@ export class Modal extends Component {
 			return this;
 		};
 		this.contentEl.createEl = function <
-			T extends keyof HTMLElementTagNameMap,
+			T extends keyof HTMLElementTagNameMap
 		>(tag: T, attrs?: any): HTMLElementTagNameMap[T] {
 			const el = document.createElement(tag);
 			if (attrs) {
@@ -716,7 +716,7 @@ export abstract class FuzzySuggestModal<T> extends Modal {
 	// Mock methods for fuzzy search functionality
 	setPlaceholder(placeholder: string): void {}
 	setInstructions(
-		instructions: Array<{ command: string; purpose: string }>,
+		instructions: Array<{ command: string; purpose: string }>
 	): void {}
 }
 
@@ -730,7 +730,7 @@ export abstract class AbstractInputSuggest<T> {
 	abstract renderSuggestion(suggestion: T, el: HTMLElement): void;
 	abstract selectSuggestion(
 		suggestion: T,
-		evt: MouseEvent | KeyboardEvent,
+		evt: MouseEvent | KeyboardEvent
 	): void;
 
 	// Mock methods
@@ -776,7 +776,7 @@ export class ItemView extends Component {
 		el: HTMLElement,
 		type: K,
 		listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
-		options?: boolean | AddEventListenerOptions,
+		options?: boolean | AddEventListenerOptions
 	): void {
 		el.addEventListener(type, listener, options);
 	}
@@ -1044,19 +1044,21 @@ export const requestUrl = vi.fn().mockImplementation(async (options: any) => {
 // Menu mock class
 export const Menu = vi.fn().mockImplementation(() => ({
 	items: [],
-	addItem: vi.fn().mockImplementation(function (
-		this: any,
-		callback: (item: any) => void,
-	) {
-		const mockItem = {
-			setTitle: vi.fn().mockReturnThis(),
-			setIcon: vi.fn().mockReturnThis(),
-			onClick: vi.fn().mockReturnThis(),
-			setSection: vi.fn().mockReturnThis(),
-		};
-		callback(mockItem);
-		this.items.push(mockItem);
-	}),
+	addItem: vi
+		.fn()
+		.mockImplementation(function (
+			this: any,
+			callback: (item: any) => void
+		) {
+			const mockItem = {
+				setTitle: vi.fn().mockReturnThis(),
+				setIcon: vi.fn().mockReturnThis(),
+				onClick: vi.fn().mockReturnThis(),
+				setSection: vi.fn().mockReturnThis(),
+			};
+			callback(mockItem);
+			this.items.push(mockItem);
+		}),
 	addSeparator: vi.fn().mockImplementation(function (this: any) {
 		this.items.push({ type: "separator" });
 	}),
@@ -1096,7 +1098,7 @@ export function setIcon(element: HTMLElement, iconName: string): void {
 export function setTooltip(
 	element: HTMLElement,
 	tooltip: string,
-	options?: { placement?: string },
+	options?: { placement?: string }
 ): void {
 	// Mock implementation - just add tooltip attributes
 	element.setAttribute("data-tooltip", tooltip);
@@ -1168,13 +1170,42 @@ export const MockObsidian = {
 };
 
 // Simple debounce mock: return the original function for test determinism
-export function debounce<T extends (...args: any[]) => any>(
-	fn: T,
-	_wait?: number,
-): T {
-	return fn;
+export interface DebouncedFunction<T extends (...args: any[]) => any> {
+	(...args: Parameters<T>): void;
+	cancel(): void;
 }
 
+/**
+ * Creates a debounced function that delays invoking `func` until after `wait`
+ * milliseconds have elapsed since the last time the debounced function was
+ * invoked.
+ *
+ * @param func The function to debounce.
+ * @param wait The number of milliseconds to delay.
+ * @returns A new debounced function with a `cancel` method.
+ */
+export function debounce<T extends (...args: any[]) => any>(
+	func: T,
+	wait: number
+): DebouncedFunction<T> {
+	let timeout: NodeJS.Timeout;
+
+	const debounced = function (
+		this: ThisParameterType<T>,
+		...args: Parameters<T>
+	) {
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const context = this;
+		clearTimeout(timeout);
+		timeout = setTimeout(() => func.apply(context, args), wait);
+	} as DebouncedFunction<T>;
+
+	debounced.cancel = () => {
+		clearTimeout(timeout);
+	};
+
+	return debounced;
+}
 // Helper to create test files
 export function createTestFile(path: string, content: string) {
 	return mockFileSystem.create(path, content);
@@ -1199,7 +1230,7 @@ global.createDiv = function (o) {
 			div.className = Array.isArray(o.cls) ? o.cls.join(" ") : o.cls;
 		}
 		if (o.text) {
-			if (typeof o.text === 'string') {
+			if (typeof o.text === "string") {
 				div.textContent = o.text;
 			} else {
 				div.textContent = o.text.textContent;

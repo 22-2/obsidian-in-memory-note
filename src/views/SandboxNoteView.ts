@@ -28,8 +28,7 @@ export class SandboxNoteView extends AbstractNoteView {
 
 	/** Load content from the shared ContentManager and synchronize. */
 	async loadInitialContent(): Promise<string> {
-		synchronizeWithExistingViews(this);
-		return this.plugin.editorSyncManager.currenSharedNoteContent;
+		return this.plugin.editorSyncManager.currentSharedNoteContent;
 	}
 
 	/** Save the content using the SaveManager. */
@@ -40,6 +39,7 @@ export class SandboxNoteView extends AbstractNoteView {
 	/** On open, register this view with the ContentManager. */
 	async onOpen() {
 		this.plugin.editorSyncManager.addActiveView(this);
+		synchronizeWithExistingViews(this);
 		await super.onOpen();
 	}
 

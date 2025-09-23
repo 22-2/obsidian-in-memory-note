@@ -25,7 +25,7 @@ describe("View Sync Helpers", () => {
 		};
 		mockEditorSyncManager = {
 			activeViews: new Set(),
-			currenSharedNoteContent: "",
+			currentSharedNoteContent: "",
 			syncAll: vi.fn(),
 		} as unknown as EditorSyncManager;
 
@@ -67,7 +67,7 @@ describe("View Sync Helpers", () => {
 
 	describe("synchronizeWithExistingViews", () => {
 		it("should set content from shared content if no other views are open", () => {
-			mockView.plugin.editorSyncManager.currenSharedNoteContent =
+			mockView.plugin.editorSyncManager.currentSharedNoteContent =
 				"initial content from plugin";
 			mockView.plugin.editorSyncManager.activeViews.add(mockView);
 
@@ -93,7 +93,7 @@ describe("View Sync Helpers", () => {
 			synchronizeWithExistingViews(mockView);
 
 			expect(
-				mockView.plugin.editorSyncManager.currenSharedNoteContent
+				mockView.plugin.editorSyncManager.currentSharedNoteContent
 			).toBe("content from other view");
 			expect(mockView.setContent).toHaveBeenCalledWith(
 				"content from other view"
@@ -107,13 +107,12 @@ describe("View Sync Helpers", () => {
 
 			mockView.plugin.editorSyncManager.activeViews.add(mockView);
 			mockView.plugin.editorSyncManager.activeViews.add(mockOtherView);
-			mockView.plugin.editorSyncManager.currenSharedNoteContent = "";
-
+			mockView.plugin.editorSyncManager.currentSharedNoteContent = "";
 
 			synchronizeWithExistingViews(mockView);
 
 			expect(
-				mockView.plugin.editorSyncManager.currenSharedNoteContent
+				mockView.plugin.editorSyncManager.currentSharedNoteContent
 			).toBe("");
 			expect(mockView.setContent).not.toHaveBeenCalled();
 		});

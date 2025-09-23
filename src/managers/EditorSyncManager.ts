@@ -9,7 +9,7 @@ export class EditorSyncManager {
 	private emitter: EventEmitter<AppEvents>;
 
 	/** Shared content across all views */
-	currenSharedNoteContent = "";
+	currentSharedNoteContent = "";
 
 	/** Content that was last saved */
 	lastSavedContent = "";
@@ -29,7 +29,7 @@ export class EditorSyncManager {
 		log.debug(
 			`Updating note content from view: ${sourceView.getViewType()}`
 		);
-		this.currenSharedNoteContent = content;
+		this.currentSharedNoteContent = content;
 		this.updateUnsavedState();
 
 		// Synchronize content to all other active views
@@ -45,7 +45,7 @@ export class EditorSyncManager {
 	private updateUnsavedState() {
 		const wasUnsaved = this.hasUnsavedChanges;
 		this.hasUnsavedChanges =
-			this.currenSharedNoteContent !== this.lastSavedContent;
+			this.currentSharedNoteContent !== this.lastSavedContent;
 
 		if (wasUnsaved !== this.hasUnsavedChanges) {
 			log.debug(`Unsaved state changed to: ${this.hasUnsavedChanges}`);
@@ -57,7 +57,7 @@ export class EditorSyncManager {
 
 	/** Marks the current content as saved. */
 	markAsSaved() {
-		this.lastSavedContent = this.currenSharedNoteContent;
+		this.lastSavedContent = this.currentSharedNoteContent;
 		this.updateUnsavedState();
 		log.debug("Content marked as saved.");
 	}

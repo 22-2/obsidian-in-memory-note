@@ -207,7 +207,11 @@ export abstract class AbstractNoteView extends ItemView {
 				this.plugin.editorPluginConnector.watchEditorPlugin
 			);
 			if (editorPlugin) {
-				editorPlugin.connectToPlugin(this.plugin, this as any);
+				editorPlugin.connectToPlugin(
+					this.plugin,
+					this,
+					this.plugin.emitter
+				);
 			}
 		});
 	}

@@ -31,6 +31,7 @@ export default class SandboxNotePlugin extends Plugin {
 	viewActivator!: ViewActivator;
 	eventManager!: EventManager;
 	workspaceEventManager!: WorkspaceEventManager;
+	emitter!: EventEmitter<AppEvents>;
 
 	/** Initialize plugin on load. */
 	async onload() {
@@ -80,6 +81,7 @@ export default class SandboxNotePlugin extends Plugin {
 				getHistoryState: () => ({}),
 				open: noop,
 				updateHeader: noop,
+				workspace: {},
 			} as unknown as WorkspaceLeaf;
 
 			// @ts-ignore
@@ -103,6 +105,7 @@ export default class SandboxNotePlugin extends Plugin {
 		const saveData = (settings: SandboxNotePluginSettings) =>
 			this.saveData(settings);
 		const emitter = new EventEmitter<AppEvents>();
+		this.emitter = emitter;
 
 		this.editorSyncManager = new EditorSyncManager(emitter);
 		this.saveManager = new SaveManager(emitter, this.settings, saveData);

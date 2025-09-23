@@ -25,6 +25,9 @@ describe("View Sync Helpers", () => {
 		mockView = {
 			editor: mockEditor as unknown as Editor,
 			leaf: mockLeaf,
+			containerEl: {
+				isShown: vi.fn().mockReturnValue(true),
+			},
 			updateUnsavedState: vi.fn(),
 			setContent: vi.fn(),
 			plugin: {

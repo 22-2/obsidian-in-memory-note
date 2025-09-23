@@ -1,5 +1,5 @@
 import type { AppEvents } from "../events/AppEvents";
-import type { SandboxNotePluginSettings } from "../settings";
+import type { PluginSettings } from "../settings";
 import { SandboxNoteView } from "../views/SandboxNoteView";
 import type { EventEmitter } from "../utils/EventEmitter";
 import type { EditorSyncManager } from "./EditorSyncManager";
@@ -15,7 +15,7 @@ export class EventManager {
 	public registerEventHandlers(
 		editorSyncManager: EditorSyncManager,
 		saveManager: SaveManager,
-		settings: SandboxNotePluginSettings
+		settings: PluginSettings
 	): void {
 		// When content changes, sync it and trigger auto-save
 		this.emitter.on("content-changed", (payload) => {

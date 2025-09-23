@@ -1,7 +1,7 @@
 import { Notice, Plugin } from "obsidian";
 import {
-	type PluginData,
-	type SandboxNotePluginSettings,
+	type SandboxNotePluginData,
+	type PluginSettings,
 	SandboxNoteSettingTab,
 } from "./settings";
 import { UnsafeMarkdownView } from "./views/internal/UnsafeMarkdownView";
@@ -25,7 +25,7 @@ import type { SandboxNoteView } from "./views/SandboxNoteView";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
-	data: PluginData = DEFAULT_PLUGIN_DATA;
+	data: SandboxNotePluginData = DEFAULT_PLUGIN_DATA;
 
 	// Managers
 	editorSyncManager!: EditorSyncManager;
@@ -107,7 +107,7 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Initialize all manager instances */
 	private initializeManagers() {
-		const saveData = (data: PluginData) => this.saveData(data);
+		const saveData = (data: SandboxNotePluginData) => this.saveData(data);
 		const emitter = new EventEmitter<AppEvents>();
 		this.emitter = emitter;
 

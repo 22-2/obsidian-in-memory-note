@@ -1,8 +1,8 @@
 import { PluginSettingTab, Setting } from "obsidian";
 import type SandboxNotePlugin from "./main";
 
-export interface PluginData {
-	settings: SandboxNotePluginSettings;
+export interface SandboxNotePluginData {
+	settings: PluginSettings;
 	data: {
 		noteContent: string;
 		lastSaved: string;
@@ -10,7 +10,7 @@ export interface PluginData {
 }
 
 /** Plugin settings interface. */
-export interface SandboxNotePluginSettings {
+export interface PluginSettings {
 	enableLogger: boolean;
 	enableAutoSave: boolean;
 	autoSaveDebounceMs: number;

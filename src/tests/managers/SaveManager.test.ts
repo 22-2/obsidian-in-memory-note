@@ -3,7 +3,7 @@ import { SaveManager } from "src/managers/SaveManager";
 import type { SandboxNoteView } from "src/views/SandboxNoteView";
 import { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
-import type { PluginData, SandboxNotePluginSettings } from "src/settings";
+import type { SandboxNotePluginData, PluginSettings } from "src/settings";
 
 const createMockView = (content: string): SandboxNoteView =>
 	({
@@ -16,9 +16,9 @@ const createMockView = (content: string): SandboxNoteView =>
 describe("SaveManager", () => {
 	let saveManager: SaveManager;
 	let mockEmitter: EventEmitter<AppEvents>;
-	let mockSettings: SandboxNotePluginSettings;
-	let mockData: PluginData;
-	let mockSaveData: (data: PluginData) => Promise<void>;
+	let mockSettings: PluginSettings;
+	let mockData: SandboxNotePluginData;
+	let mockSaveData: (data: SandboxNotePluginData) => Promise<void>;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -29,7 +29,7 @@ describe("SaveManager", () => {
 		mockSettings = {
 			enableAutoSave: true,
 			autoSaveDebounceMs: 1000,
-		} as SandboxNotePluginSettings;
+		} as PluginSettings;
 		mockData = {
 			settings: mockSettings,
 			data: {

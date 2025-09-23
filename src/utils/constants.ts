@@ -1,7 +1,7 @@
-import { type PluginData, type SandboxNotePluginSettings } from "../settings";
+import { type SandboxNotePluginData, type PluginSettings } from "../settings";
 import manifest from "../../manifest.json";
 
-export const DEFAULT_SETTINGS: SandboxNotePluginSettings = {
+export const DEFAULT_SETTINGS: PluginSettings = {
 	enableLogger: false,
 	enableAutoSave: true,
 	autoSaveDebounceMs: 3000,
@@ -9,7 +9,7 @@ export const DEFAULT_SETTINGS: SandboxNotePluginSettings = {
 	enableCtrlS: false,
 };
 
-export const DEFAULT_DATA: PluginData = {
+export const DEFAULT_DATA: SandboxNotePluginData = {
 	settings: DEFAULT_SETTINGS,
 	data: {
 		noteContent: "",

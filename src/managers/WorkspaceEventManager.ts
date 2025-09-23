@@ -6,7 +6,7 @@ import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
 import type { EditorSyncManager } from "./EditorSyncManager";
 import type { EditorPluginConnector } from "./EditorPluginConnector";
-import type { SandboxNotePluginSettings } from "src/settings";
+import type { PluginSettings } from "src/settings";
 
 /** Manages Obsidian workspace event handling */
 export class WorkspaceEventManager {
@@ -15,7 +15,7 @@ export class WorkspaceEventManager {
 	private emitter: EventEmitter<AppEvents>;
 	private editorSyncManager: EditorSyncManager;
 	private editorPluginConnector: EditorPluginConnector;
-	private settings: SandboxNotePluginSettings;
+	private settings: PluginSettings;
 	private debouncedSetupSandboxViews: () => void;
 
 	constructor(
@@ -23,7 +23,7 @@ export class WorkspaceEventManager {
 		emitter: EventEmitter<AppEvents>,
 		editorSyncManager: EditorSyncManager,
 		editorPluginConnector: EditorPluginConnector,
-		settings: SandboxNotePluginSettings
+		settings: PluginSettings
 	) {
 		this.app = app;
 		this.workspace = app.workspace;
@@ -45,10 +45,7 @@ export class WorkspaceEventManager {
 			"active-leaf-change",
 			this.handleActiveLeafChange.bind(this)
 		);
-		this.workspace.on(
-			"layout-change",
-			this.debouncedSetupSandboxViews
-		);
+		this.workspace.on("layout-change", this.debouncedSetupSandboxViews);
 	}
 
 	/** Connects the editor plugin to any existing sandbox views on layout ready or change. */
@@ -86,8 +83,7 @@ export class WorkspaceEventManager {
 		}
 
 		// Only proceed if the new active view is a SandboxNoteView
-		const activeView =
-			this.workspace.getActiveViewOfType(SandboxNoteView);
+		const activeView = this.workspace.getActiveViewOfType(SandboxNoteView);
 		if (!(activeView instanceof SandboxNoteView)) {
 			return;
 		}

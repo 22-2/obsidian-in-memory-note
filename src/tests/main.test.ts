@@ -11,7 +11,7 @@ import SandboxNotePlugin from "../main";
 import { App, Notice } from "obsidian";
 import { UnsafeMarkdownView } from "../views/internal/UnsafeMarkdownView";
 
-vi.mock("../views/helpers/UnsafeMarkdownView", () => {
+vi.mock("../views/internal/UnsafeMarkdownView", () => {
 	const UnsafeMarkdownView = vi.fn();
 	UnsafeMarkdownView.prototype.unload = vi.fn();
 	return { UnsafeMarkdownView };

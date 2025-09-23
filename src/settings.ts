@@ -7,6 +7,7 @@ export interface SandboxNotePluginSettings {
 	enableSaveNoteContent: boolean;
 	autoSaveDebounceMs: number;
 	enableUnsafeCtrlS: boolean;
+	enableCtrlS: boolean;
 	noteContent: string;
 	lastSaved: string;
 }
@@ -23,7 +24,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 		this.addDebugLoggingSetting();
 		this.addAutoSaveSetting();
 		this.addAutoSaveDebounceSetting();
-		this.addUnsafeCtrlSSetting();
+		// this.addUnsafeCtrlSSetting();
 	}
 
 	/** Add debug logging toggle. */
@@ -95,21 +96,38 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 	}
 
 	/** Add unsafe Ctrl+S save setting. */
-	private addUnsafeCtrlSSetting() {
-		new Setting(this.containerEl)
-			.setName("Enable Ctrl+S to save sandbox note")
-			.setDesc(
-				"Overrides the default save command (Ctrl+S) to save the content of the sandbox note. " +
-					"This is an unsafe feature as it alters core Obsidian behavior."
-			)
-			.addToggle((toggle) => {
-				toggle
-					.setValue(this.plugin.settings.enableUnsafeCtrlS)
-					.onChange(async (enabled) => {
-						this.plugin.settings.enableUnsafeCtrlS = enabled;
-						await this.plugin.saveSettings();
-						this.plugin.commandManager.updateSaveCommandMonkeyPatch();
-					});
-			});
-	}
+	// private addUnsafeCtrlSSetting() {
+	// 	new Setting(this.containerEl)
+	// 		.setName("Enable Ctrl+S to save sandbox note")
+	// 		.setDesc(
+	// 			"Overrides the default save command (Ctrl+S) to save the content of the sandbox note. " +
+	// 				"This is an unsafe feature as it alters core Obsidian behavior."
+	// 		)
+	// 		.addToggle((toggle) => {
+	// 			toggle
+	// 				.setValue(this.plugin.settings.enableUnsafeCtrlS)
+	// 				.onChange(async (enabled) => {
+	// 					this.plugin.settings.enableUnsafeCtrlS = enabled;
+	// 					await this.plugin.saveSettings();
+	// 					// this.plugin.commandManager.updateSaveCommandMonkeyPatch();
+	// 				});
+	// 		});
+	// }
+	/** Add Ctrl+S save setting. */
+	// private addCtrlSSetting() {
+	// 	new Setting(this.containerEl)
+	// 		.setName("Enable Ctrl+S to save sandbox note")
+	// 		.setDesc(
+	// 			"Overrides the default save command (Ctrl+S) to save the content of the sandbox note. "
+	// 		)
+	// 		.addToggle((toggle) => {
+	// 			toggle
+	// 				.setValue(this.plugin.settings.enableCtrlS)
+	// 				.onChange(async (enabled) => {
+	// 					this.plugin.settings.enableCtrlS = enabled;
+	// 					await this.plugin.saveSettings();
+	// 					// this.plugin.commandManager.updateSaveCommandMonkeyPatch();
+	// 				});
+	// 		});
+	// }
 }

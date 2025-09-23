@@ -43,29 +43,49 @@ export class SandboxNoteView extends AbstractNoteView {
 	}
 
 	/** Get ephemeral state for tab duplication. */
-	getEphemeralState(): any {
-		return { content: this.plugin.contentManager.sharedNoteContent };
-	}
+	// getEphemeralState(): any {
+	// 	return { content: this.plugin.contentManager.sharedNoteContent };
+	// }
 
-	/** Restore ephemeral state and update content. */
-	setEphemeralState(state: any): void {
-		if (state && typeof state.content === "string") {
-			// Set initial content for the inline editor
-			this.wrapper.content = state.content;
-			this.initialContent = state.content;
+	// /** Restore ephemeral state and update content. */
+	// setEphemeralState(state: any): void {
+	// 	if (state && typeof state.content === "string") {
+	// 		// Set initial content for the inline editor
+	// 		this.wrapper.content = state.content;
+	// 		this.initialContent = state.content;
 
-			// If the view is already loaded, update the editor immediately
-			if (this.wrapper.targetEl) {
-				this.setContent(state.content);
-			}
-		}
-	}
+	// 		// If the view is already loaded, update the editor immediately
+	// 		if (this.wrapper.targetEl) {
+	// 			this.setContent(state.content);
+	// 		}
+	// 	}
+	// }
 
 	/** On open, register this view with the ContentManager. */
 	async onOpen() {
 		this.plugin.contentManager.addActiveView(this);
+		this.plugin.registerDomEvent(
+			this.containerEl,
+			"keydown",
+			this.onKeyDown,
+			{
+				capture: true,
+			}
+		);
+		// console.trace("onOpen");
 		await super.onOpen();
 	}
+
+	onKeyDown = (e: KeyboardEvent) => {
+		if (
+			this.plugin.settings.enableCtrlS &&
+			e.ctrlKey &&
+			e.key === "s" &&
+			e.preventDefault()
+		) {
+			this.save();
+		}
+	};
 
 	/** On close, unregister this view. */
 	async onClose() {

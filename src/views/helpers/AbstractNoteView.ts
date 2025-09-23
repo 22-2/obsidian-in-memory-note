@@ -40,7 +40,6 @@ export abstract class AbstractNoteView extends ItemView {
 	abstract getViewType(): string;
 	abstract loadInitialContent(): Promise<string>;
 	abstract save(): Promise<void>;
-	onContentChanged(content: string): void {}
 	abstract getBaseTitle(): string;
 	abstract get hasUnsavedChanges(): boolean;
 

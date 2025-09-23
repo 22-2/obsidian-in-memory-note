@@ -1,4 +1,4 @@
-// E:\Desktop\coding\pub\obsidian-sandbox-note\src\views\AbstractNoteView.ts
+// E:\Desktop\coding\pub\obsidian-sandbox-note\src\views\helpers\AbstractNoteView.ts
 import {
 	ItemView,
 	MarkdownView,
@@ -114,45 +114,58 @@ export abstract class AbstractNoteView extends ItemView {
 
 	async onOpen() {
 		this.applyViewStatePatch();
+		this.registerActiveLeafEvents();
 
+		try {
+			await this.initializeEditor();
+			await this.loadContent();
+			this.setupEventHandlers();
+			this.connectEditorPlugin();
+		} catch (error) {
+			this.handleInitializationError(error);
+		}
+	}
+
+	private registerActiveLeafEvents() {
 		this.plugin.registerEvent(
-			this.plugin.app.workspace.on("active-leaf-change", (leaf) => {
+			this.app.workspace.on("active-leaf-change", (leaf) => {
 				if (leaf?.id === this.leaf.id) {
 					this.editor?.focus();
 				}
 			})
 		);
-		try {
-			await this.wrapper.onload();
-			const editorContainer = this.contentEl.createEl("div", {
-				cls: "sandbox-note-container",
+	}
+
+	private async initializeEditor() {
+		await this.wrapper.onload();
+		const editorContainer = this.contentEl.createEl("div", {
+			cls: "sandbox-note-container",
+		});
+		this.wrapper.load(editorContainer);
+	}
+
+	private async loadContent() {
+		const initialContent =
+			this.initialState?.content ?? (await this.loadInitialContent());
+		this.initialContent = initialContent;
+		this.wrapper.content = initialContent;
+		this.setContent(initialContent);
+		if (this.initialState) {
+			await this.wrapper.virtualEditor.setState(this.initialState, {
+				history: false,
 			});
-			this.wrapper.load(editorContainer);
-			const initialContent =
-				this.initialState?.content ?? (await this.loadInitialContent());
-			this.initialContent = initialContent;
-			this.wrapper.content = initialContent;
-			this.setContent(initialContent);
-			if (this.initialState) {
-				await this.wrapper.virtualEditor.setState(this.initialState, {
-					history: false,
-				});
-				this.initialState = null;
-			}
-			this.setupEventHandlers();
-			this.connectEditorPlugin();
-		} catch (error) {
-			log.error(
-				"Sandbox Note: Failed to initialize inline editor.",
-				error
-			);
-			new Notice("Sandbox Note: Failed to initialize inline editor.");
-			this.contentEl.empty();
-			this.contentEl.createEl("div", {
-				text: "Error: Could not initialize editor. This might be due to an Obsidian update.",
-				cls: "sandbox-error-message",
-			});
+			this.initialState = null;
 		}
+	}
+
+	private handleInitializationError(error: unknown) {
+		log.error("Sandbox Note: Failed to initialize inline editor.", error);
+		new Notice("Sandbox Note: Failed to initialize inline editor.");
+		this.contentEl.empty();
+		this.contentEl.createEl("div", {
+			text: "Error: Could not initialize editor. This might be due to an Obsidian update.",
+			cls: "sandbox-error-message",
+		});
 	}
 
 	private setupEventHandlers() {
@@ -171,7 +184,18 @@ export abstract class AbstractNoteView extends ItemView {
 				this.wrapper.virtualEditor.editMode
 			)
 		);
+		this.registerDomEvent(window, "keydown", this.onKeyDown, {
+			capture: true,
+		});
 	}
+
+	private onKeyDown = (e: KeyboardEvent) => {
+		if (this.plugin.settings.enableCtrlS && e.ctrlKey && e.key === "s") {
+			e.preventDefault(); // Prevent default browser save action
+			log.debug("Saving note via Ctrl+S");
+			this.save();
+		}
+	};
 
 	private connectEditorPlugin() {
 		if (!this.editor) return;

@@ -98,7 +98,7 @@ export class EditorWrapper {
 	private disableSaveOperations() {
 		this.virtualEditor.save = noop;
 		this.virtualEditor.saveTitle = noop;
-		this.virtualEditor.requestSave = () => {};
+		this.virtualEditor.requestSave = noop;
 		this.virtualEditor.__setViewData__ = this.virtualEditor.setViewData;
 		this.virtualEditor.setViewData = noop;
 	}

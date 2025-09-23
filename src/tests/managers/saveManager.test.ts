@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "obsidian";
 import type SandboxNotePlugin from "src/main";
-import { SaveManager } from "src/managers/SaveManager";
+import { AutoSaveHandler } from "src/managers/SaveManager";
 import type { SandboxNoteView } from "src/views/SandboxNoteView";
 
 const createMockView = (content: string): SandboxNoteView =>
@@ -17,7 +17,7 @@ const createMockView = (content: string): SandboxNoteView =>
 describe("SaveManager", () => {
 	let mockPlugin: SandboxNotePlugin;
 	let mockApp: App;
-	let saveManager: SaveManager;
+	let saveManager: AutoSaveHandler;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -36,7 +36,7 @@ describe("SaveManager", () => {
 			saveData: vi.fn().mockResolvedValue(undefined),
 		} as unknown as SandboxNotePlugin;
 
-		saveManager = new SaveManager(mockPlugin);
+		saveManager = new AutoSaveHandler(mockPlugin);
 	});
 
 	it("should be defined", () => {

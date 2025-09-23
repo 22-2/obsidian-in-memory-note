@@ -14,9 +14,9 @@ import { activateView } from "./utils/obsidian";
 import { SandboxNoteView } from "./views/SandboxNoteView";
 import { InMemoryNoteView } from "./views/InMemoryNoteView";
 import log from "loglevel";
-import { ContentManager } from "./managers/ContentManager";
-import { EditorManager } from "./managers/EditorManager";
-import { SaveManager } from "./managers/SaveManager";
+import { SharedContentManager } from "./managers/SharedContentManager";
+import { EditorSyncManager } from "./managers/EditorSyncManager";
+import { AutoSaveHandler } from "./managers/SaveManager";
 import { UIManager } from "./managers/UIManager";
 
 /** Main plugin class for Sandbox Note functionality. */
@@ -24,11 +24,11 @@ export default class SandboxNotePlugin extends Plugin {
 	settings: SandboxNotePluginSettings = DEFAULT_SETTINGS;
 
 	// Managers
-	contentManager!: ContentManager;
-	saveManager!: SaveManager;
+	contentManager!: SharedContentManager;
+	saveManager!: AutoSaveHandler;
 	uiManager!: UIManager;
 	// commandManager!: CommandManager;
-	editorManager!: EditorManager;
+	editorManager!: EditorSyncManager;
 
 	debouncedSetupSandboxViews = () => {};
 
@@ -44,7 +44,7 @@ export default class SandboxNotePlugin extends Plugin {
 		await this.loadSettings();
 		this.initializeLogger();
 		this.initializeManagers();
-		this.contentManager.sharedNoteContent = this.settings.noteContent ?? "";
+		this.contentManager.noteContent = this.settings.noteContent ?? "";
 		this.setupSettingsTab();
 		this.editorManager.setupEditorExtension();
 		this.setupWorkspaceEventHandlers();
@@ -109,11 +109,11 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Initialize all manager instances */
 	private initializeManagers() {
-		this.contentManager = new ContentManager(this);
-		this.saveManager = new SaveManager(this);
+		this.contentManager = new SharedContentManager(this);
+		this.saveManager = new AutoSaveHandler(this);
 		this.uiManager = new UIManager(this);
 		// this.commandManager = new CommandManager(this);
-		this.editorManager = new EditorManager(this);
+		this.editorManager = new EditorSyncManager(this);
 	}
 
 	/** Setup plugin settings tab. */
@@ -209,7 +209,7 @@ export default class SandboxNotePlugin extends Plugin {
 	async saveSettings() {
 		const settingsToSave = {
 			...this.settings,
-			noteContent: this.contentManager.sharedNoteContent,
+			noteContent: this.contentManager.noteContent,
 		};
 		await this.saveData(settingsToSave);
 		// Refresh all view titles when settings change

@@ -24,7 +24,7 @@ export class SandboxNoteView extends AbstractNoteView {
 	/** Load content from the shared ContentManager and synchronize. */
 	async loadInitialContent(): Promise<string> {
 		synchronizeWithExistingViews(this);
-		return this.plugin.contentManager.sharedNoteContent;
+		return this.plugin.contentManager.noteContent;
 	}
 
 	/** A change in this view should be broadcast to other sandbox views. */

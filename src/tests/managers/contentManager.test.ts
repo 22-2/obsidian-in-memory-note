@@ -1,5 +1,5 @@
 import type SandboxNotePlugin from "src/main";
-import { ContentManager } from "src/managers/ContentManager";
+import { SharedContentManager } from "src/managers/SharedContentManager";
 import type { SandboxNoteView } from "src/views/SandboxNoteView";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -25,7 +25,7 @@ const mockLogger = {
 const mockPlugin = {} as SandboxNotePlugin;
 
 describe("ContentManager", () => {
-	let contentManager: ContentManager;
+	let contentManager: SharedContentManager;
 	let view1: SandboxNoteView;
 	let view2: SandboxNoteView;
 	let view3: SandboxNoteView;
@@ -33,7 +33,7 @@ describe("ContentManager", () => {
 	beforeEach(() => {
 		// Reset mocks and create new instances for each test
 		vi.clearAllMocks();
-		contentManager = new ContentManager(mockPlugin);
+		contentManager = new SharedContentManager(mockPlugin);
 		view1 = createMockView();
 		view2 = createMockView();
 		view3 = createMockView();
@@ -70,7 +70,7 @@ describe("ContentManager", () => {
 		it("should update the shared content", () => {
 			const newContent = "This is the new shared content.";
 			contentManager.updateNoteContent(newContent, view1);
-			expect(contentManager.sharedNoteContent).toBe(newContent);
+			expect(contentManager.noteContent).toBe(newContent);
 		});
 
 		it("should synchronize content to all other views", () => {
@@ -96,7 +96,7 @@ describe("ContentManager", () => {
 			expect(() =>
 				contentManager.updateNoteContent(newContent, view1)
 			).not.toThrow();
-			expect(contentManager.sharedNoteContent).toBe(newContent);
+			expect(contentManager.noteContent).toBe(newContent);
 		});
 	});
 

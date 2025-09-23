@@ -6,7 +6,7 @@ import log from "loglevel";
 const SAVE_DEBOUNCE_DELAY = 1000;
 
 /** Manages content persistence and auto-save functionality */
-export class SaveManager {
+export class AutoSaveHandler {
 	private plugin: SandboxNotePlugin;
 	private previousActiveView: SandboxNoteView | null = null;
 	private isSaving = false;

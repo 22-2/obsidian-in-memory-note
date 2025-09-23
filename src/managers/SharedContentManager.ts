@@ -3,11 +3,11 @@ import type SandboxNotePlugin from "../main";
 import log from "loglevel";
 
 /** Manages shared content synchronization across views */
-export class ContentManager {
+export class SharedContentManager {
 	private plugin: SandboxNotePlugin;
 
 	/** Shared content across all views */
-	sharedNoteContent = "";
+	noteContent = "";
 
 	/** Currently active views */
 	activeViews: Set<SandboxNoteView> = new Set();
@@ -21,7 +21,7 @@ export class ContentManager {
 		log.debug(
 			`Updating note content from view: ${sourceView.getViewType()}`
 		);
-		this.sharedNoteContent = content;
+		this.noteContent = content;
 
 		// Synchronize content to all other active views
 		for (const view of this.activeViews) {

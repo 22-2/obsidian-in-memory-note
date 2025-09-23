@@ -29,7 +29,7 @@ export function synchronizeWithExistingViews(view: SandboxNoteView) {
 
 	if (sourceView?.editor) {
 		const content = sourceView.editor.getValue();
-		view.plugin.contentManager.sharedNoteContent = content;
+		view.plugin.contentManager.noteContent = content;
 		view.initialContent = sourceView.initialContent;
 		// Directly set the content in the new view's editor
 		view.setContent(content);
@@ -37,7 +37,7 @@ export function synchronizeWithExistingViews(view: SandboxNoteView) {
 	}
 
 	// If no other views are open, but there's initial content from startup, use it.
-	const initialContent = view.plugin.contentManager.sharedNoteContent;
+	const initialContent = view.plugin.contentManager.noteContent;
 	if (initialContent) {
 		view.setContent(initialContent);
 	}

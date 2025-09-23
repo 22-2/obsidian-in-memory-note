@@ -3,7 +3,7 @@ import { syncEditorPlugin } from "src/views/helpers/SyncEditorPlugin";
 import type { SandboxNoteView } from "src/views/SandboxNoteView";
 
 /** Manages editor extensions and plugin connections */
-export class EditorManager {
+export class EditorSyncManager {
 	private plugin: SandboxNotePlugin;
 
 	/** CodeMirror plugin for watching changes */

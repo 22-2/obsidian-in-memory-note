@@ -59,7 +59,7 @@ export class EditorWrapper {
 			this.unsafeCreateFakeLeaf(),
 			this
 		);
-
+		this.virtualEditor.leaf.working = false;
 		this.disableSaveOperations();
 		// await this.ensureSourceMode();
 	}
@@ -95,7 +95,7 @@ export class EditorWrapper {
 			open: noop,
 			getRoot: noop,
 			updateHeader: noop,
-		};
-		return fakeLeaf as unknown as WorkspaceLeaf;
+		} as unknown as WorkspaceLeaf;
+		return fakeLeaf;
 	}
 }

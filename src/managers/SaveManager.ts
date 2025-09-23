@@ -86,8 +86,8 @@ export class SaveManager {
 	 */
 	private async persistContent(content: string): Promise<void> {
 		// Also update the in-memory settings to keep them in sync
-		this.data.settings.noteContent = content;
-		this.data.settings.lastSaved = new Date().toISOString();
+		this.data.data.noteContent = content;
+		this.data.data.lastSaved = new Date().toISOString();
 
 		// Save content to data.json using Obsidian API
 		await this.saveData(this.data);

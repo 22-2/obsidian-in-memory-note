@@ -7,8 +7,6 @@ export const DEFAULT_SETTINGS: SandboxNotePluginSettings = {
 	autoSaveDebounceMs: 3000,
 	// enableUnsafeCtrlS: false,
 	enableCtrlS: false,
-	noteContent: "",
-	lastSaved: "",
 };
 
 export const DEFAULT_DATA: PluginData = {

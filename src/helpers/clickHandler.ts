@@ -5,9 +5,8 @@ import type { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 
 /** Handle right-click context menu events. */
 export const handleContextMenu = async (
-	commands: Commands,
-	editMode: MarkdownEditView,
-	e: PointerEvent
+	e: PointerEvent,
+	editMode: MarkdownEditView
 ) => {
 	const target = e.target;
 	if (!(target instanceof HTMLElement)) return;
@@ -19,7 +18,7 @@ export const handleContextMenu = async (
 };
 
 /** Handle click events for better editor focus. */
-export const handleClick = (editor: Editor, e: MouseEvent) => {
+export const handleClick = (e: MouseEvent, editor: Editor) => {
 	const target = e.target;
 	if (!(target instanceof HTMLElement)) return;
 
@@ -40,7 +39,7 @@ export const handleClick = (editor: Editor, e: MouseEvent) => {
 };
 
 /** Handle keydown events, specifically for Ctrl+S save functionality. */
-export const handleKeyDown = (view: AbstractNoteView, e: KeyboardEvent) => {
+export const handleKeyDown = (e: KeyboardEvent, view: AbstractNoteView) => {
 	const activeView = view.app.workspace.activeLeaf?.view;
 	if (activeView !== view) return;
 

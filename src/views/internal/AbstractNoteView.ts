@@ -147,26 +147,18 @@ export abstract class AbstractNoteView extends ItemView {
 
 	private setupEventHandlers() {
 		if (!this.editor) return;
-		this.registerDomEvent(
-			this.contentEl,
-			"mousedown",
-			handleClick.bind(null, this.editor)
+		this.registerDomEvent(this.contentEl, "mousedown", (e) =>
+			handleClick(e, this.editor)
 		);
-		this.registerDomEvent(
-			this.contentEl,
-			"contextmenu",
-			handleContextMenu.bind(
-				null,
-				this.app.commands,
-				this.wrapper.virtualEditor.editMode
-			)
+		this.registerDomEvent(this.contentEl, "contextmenu", (e) =>
+			handleContextMenu(e, this.wrapper.virtualEditor.editMode)
 		);
 
 		// Use the capture phase to reliably catch the Ctrl+S hotkey, which is otherwise difficult to intercept in Obsidian.
 		this.registerDomEvent(
 			window,
 			"keydown",
-			(e) => handleKeyDown(this, e),
+			(e) => handleKeyDown(e, this),
 			{
 				capture: true,
 			}

@@ -12,10 +12,9 @@ import { around } from "monkey-around";
 import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
 import { updateActionButtons } from "src/helpers/viewHelpers";
 import { setContent } from "src/helpers/viewSync";
-import SandboxNotePlugin from "src/main";
+import type SandboxNotePlugin from "src/main";
 import { SANDBOX_NOTE_ICON } from "src/utils/constants";
 import { EditorWrapper } from "./EditorWrapper";
-import { SandboxNoteView } from "../SandboxNoteView";
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
@@ -194,10 +193,10 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	private onKeyDown = (e: KeyboardEvent) => {
-		const activeView =
-			this.app.workspace.getActiveViewOfType(SandboxNoteView);
-		if (activeView === this) return;
-		if (!activeView?.editor.hasFocus()) return;
+		const activeView = this.app.workspace.activeLeaf?.view;
+		if (activeView !== this) return;
+
+		if (!this.editor?.hasFocus()) return;
 		if (this.plugin.settings.enableCtrlS && e.ctrlKey && e.key === "s") {
 			e.preventDefault(); // Prevent default browser save action
 			log.debug("Saving note via Ctrl+S");

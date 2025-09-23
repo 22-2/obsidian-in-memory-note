@@ -13,11 +13,14 @@ export function updateActionButtons(view: AbstractNoteView): void {
 	if (!view.saveActionEl) {
 		view.saveActionEl = view.addAction("save", "Save", () => view.save());
 	}
-	view.saveActionEl.show();
+	view.saveActionEl?.show();
 
 	const shouldShowUnsaved =
 		view.plugin.settings.enableSaveNoteContent && view.hasUnsavedChanges;
 
-	view.saveActionEl.toggleClass("is-disabled", !shouldShowUnsaved);
-	view.saveActionEl.setAttribute("aria-disabled", String(!shouldShowUnsaved));
+	view.saveActionEl?.toggleClass("is-disabled", !shouldShowUnsaved);
+	view.saveActionEl?.setAttribute(
+		"aria-disabled",
+		String(!shouldShowUnsaved)
+	);
 }

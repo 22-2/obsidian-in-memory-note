@@ -51,7 +51,7 @@ describe("View Helpers", () => {
 		});
 
 		it("should disable the save button when there are no unsaved changes", () => {
-			mockView.hasUnsavedChanges = false;
+			(mockView as any).hasUnsavedChanges = false;
 			updateActionButtons(mockView);
 			expect(mockSaveActionEl.toggleClass).toHaveBeenCalledWith(
 				"is-disabled",
@@ -64,7 +64,7 @@ describe("View Helpers", () => {
 		});
 
 		it("should enable the save button when there are unsaved changes", () => {
-			mockView.hasUnsavedChanges = true;
+			(mockView as any).hasUnsavedChanges = true;
 			updateActionButtons(mockView);
 			expect(mockSaveActionEl.toggleClass).toHaveBeenCalledWith(
 				"is-disabled",

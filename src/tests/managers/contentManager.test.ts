@@ -11,6 +11,7 @@ const createMockView = (): SandboxNoteView =>
 			updateHeader: vi.fn(),
 		},
 		getViewType: vi.fn().mockReturnValue("sandbox-note"),
+		updateActionButtons: vi.fn(),
 		// Add other properties and methods as needed for tests
 	} as unknown as SandboxNoteView);
 

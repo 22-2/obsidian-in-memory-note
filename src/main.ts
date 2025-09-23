@@ -12,11 +12,11 @@ import { activateView } from "./utils/obsidian";
 import { SandboxNoteView } from "./views/SandboxNoteView";
 import { InMemoryNoteView } from "./views/InMemoryNoteView";
 import log from "loglevel";
-import { CommandManager } from "./managers/commandManager";
-import { ContentManager } from "./managers/contentManager";
-import { EditorManager } from "./managers/editorManager";
-import { SaveManager } from "./managers/saveManager";
-import { UIManager } from "./managers/uiManager";
+import { CommandManager } from "./managers/CommandManager";
+import { ContentManager } from "./managers/ContentManager";
+import { EditorManager } from "./managers/EditorManager";
+import { SaveManager } from "./managers/SaveManager";
+import { UIManager } from "./managers/UIManager";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {

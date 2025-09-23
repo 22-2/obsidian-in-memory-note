@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "obsidian";
 import type SandboxNotePlugin from "src/main";
-import { SaveManager } from "src/managers/saveManager";
+import { SaveManager } from "src/managers/SaveManager";
 import type { SandboxNoteView } from "src/views/SandboxNoteView";
 
 const createMockView = (content: string): SandboxNoteView =>

@@ -194,9 +194,7 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	private onKeyDown = (e: KeyboardEvent) => {
-		const activeView =
-			this.app.workspace.getActiveViewOfType(SandboxNoteView);
-		if (!activeView) return;
+		if (this.app.workspace.activeLeaf?.view === this) return;
 		if (this.plugin.settings.enableCtrlS && e.ctrlKey && e.key === "s") {
 			e.preventDefault(); // Prevent default browser save action
 			log.debug("Saving note via Ctrl+S");

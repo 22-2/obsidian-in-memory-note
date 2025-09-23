@@ -1190,6 +1190,28 @@ export function createMockApp() {
 	return new App();
 }
 
+global.createDiv = function (o) {
+	const div = document.createElement("div");
+	if (typeof o === "string") {
+		div.className = o;
+	} else if (o) {
+		if (o.cls) {
+			div.className = Array.isArray(o.cls) ? o.cls.join(" ") : o.cls;
+		}
+		if (o.text) {
+			if (typeof o.text === 'string') {
+				div.textContent = o.text;
+			} else {
+				div.textContent = o.text.textContent;
+			}
+		}
+		if (o.title) {
+			div.title = o.title;
+		}
+	}
+	return div;
+};
+
 // Default export for compatibility
 export default {
 	TFile,

@@ -9,9 +9,11 @@ import type { EditorPluginConnector } from "./EditorPluginConnector";
 import type { PluginSettings } from "src/settings";
 import type { Manager } from "./Manager";
 import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
+import type SandboxNotePlugin from "src/main";
 
 /** Manages Obsidian workspace event handling */
 export class WorkspaceEventManager implements Manager {
+	private plugin: SandboxNotePlugin;
 	private app: App;
 	private workspace: Workspace;
 	private emitter: EventEmitter<AppEvents>;
@@ -21,14 +23,15 @@ export class WorkspaceEventManager implements Manager {
 	private debouncedSetupSandboxViews: () => void;
 
 	constructor(
-		app: App,
+		plugin: SandboxNotePlugin,
 		emitter: EventEmitter<AppEvents>,
 		editorSyncManager: EditorSyncManager,
 		editorPluginConnector: EditorPluginConnector,
 		settings: PluginSettings
 	) {
-		this.app = app;
-		this.workspace = app.workspace;
+		this.plugin = plugin;
+		this.app = plugin.app;
+		this.workspace = plugin.app.workspace;
 		this.emitter = emitter;
 		this.editorSyncManager = editorSyncManager;
 		this.editorPluginConnector = editorPluginConnector;
@@ -57,6 +60,7 @@ export class WorkspaceEventManager implements Manager {
 		this.editorSyncManager.activeViews.forEach((view) => {
 			log.debug(`Connecting to existing view: ${view.getViewType()}`);
 			this.editorPluginConnector.connectEditorPluginToView(view);
+			this.syncActiveEditorState();
 		});
 	}
 
@@ -77,27 +81,8 @@ export class WorkspaceEventManager implements Manager {
 	 */
 	private syncActiveEditorState(): void {
 		const activeView = this.workspace.getActiveViewOfType(SandboxNoteView);
-		// @ts-ignore - Accessing a private API to manage the active editor.
-		const workspace = this.app.workspace;
-
-		// If the active view is our sandbox view, set its virtual editor as active.
-		if (activeView instanceof AbstractNoteView && activeView.editor) {
-			log.debug(
-				`Setting activeEditor to Sandbox view's editor in leaf: ${this.workspace.activeLeaf?.id}`
-			);
-			workspace._activeEditor = activeView.wrapper.virtualEditor;
-		}
-		// If the active editor was ours, but the view is no longer a sandbox view...
-		else if (
-			// @ts-expect-error
-			workspace._activeEditor?.leaf?.__FAKE_LEAF__ &&
-			!(activeView instanceof AbstractNoteView)
-		) {
-			// ...clear it to avoid side effects on regular notes.
-			log.debug(
-				"Active view is not a Sandbox view, clearing activeEditor."
-			);
-			workspace._activeEditor = null;
+		if (activeView instanceof SandboxNoteView) {
+			activeView.syncActiveEditorState();
 		}
 	}
 

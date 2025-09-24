@@ -13,7 +13,6 @@ import {
 	handleContextMenu,
 	handleKeyDown,
 } from "src/helpers/clickHandler";
-import { setContent } from "src/helpers/viewSync";
 import type SandboxNotePlugin from "src/main";
 import { SANDBOX_NOTE_ICON } from "src/utils/constants";
 import { EditorWrapper } from "./EditorWrapper";
@@ -56,7 +55,12 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	setContent(content: string) {
-		setContent(this, content);
+		if (this.editor && this.editor.getValue() !== content) {
+			this.editor.setValue(content);
+			// The central manager now handles the unsaved state.
+			// Refresh the tab title to reflect any state changes from the manager.
+			this.leaf.updateHeader();
+		}
 	}
 
 	getState(): any {

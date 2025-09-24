@@ -12,7 +12,7 @@ import { WorkspaceEventManager } from "./managers/WorkspaceEventManager";
 import { type SandboxNotePluginData, SandboxNoteSettingTab } from "./settings";
 import { DEFAULT_DATA as DEFAULT_PLUGIN_DATA } from "./utils/constants";
 import { EventEmitter } from "./utils/EventEmitter";
-import type { SandboxNoteView } from "./views/SandboxNoteView";
+import { SandboxNoteView } from "./views/SandboxNoteView";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
@@ -90,7 +90,7 @@ export default class SandboxNotePlugin extends Plugin {
 		this.editorPluginConnector = new EditorPluginConnector(this, emitter);
 		this.viewFactory = new ViewFactory(this);
 		this.workspaceEventManager = new WorkspaceEventManager(
-			this.app,
+			this, // Pass the plugin instance instead of `this.app`
 			emitter,
 			this.editorSyncManager,
 			this.editorPluginConnector,

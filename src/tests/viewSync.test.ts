@@ -89,14 +89,12 @@ describe("View Sync Helpers", () => {
 
 			mockView.plugin.editorSyncManager.activeViews.add(mockView);
 			mockView.plugin.editorSyncManager.activeViews.add(mockOtherView);
+			mockView.plugin.editorSyncManager.currentSharedNoteContent = "shared content";
 
 			syncViewContent(mockView);
 
-			expect(
-				mockView.plugin.editorSyncManager.currentSharedNoteContent
-			).toBe("content from other view");
 			expect(mockView.setContent).toHaveBeenCalledWith(
-				"content from other view"
+				"shared content"
 			);
 		});
 

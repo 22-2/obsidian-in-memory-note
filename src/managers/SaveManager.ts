@@ -96,4 +96,20 @@ export class SaveManager {
 
 		log.debug("Auto-saved note content to data.json using Obsidian API");
 	}
+
+	/**
+	 * Saves the plugin settings.
+	 * @param settings The settings to save.
+	 */
+	async saveSettings(
+		pluginSettings: PluginSettings,
+		noteContentBody: {
+			noteContent: string;
+			lastSaved: string;
+		}
+	) {
+		this.data.settings = pluginSettings;
+		this.data.data = noteContentBody;
+		await this.saveData(this.data);
+	}
 }

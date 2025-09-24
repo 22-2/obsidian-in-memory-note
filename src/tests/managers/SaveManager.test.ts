@@ -122,7 +122,7 @@ describe("SaveManager", () => {
 			expect(mockSaveData).toHaveBeenCalledOnce();
 			const savedSettings = (mockSaveData as ReturnType<typeof vi.fn>)
 				.mock.calls[0][0];
-			expect(savedSettings.noteContent).toBe("Debounced content");
+			expect(savedSettings.data.noteContent).toBe("Debounced content");
 		});
 
 		it("should only save once if called multiple times within the delay", async () => {
@@ -137,7 +137,7 @@ describe("SaveManager", () => {
 			expect(mockSaveData).toHaveBeenCalledOnce();
 			const savedSettings = (mockSaveData as ReturnType<typeof vi.fn>)
 				.mock.calls[0][0];
-			expect(savedSettings.noteContent).toBe("Final content");
+			expect(savedSettings.data.noteContent).toBe("Final content");
 		});
 
 		it("should reset the timer if called again", async () => {
@@ -183,6 +183,29 @@ describe("SaveManager", () => {
 
 			// Should not have been called again
 			expect(mockSaveData).toHaveBeenCalledOnce();
+		});
+	});
+
+	describe("saveSettings", () => {
+		it("should save the settings and note content", async () => {
+			const newSettings: PluginSettings = {
+				enableAutoSave: false,
+				autoSaveDebounceMs: 5000,
+				enableLogger: true,
+				enableCtrlS: true,
+			};
+			const newNoteContent = {
+				noteContent: "new content",
+				lastSaved: "never",
+			};
+
+			await saveManager.saveSettings(newSettings, newNoteContent);
+
+			expect(mockSaveData).toHaveBeenCalledOnce();
+			const savedData = (mockSaveData as ReturnType<typeof vi.fn>)
+				.mock.calls[0][0];
+			expect(savedData.settings).toEqual(newSettings);
+			expect(savedData.data).toEqual(newNoteContent);
 		});
 	});
 });

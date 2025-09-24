@@ -86,6 +86,9 @@ export abstract class AbstractNoteView extends ItemView {
 			this.setContent(state.content);
 			// The unsaved state is now managed centrally
 			await this.wrapper.virtualEditor.setState(state, result);
+			// Prevent the view from being closed and reopened unnecessarily
+			// @ts-ignore
+			result.close = false;
 		}
 		await super.setState(state, result);
 	}

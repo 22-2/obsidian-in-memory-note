@@ -78,22 +78,23 @@ export default class SandboxNotePlugin extends Plugin {
 		// to create an editor without a file. This check attempts to create a
 		// dummy view to see if the required APIs are available.
 		try {
-			const dummyEl = createDiv("div");
-			const leaf = {
-				...(this.app.workspace.activeLeaf ?? {}),
-				containerEl: dummyEl,
-				getRoot: () => this.app.workspace.rootSplit,
-				getHistoryState: () => ({}),
-				open: noop,
-				updateHeader: noop,
-				workspace: {},
-			} as unknown as WorkspaceLeaf;
+			// FIXME: Better implementation needed
+			// const dummyEl = createDiv("div");
+			// const leaf = {
+			// 	...(this.app.workspace.activeLeaf ?? {}),
+			// 	containerEl: dummyEl,
+			// 	getRoot: () => this.app.workspace.rootSplit,
+			// 	getHistoryState: () => ({}),
+			// 	open: noop,
+			// 	updateHeader: noop,
+			// 	workspace: {},
+			// } as unknown as WorkspaceLeaf;
 
-			// @ts-ignore
-			const view = new UnsafeMarkdownView(leaf, null);
+			// // @ts-ignore
+			// const view = new UnsafeMarkdownView(leaf, null);
 
-			view.unload();
-			dummyEl.remove();
+			// view.unload();
+			// dummyEl.remove();
 
 			return true;
 		} catch (error) {

@@ -3,6 +3,7 @@ import { type ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { noop } from "../../utils/noop";
 import type { AbstractNoteView } from "./AbstractNoteView";
 import { UnsafeMarkdownView } from "./UnsafeMarkdownView";
+import log from "loglevel";
 
 /** Manages inline MarkdownView without physical file. */
 export class EditorWrapper {
@@ -108,19 +109,19 @@ export class EditorWrapper {
 		// The goal is to make it render inside our `containerEl` instead of the
 		// leaf's main container. This avoids modifying the real leaf,
 		// preventing crashes and instability.
-		let init = false;
 		const fakeLeaf = {
 			...this.parentView.leaf,
 			containerEl: this.containerEl,
-			// Prevent the virtual view from causing side effects
-			getHistoryState: () => ({}),
-			open: noop,
-			getRoot: noop,
-			updateHeader: noop,
-			getState: () => this.parentView.getState(),
+			getState: () => {
+				const state = this.parentView.getState();
+				log.debug("getState", state);
+				return state;
+			},
 			setViewState: async (state: any, result: ViewStateResult) => {
-				if (!init) state.type = this.parentView.getViewType();
-				init = true;
+				if (state.type === "markdown") {
+					state.type = this.parentView.getViewType();
+				}
+				log.debug("setViewState", state);
 				this.parentView.leaf.setViewState(
 					state,
 					result || { history: false }

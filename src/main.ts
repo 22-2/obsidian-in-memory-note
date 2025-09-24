@@ -163,7 +163,7 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Load plugin settings from storage. */
 	async loadSettings() {
-		this.data.settings = Object.assign(
+		this.data = Object.assign(
 			{},
 			DEFAULT_PLUGIN_DATA,
 			await this.loadData()
@@ -172,14 +172,10 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Save current plugin settings to storage. */
 	async saveSettings() {
-		const settingsToSave = {
-			...this.data,
-			data: {
-				noteContent: this.editorSyncManager.currentSharedNoteContent,
-				lastSaved: this.editorSyncManager.lastSavedContent,
-			},
-		};
-		await this.saveData(settingsToSave);
+		await this.saveManager.saveSettings(this.data.settings, {
+			noteContent: this.editorSyncManager.currentSharedNoteContent,
+			lastSaved: this.editorSyncManager.lastSavedContent,
+		});
 		// Refresh all view titles when settings change
 		this.editorSyncManager.refreshAllViewTitles();
 	}

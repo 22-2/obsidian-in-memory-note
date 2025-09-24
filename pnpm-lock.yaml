@@ -42,6 +42,9 @@ importers:
       obsidian-typings:
         specifier: 4.51.0
         version: 4.51.0(@codemirror/view@6.38.2)(@pixi/core@7.2.4)(@pixi/display@7.2.4(@pixi/core@7.2.4))(@pixi/utils@7.2.4)(typescript@5.9.2)
+      semver:
+        specifier: ^7.7.2
+        version: 7.7.2
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
@@ -3720,8 +3723,7 @@ snapshots:
 
   semver@6.3.1: {}
 
-  semver@7.7.2:
-    optional: true
+  semver@7.7.2: {}
 
   serialize-error@7.0.1:
     dependencies:

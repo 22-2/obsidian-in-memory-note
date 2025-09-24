@@ -35,7 +35,7 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	get editor() {
-		return this.wrapper.virtualEditor.editor;
+		return this.wrapper.virtualEditor?.editor;
 	}
 
 	abstract getViewType(): string;

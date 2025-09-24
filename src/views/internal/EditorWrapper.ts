@@ -108,6 +108,7 @@ export class EditorWrapper {
 		// The goal is to make it render inside our `containerEl` instead of the
 		// leaf's main container. This avoids modifying the real leaf,
 		// preventing crashes and instability.
+		let init = false;
 		const fakeLeaf = {
 			...this.parentView.leaf,
 			containerEl: this.containerEl,
@@ -118,7 +119,8 @@ export class EditorWrapper {
 			updateHeader: noop,
 			getState: () => this.parentView.getState(),
 			setViewState: async (state: any, result: ViewStateResult) => {
-				state.type = this.parentView.getViewType();
+				if (!init) state.type = this.parentView.getViewType();
+				init = true;
 				this.parentView.leaf.setViewState(
 					state,
 					result || { history: false }

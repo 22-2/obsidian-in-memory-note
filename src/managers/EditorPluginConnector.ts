@@ -24,7 +24,7 @@ export class EditorPluginConnector {
 
 	/** Connect watch editor plugin to view */
 	connectEditorPluginToView(view: AbstractNoteView) {
-		if (!view.editor) return;
+		if (!view?.editor) return;
 		const editorPlugin = view.editor.cm.plugin(syncEditorPlugin);
 		if (editorPlugin) {
 			editorPlugin.connectToPlugin(this.plugin, view, this.emitter);

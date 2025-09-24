@@ -1,23 +1,18 @@
-import { Notice, Plugin } from "obsidian";
-import {
-	type SandboxNotePluginData,
-	SandboxNoteSettingTab,
-} from "./settings";
-import {
-	DEFAULT_DATA as DEFAULT_PLUGIN_DATA,
-} from "./utils/constants";
 import log from "loglevel";
-import { EventEmitter } from "./utils/EventEmitter";
+import { Plugin } from "obsidian";
 import type { AppEvents } from "./events/AppEvents";
-import { EditorSyncManager } from "./managers/EditorSyncManager";
 import { EditorPluginConnector } from "./managers/EditorPluginConnector";
-import { SaveManager } from "./managers/SaveManager";
-import { InteractionManager } from "./managers/InteractionManager";
+import { EditorSyncManager } from "./managers/EditorSyncManager";
 import { EventManager } from "./managers/EventManager";
+import { InteractionManager } from "./managers/InteractionManager";
+import type { Manager } from "./managers/Manager";
+import { SaveManager } from "./managers/SaveManager";
 import { ViewFactory } from "./managers/ViewFactory";
 import { WorkspaceEventManager } from "./managers/WorkspaceEventManager";
+import { type SandboxNotePluginData, SandboxNoteSettingTab } from "./settings";
+import { DEFAULT_DATA as DEFAULT_PLUGIN_DATA } from "./utils/constants";
+import { EventEmitter } from "./utils/EventEmitter";
 import type { SandboxNoteView } from "./views/SandboxNoteView";
-import type { Manager } from "./managers/Manager";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
@@ -52,6 +47,35 @@ export default class SandboxNotePlugin extends Plugin {
 		this.setupSettingsTab();
 
 		log.debug("Sandbox Note plugin loaded");
+		// main.ts の onload 内に追加
+		// this.app.workspace.onLayoutReady(() => {
+		// 	this.register(
+		// 		around(this.app.commands.commands["editor:toggle-source"], {
+		// 			checkCallback: (original) => {
+		// 				return (checking) => {
+		// 					console.log(
+		// 						"--- Toggle Source Command Triggered ---"
+		// 					);
+		// 					console.log(
+		// 						"Active Leaf:",
+		// 						this.app.workspace.activeLeaf?.view.getViewType()
+		// 					);
+		// 					// @ts-ignore
+		// 					const activeEditor =
+		// 						this.app.workspace.activeEditor;
+		// 					console.log("Active Editor:", activeEditor);
+		// 					if (activeEditor) {
+		// 						console.log(
+		// 							"Active Editor's Leaf:",
+		// 							activeEditor.leaf
+		// 						);
+		// 					}
+		// 					return original?.call(null, checking);
+		// 				};
+		// 			},
+		// 		})
+		// 	);
+		// });
 	}
 
 	/** Initialize all manager instances */

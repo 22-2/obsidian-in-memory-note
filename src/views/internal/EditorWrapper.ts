@@ -48,27 +48,35 @@ export class EditorWrapper {
 		target.append(this.containerEl);
 		setTimeout(() => this.focus());
 		this.targetEl = target;
-		this.parentView.plugin.registerDomEvent(
-			this.targetEl,
-			"focusin",
-			this.handleFocusIn
-		);
-		this.handleFocusIn();
+		// this.parentView.plugin.registerDomEvent(
+		// 	this.targetEl,
+		// 	"focusin",
+		// 	this.handleFocusIn
+		// );
+		// this.targetEl.addEventListener("focusin", this.setActiveEditor);
+		// this.setActiveEditor();
 	}
 
 	focus() {
 		this.virtualEditor.editor.focus();
 	}
 
-	private handleFocusIn = () => {
-		// @ts-ignore
-		this.parentView.plugin.app.workspace._activeEditor = this.virtualEditor;
-	};
+	// private setActiveEditor = () => {
+	// 	// @ts-ignore
+	// 	this.parentView.plugin.app.workspace._activeEditor = this.virtualEditor;
+	// 	log.debug("this.virtualEditor", this.virtualEditor);
+	// 	log.debug(
+	// 		"this.parentView.plugin.app.workspace._activeEditor",
+	// 		// @ts-expect-error
+	// 		this.parentView.plugin.app.workspace._activeEditor
+	// 	);
+	// };
 
 	unload() {
 		this.content = this.getContent();
 		if (this.targetEl) {
 			this.targetEl.empty();
+			// this.targetEl.removeEventListener("focusin", this.setActiveEditor);
 			this.targetEl = null;
 		}
 	}

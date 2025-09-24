@@ -13,7 +13,8 @@ declare module "obsidian" {
 		sync?: boolean; // Whether state synchronization is needed.
 	}
 
-	// interface WorkspaceLeaf {
-	// 	setViewState(state: UViewState, result: ViewStateResult): Promise<void>;
-	// }
+	interface Workspace {
+		// setViewState(state: UViewState, result: ViewStateResult): Promise<void>;
+		_activeEditor: MarkdownView | null;
+	}
 }

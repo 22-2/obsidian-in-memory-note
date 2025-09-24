@@ -1,15 +1,14 @@
-import { debounce } from "obsidian";
-import { SandboxNoteView } from "src/views/SandboxNoteView";
 import log from "loglevel";
 import type { App, Workspace } from "obsidian";
-import type { EventEmitter } from "src/utils/EventEmitter";
+import { debounce } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
-import type { EditorSyncManager } from "./EditorSyncManager";
-import type { EditorPluginConnector } from "./EditorPluginConnector";
-import type { PluginSettings } from "src/settings";
-import type { Manager } from "./Manager";
-import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 import type SandboxNotePlugin from "src/main";
+import type { PluginSettings } from "src/settings";
+import type { EventEmitter } from "src/utils/EventEmitter";
+import { SandboxNoteView } from "src/views/SandboxNoteView";
+import type { EditorPluginConnector } from "./EditorPluginConnector";
+import type { EditorSyncManager } from "./EditorSyncManager";
+import type { Manager } from "./Manager";
 
 /** Manages Obsidian workspace event handling */
 export class WorkspaceEventManager implements Manager {

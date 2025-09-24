@@ -4,8 +4,9 @@ import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
 import type { SandboxNotePluginData, PluginSettings } from "src/settings";
 import { debounce, Notice, type Debouncer } from "obsidian";
+import type { Manager } from "./Manager";
 /** Manages content persistence and auto-save functionality */
-export class SaveManager {
+export class SaveManager implements Manager {
 	private emitter: EventEmitter<AppEvents>;
 	private data: SandboxNotePluginData;
 	private saveData: (data: SandboxNotePluginData) => Promise<void>;
@@ -26,6 +27,14 @@ export class SaveManager {
 			(view: SandboxNoteView) => this.saveNoteContentToFile(view),
 			this.data.settings.autoSaveDebounceMs
 		);
+	}
+
+	public load(): void {
+		// Nothing to do
+	}
+
+	public unload(): void {
+		// Nothing to do
 	}
 
 	/**

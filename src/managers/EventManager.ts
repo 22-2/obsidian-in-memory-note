@@ -4,45 +4,61 @@ import { SandboxNoteView } from "../views/SandboxNoteView";
 import type { EventEmitter } from "../utils/EventEmitter";
 import type { EditorSyncManager } from "./EditorSyncManager";
 import type { SaveManager } from "./SaveManager";
+import type { Manager } from "./Manager";
 
-export class EventManager {
+export class EventManager implements Manager {
 	private emitter: EventEmitter<AppEvents>;
+	private editorSyncManager: EditorSyncManager;
+	private saveManager: SaveManager;
+	private settings: PluginSettings;
 
-	constructor(emitter: EventEmitter<AppEvents>) {
-		this.emitter = emitter;
-	}
+	private onContentChanged = (payload: AppEvents["content-changed"]) => {
+		this.editorSyncManager.syncAll(payload.content, payload.sourceView);
 
-	public registerEventHandlers(
+		if (
+			this.settings.enableAutoSave &&
+			payload.sourceView instanceof SandboxNoteView
+		) {
+			this.saveManager.debouncedSave(payload.sourceView);
+		}
+	};
+
+	private onSaveRequested = (payload: AppEvents["save-requested"]) => {
+		this.saveManager.saveNoteContentToFile(payload.view);
+	};
+
+	private onContentSaved = () => {
+		this.editorSyncManager.markAsSaved();
+	};
+
+	private onUnsavedStateChanged = () => {
+		this.editorSyncManager.refreshAllViewTitles();
+		this.editorSyncManager.refreshAllViewActionButtons();
+	};
+
+	constructor(
+		emitter: EventEmitter<AppEvents>,
 		editorSyncManager: EditorSyncManager,
 		saveManager: SaveManager,
 		settings: PluginSettings
-	): void {
-		// When content changes, sync it and trigger auto-save
-		this.emitter.on("content-changed", (payload) => {
-			editorSyncManager.syncAll(payload.content, payload.sourceView);
+	) {
+		this.emitter = emitter;
+		this.editorSyncManager = editorSyncManager;
+		this.saveManager = saveManager;
+		this.settings = settings;
+	}
 
-			if (
-				settings.enableAutoSave &&
-				payload.sourceView instanceof SandboxNoteView
-			) {
-				saveManager.debouncedSave(payload.sourceView);
-			}
-		});
+	public load(): void {
+		this.emitter.on("content-changed", this.onContentChanged);
+		this.emitter.on("save-requested", this.onSaveRequested);
+		this.emitter.on("content-saved", this.onContentSaved);
+		this.emitter.on("unsaved-state-changed", this.onUnsavedStateChanged);
+	}
 
-		// When a save is requested, save it
-		this.emitter.on("save-requested", (payload) => {
-			saveManager.saveNoteContentToFile(payload.view);
-		});
-
-		// When content is saved, mark it as saved
-		this.emitter.on("content-saved", () => {
-			editorSyncManager.markAsSaved();
-		});
-
-		// When unsaved state changes, refresh views
-		this.emitter.on("unsaved-state-changed", () => {
-			editorSyncManager.refreshAllViewTitles();
-			editorSyncManager.refreshAllViewActionButtons();
-		});
+	public unload(): void {
+		this.emitter.off("content-changed", this.onContentChanged);
+		this.emitter.off("save-requested", this.onSaveRequested);
+		this.emitter.off("content-saved", this.onContentSaved);
+		this.emitter.off("unsaved-state-changed", this.onUnsavedStateChanged);
 	}
 }

@@ -1,14 +1,10 @@
 import { Notice, Plugin } from "obsidian";
 import {
 	type SandboxNotePluginData,
-	type PluginSettings,
 	SandboxNoteSettingTab,
 } from "./settings";
-import { UnsafeMarkdownView } from "./views/internal/UnsafeMarkdownView";
-import { noop } from "./utils/noop";
 import {
 	DEFAULT_DATA as DEFAULT_PLUGIN_DATA,
-	DEFAULT_SETTINGS,
 } from "./utils/constants";
 import log from "loglevel";
 import { EventEmitter } from "./utils/EventEmitter";
@@ -20,8 +16,8 @@ import { InteractionManager } from "./managers/InteractionManager";
 import { EventManager } from "./managers/EventManager";
 import { ViewFactory } from "./managers/ViewFactory";
 import { WorkspaceEventManager } from "./managers/WorkspaceEventManager";
-import type { WorkspaceLeaf } from "obsidian";
 import type { SandboxNoteView } from "./views/SandboxNoteView";
+import type { Manager } from "./managers/Manager";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
@@ -36,24 +32,17 @@ export default class SandboxNotePlugin extends Plugin {
 	eventManager!: EventManager;
 	workspaceEventManager!: WorkspaceEventManager;
 	emitter!: EventEmitter<AppEvents>;
+	managers: Manager[] = [];
 
 	/** Initialize plugin on load. */
 	async onload() {
-		if (!this.checkCompatibility()) {
-			new Notice(
-				"Sandbox Note plugin: Incompatible with this version of Obsidian. The plugin has been disabled."
-			);
-			return;
-		}
-
 		await this.loadSettings();
 		this.initializeLogger();
 		this.initializeManagers();
-		this.eventManager.registerEventHandlers(
-			this.editorSyncManager,
-			this.saveManager,
-			this.data.settings
-		);
+
+		for (const manager of this.managers) {
+			manager.load();
+		}
 
 		// Initialize content manager with saved content
 		const savedContent = this.data.data.noteContent ?? "";
@@ -61,49 +50,8 @@ export default class SandboxNotePlugin extends Plugin {
 		this.editorSyncManager.lastSavedContent = savedContent;
 
 		this.setupSettingsTab();
-		this.editorPluginConnector.setupEditorExtension();
-		this.interactionManager.setupUserInterface();
-		this.viewFactory.registerViews();
-		this.workspaceEventManager.setupEventHandlers();
 
 		log.debug("Sandbox Note plugin loaded");
-	}
-
-	/**
-	 * Checks if the plugin is compatible with the current version of Obsidian.
-	 * @returns {boolean} True if compatible, false otherwise.
-	 */
-	private checkCompatibility(): boolean {
-		// This plugin relies on a specific internal structure of MarkdownView
-		// to create an editor without a file. This check attempts to create a
-		// dummy view to see if the required APIs are available.
-		try {
-			// FIXME: Better implementation needed
-			// const dummyEl = createDiv("div");
-			// const leaf = {
-			// 	...(this.app.workspace.activeLeaf ?? {}),
-			// 	containerEl: dummyEl,
-			// 	getRoot: () => this.app.workspace.rootSplit,
-			// 	getHistoryState: () => ({}),
-			// 	open: noop,
-			// 	updateHeader: noop,
-			// 	workspace: {},
-			// } as unknown as WorkspaceLeaf;
-
-			// // @ts-ignore
-			// const view = new UnsafeMarkdownView(leaf, null);
-
-			// view.unload();
-			// dummyEl.remove();
-
-			return true;
-		} catch (error) {
-			log.error(
-				"Sandbox Note plugin: Compatibility check failed. This is likely due to an Obsidian update.",
-				error
-			);
-			return false;
-		}
 	}
 
 	/** Initialize all manager instances */
@@ -124,7 +72,22 @@ export default class SandboxNotePlugin extends Plugin {
 			this.editorPluginConnector,
 			this.data.settings
 		);
-		this.eventManager = new EventManager(emitter);
+		this.eventManager = new EventManager(
+			emitter,
+			this.editorSyncManager,
+			this.saveManager,
+			this.data.settings
+		);
+
+		this.managers.push(
+			this.editorSyncManager,
+			this.saveManager,
+			this.interactionManager,
+			this.editorPluginConnector,
+			this.viewFactory,
+			this.workspaceEventManager,
+			this.eventManager
+		);
 	}
 
 	/** Setup plugin settings tab. */
@@ -139,6 +102,9 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Cleanup on plugin unload. */
 	async onunload() {
+		for (const manager of this.managers) {
+			manager.unload();
+		}
 		log.debug("Sandbox Note plugin unloaded");
 	}
 

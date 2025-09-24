@@ -29,9 +29,9 @@ describe("EditorPluginConnector", () => {
 		expect(editorPluginConnector).toBeDefined();
 	});
 
-	describe("setupEditorExtension", () => {
+	describe("load", () => {
 		it("should register the watchEditorPlugin", () => {
-			editorPluginConnector.setupEditorExtension();
+			editorPluginConnector.load();
 
 			expect(mockPlugin.registerEditorExtension).toHaveBeenCalledOnce();
 			expect(mockPlugin.registerEditorExtension).toHaveBeenCalledWith(

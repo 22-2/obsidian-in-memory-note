@@ -1,9 +1,10 @@
 import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 import type SandboxNotePlugin from "../main";
 import { IN_MEMORY_NOTE_ICON, SANDBOX_NOTE_ICON } from "../utils/constants";
+import type { Manager } from "./Manager";
 
 /** Manages UI elements like ribbon icons and commands */
-export class InteractionManager {
+export class InteractionManager implements Manager {
 	private plugin: SandboxNotePlugin;
 
 	constructor(plugin: SandboxNotePlugin) {
@@ -11,7 +12,7 @@ export class InteractionManager {
 	}
 
 	/** Setup UI elements (ribbon icon and commands) */
-	setupUserInterface() {
+	public load() {
 		// Command to open the sandbox note
 		this.plugin.addCommand({
 			id: "open-sandbox-note-view",
@@ -67,5 +68,13 @@ export class InteractionManager {
 				this.plugin.activateInMemoryView();
 			}
 		);
+	}
+
+	/**
+	 * Unload the UI elements.
+	 * Obsidian's API automatically cleans up commands and ribbon icons when the plugin is unloaded.
+	 */
+	public unload() {
+		// Nothing to do here
 	}
 }

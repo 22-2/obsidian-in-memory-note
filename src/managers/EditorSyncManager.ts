@@ -3,9 +3,10 @@ import log from "loglevel";
 import type { AbstractNoteView } from "src/views/internal/AbstractNoteView"; // 追記
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
+import type { Manager } from "./Manager";
 
 /** Manages shared content synchronization across views */
-export class EditorSyncManager {
+export class EditorSyncManager implements Manager {
 	private emitter: EventEmitter<AppEvents>;
 
 	/** Shared content across all views */
@@ -22,6 +23,14 @@ export class EditorSyncManager {
 
 	constructor(emitter: EventEmitter<AppEvents>) {
 		this.emitter = emitter;
+	}
+
+	public load(): void {
+		// Nothing to do
+	}
+
+	public unload(): void {
+		// Nothing to do
 	}
 
 	/** Update shared content and sync across all views */

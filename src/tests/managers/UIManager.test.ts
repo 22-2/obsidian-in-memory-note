@@ -3,7 +3,7 @@ import { InteractionManager } from "src/managers/InteractionManager";
 import { IN_MEMORY_NOTE_ICON, SANDBOX_NOTE_ICON } from "src/utils/constants";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-describe("UIManager", () => {
+describe("InteractionManager", () => {
 	let mockPlugin: SandboxNotePlugin;
 	let uiManager: InteractionManager;
 
@@ -29,9 +29,9 @@ describe("UIManager", () => {
 		expect(uiManager).toBeDefined();
 	});
 
-	describe("setupUserInterface", () => {
+	describe("load", () => {
 		it("should add the ribbon icon with the correct parameters", () => {
-			uiManager.setupUserInterface();
+			uiManager.load();
 
 			expect(mockPlugin.addRibbonIcon).toHaveBeenCalledTimes(2);
 			expect(mockPlugin.addRibbonIcon).toHaveBeenCalledWith(
@@ -47,7 +47,7 @@ describe("UIManager", () => {
 		});
 
 		it("should add the commands with the correct parameters", () => {
-			uiManager.setupUserInterface();
+			uiManager.load();
 
 			expect(mockPlugin.addCommand).toHaveBeenCalledTimes(3);
 
@@ -73,7 +73,7 @@ describe("UIManager", () => {
 		});
 
 		it("should call activateSandboxView when the sandbox ribbon icon callback is executed", () => {
-			uiManager.setupUserInterface();
+			uiManager.load();
 
 			const sandboxRibbonCallback = (
 				mockPlugin.addRibbonIcon as ReturnType<typeof vi.fn>
@@ -84,7 +84,7 @@ describe("UIManager", () => {
 		});
 
 		it("should call activateInMemoryView when the in-memory ribbon icon callback is executed", () => {
-			uiManager.setupUserInterface();
+			uiManager.load();
 
 			const inMemoryRibbonCallback = (
 				mockPlugin.addRibbonIcon as ReturnType<typeof vi.fn>
@@ -95,7 +95,7 @@ describe("UIManager", () => {
 		});
 
 		it("should call activateSandboxView when the sandbox command callback is executed", () => {
-			uiManager.setupUserInterface();
+			uiManager.load();
 
 			const sandboxCommandCallback = (
 				mockPlugin.addCommand as ReturnType<typeof vi.fn>
@@ -108,7 +108,7 @@ describe("UIManager", () => {
 		});
 
 		it("should call activateInMemoryView when the in-memory command callback is executed", () => {
-			uiManager.setupUserInterface();
+			uiManager.load();
 
 			const inMemoryCommandCallback = (
 				mockPlugin.addCommand as ReturnType<typeof vi.fn>

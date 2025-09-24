@@ -64,15 +64,25 @@ describe("SandboxNotePlugin", () => {
 		// because the real initializeManagers is not called in this test setup.
 		// Instead, we will check that the methods on the managers are called.
 		plugin.editorSyncManager = {
-			sharedNoteContent: "",
-			refreshAllViewTitles: vi.fn(),
+			load: vi.fn(),
 		} as any;
-		plugin.saveManager = {} as any;
-		plugin.interactionManager = { setupUserInterface: vi.fn() } as any;
-		plugin.editorPluginConnector = { setupEditorExtension: vi.fn() } as any;
-		plugin.viewFactory = { registerViews: vi.fn() } as any;
-		plugin.workspaceEventManager = { setupEventHandlers: vi.fn() } as any;
-		plugin.eventManager = { registerEventHandlers: vi.fn() } as any;
+		plugin.saveManager = {
+			load: vi.fn(),
+		} as any;
+		plugin.interactionManager = { load: vi.fn() } as any;
+		plugin.editorPluginConnector = { load: vi.fn() } as any;
+		plugin.viewFactory = { load: vi.fn() } as any;
+		plugin.workspaceEventManager = { load: vi.fn() } as any;
+		plugin.eventManager = { load: vi.fn() } as any;
+		plugin.managers = [
+			plugin.editorSyncManager,
+			plugin.saveManager,
+			plugin.interactionManager,
+			plugin.editorPluginConnector,
+			plugin.viewFactory,
+			plugin.workspaceEventManager,
+			plugin.eventManager,
+		];
 
 		vi.spyOn(plugin as any, "setupSettingsTab").mockImplementation(
 			() => {}
@@ -81,25 +91,6 @@ describe("SandboxNotePlugin", () => {
 
 	afterEach(() => {
 		vi.restoreAllMocks();
-	});
-
-	it("should disable the plugin and show a notice if compatibility check fails", async () => {
-		const error = new Error("Incompatible version");
-		(UnsafeMarkdownView as Mock).mockImplementation(() => {
-			throw error;
-		});
-
-		await plugin.onload();
-
-		expect(Notice).toHaveBeenCalledOnce();
-		expect(Notice).toHaveBeenCalledWith(
-			"Sandbox Note plugin: Incompatible with this version of Obsidian. The plugin has been disabled."
-		);
-
-		expect(plugin.loadSettings).not.toHaveBeenCalled();
-		expect(
-			plugin.interactionManager.setupUserInterface
-		).not.toHaveBeenCalled();
 	});
 
 	it("should proceed with initialization if compatibility check passes", async () => {
@@ -111,23 +102,33 @@ describe("SandboxNotePlugin", () => {
 			.spyOn(plugin as any, "initializeManagers")
 			.mockImplementation(() => {
 				plugin.editorSyncManager = {
-					sharedNoteContent: "",
-					refreshAllViewTitles: vi.fn(),
+					load: vi.fn(),
 				} as any;
-				plugin.saveManager = {} as any;
+				plugin.saveManager = {
+					load: vi.fn(),
+				} as any;
 				plugin.interactionManager = {
-					setupUserInterface: vi.fn(),
+					load: vi.fn(),
 				} as any;
 				plugin.editorPluginConnector = {
-					setupEditorExtension: vi.fn(),
+					load: vi.fn(),
 				} as any;
-				plugin.viewFactory = { registerViews: vi.fn() } as any;
+				plugin.viewFactory = { load: vi.fn() } as any;
 				plugin.workspaceEventManager = {
-					setupEventHandlers: vi.fn(),
+					load: vi.fn(),
 				} as any;
 				plugin.eventManager = {
-					registerEventHandlers: vi.fn(),
+					load: vi.fn(),
 				} as any;
+				plugin.managers = [
+					plugin.editorSyncManager,
+					plugin.saveManager,
+					plugin.interactionManager,
+					plugin.editorPluginConnector,
+					plugin.viewFactory,
+					plugin.workspaceEventManager,
+					plugin.eventManager,
+				];
 			});
 
 		await plugin.onload();
@@ -136,18 +137,8 @@ describe("SandboxNotePlugin", () => {
 		expect(plugin.loadSettings).toHaveBeenCalledOnce();
 		expect(initializeManagersSpy).toHaveBeenCalledOnce();
 		expect((plugin as any).setupSettingsTab).toHaveBeenCalledOnce();
-		expect(
-			plugin.eventManager.registerEventHandlers
-		).toHaveBeenCalledOnce();
-		expect(
-			plugin.editorPluginConnector.setupEditorExtension
-		).toHaveBeenCalledOnce();
-		expect(
-			plugin.interactionManager.setupUserInterface
-		).toHaveBeenCalledOnce();
-		expect(plugin.viewFactory.registerViews).toHaveBeenCalledOnce();
-		expect(
-			plugin.workspaceEventManager.setupEventHandlers
-		).toHaveBeenCalledOnce();
+		for (const manager of plugin.managers) {
+			expect(manager.load).toHaveBeenCalledOnce();
+		}
 	});
 });

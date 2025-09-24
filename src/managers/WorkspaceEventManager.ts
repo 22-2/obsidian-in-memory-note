@@ -7,9 +7,10 @@ import type { AppEvents } from "src/events/AppEvents";
 import type { EditorSyncManager } from "./EditorSyncManager";
 import type { EditorPluginConnector } from "./EditorPluginConnector";
 import type { PluginSettings } from "src/settings";
+import type { Manager } from "./Manager";
 
 /** Manages Obsidian workspace event handling */
-export class WorkspaceEventManager {
+export class WorkspaceEventManager implements Manager {
 	private app: App;
 	private workspace: Workspace;
 	private emitter: EventEmitter<AppEvents>;
@@ -38,14 +39,22 @@ export class WorkspaceEventManager {
 	}
 
 	/** Set up all workspace event listeners */
-	public setupEventHandlers(): void {
+	public load(): void {
 		this.workspace.onLayoutReady(() => this.setupSandboxViews());
 
 		this.workspace.on(
 			"active-leaf-change",
-			this.handleActiveLeafChange.bind(this)
+			this.handleActiveLeafChange
 		);
 		this.workspace.on("layout-change", this.debouncedSetupSandboxViews);
+	}
+
+	public unload(): void {
+		this.workspace.off(
+			"active-leaf-change",
+			this.handleActiveLeafChange
+		);
+		this.workspace.off("layout-change", this.debouncedSetupSandboxViews);
 	}
 
 	/** Connects the editor plugin to any existing sandbox views on layout ready or change. */
@@ -57,7 +66,7 @@ export class WorkspaceEventManager {
 		});
 	}
 	/** Handle active leaf changes to connect the editor plugin and trigger auto-save. */
-	private async handleActiveLeafChange() {
+	private handleActiveLeafChange = async () => {
 		// Auto-save when switching tabs if enabled and there are unsaved changes
 		if (
 			this.settings.enableAutoSave &&
@@ -90,5 +99,5 @@ export class WorkspaceEventManager {
 
 		// Connect the editor plugin to the new active view
 		this.editorPluginConnector.connectEditorPluginToView(activeView);
-	}
+	};
 }

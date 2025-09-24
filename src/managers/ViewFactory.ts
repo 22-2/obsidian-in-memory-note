@@ -3,9 +3,10 @@ import { VIEW_TYPE_IN_MEMORY, VIEW_TYPE_SANDBOX } from "src/utils/constants";
 import { activateView } from "src/utils/obsidian";
 import { InMemoryNoteView } from "src/views/InMemoryNoteView";
 import { SandboxNoteView } from "src/views/SandboxNoteView";
+import type { Manager } from "./Manager";
 
 /** Manages registration and activation of custom views */
-export class ViewFactory {
+export class ViewFactory implements Manager {
 	private plugin: SandboxNotePlugin;
 
 	constructor(plugin: SandboxNotePlugin) {
@@ -13,7 +14,7 @@ export class ViewFactory {
 	}
 
 	/** Register custom view types with Obsidian */
-	public registerViews(): void {
+	public load(): void {
 		this.plugin.registerView(
 			VIEW_TYPE_SANDBOX,
 			(leaf) => new SandboxNoteView(leaf, this.plugin)
@@ -22,6 +23,12 @@ export class ViewFactory {
 			VIEW_TYPE_IN_MEMORY,
 			(leaf) => new InMemoryNoteView(leaf, this.plugin)
 		);
+	}
+
+	/** Unregister custom view types */
+	public unload(): void {
+		this.plugin.app.workspace.detachLeavesOfType(VIEW_TYPE_SANDBOX);
+		this.plugin.app.workspace.detachLeavesOfType(VIEW_TYPE_IN_MEMORY);
 	}
 
 	/** Create and activate new Sandbox Note view */

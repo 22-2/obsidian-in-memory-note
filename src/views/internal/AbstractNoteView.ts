@@ -8,7 +8,6 @@ import {
 } from "obsidian";
 
 import log from "loglevel";
-import { around } from "monkey-around";
 import {
 	handleClick,
 	handleContextMenu,
@@ -86,36 +85,14 @@ export abstract class AbstractNoteView extends ItemView {
 			this.setContent(state.content);
 			// The unsaved state is now managed centrally
 			await this.wrapper.virtualEditor.setState(state, result);
-			// Prevent the view from being closed and reopened unnecessarily
 			// @ts-ignore
-			result.close = false;
+			result.close = false; // Prevent the view from being closed and reopened unnecessarily
 		}
 		await super.setState(state, result);
 	}
 
-	/**
-	 * Patches leaf.setViewState to handle calls from internal commands.
-	 * Commands like `editor:toggle-source` call setViewState with `type: "markdown"`.
-	 * This patch intercepts the call and corrects the type to our view's actual type,
-	 * preventing the view from being closed and re-opened unnecessarily.
-	 */
-	private applyViewStatePatch() {
-		const view = this;
-		this.register(
-			around(this.leaf, {
-				setViewState: (originalSetViewState) =>
-					async function (this: WorkspaceLeaf, state, result) {
-						if (state.type === "markdown") {
-							state.type = view.getViewType();
-						}
-						return originalSetViewState.call(this, state, result);
-					},
-			})
-		);
-	}
-
 	async onOpen() {
-		this.applyViewStatePatch();
+		// this.applyViewStatePatch();
 		this.registerActiveLeafEvents();
 
 		try {

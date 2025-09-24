@@ -1,5 +1,5 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\views\helpers\EditorWrapper.ts
-import { type Editor, WorkspaceLeaf } from "obsidian";
+import { type ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { noop } from "../../utils/noop";
 import type { AbstractNoteView } from "./AbstractNoteView";
 import { UnsafeMarkdownView } from "./UnsafeMarkdownView";
@@ -116,6 +116,15 @@ export class EditorWrapper {
 			open: noop,
 			getRoot: noop,
 			updateHeader: noop,
+			getState: () => this.parentView.getState(),
+			setViewState: async (state: any, result: ViewStateResult) => {
+				state.type = this.parentView.getViewType();
+				this.parentView.leaf.setViewState(
+					state,
+					result || { history: false }
+				);
+			},
+			__FAKE_LEAF__: true,
 		} as unknown as WorkspaceLeaf;
 		return fakeLeaf;
 	}

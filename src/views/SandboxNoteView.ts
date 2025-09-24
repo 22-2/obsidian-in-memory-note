@@ -2,7 +2,7 @@
 import { WorkspaceLeaf } from "obsidian";
 import { VIEW_TYPE_SANDBOX } from "src/utils/constants";
 import type SandboxNotePlugin from "../main";
-import { syncView } from "../helpers/viewSync";
+import { syncViewContent } from "../helpers/viewSync";
 import { AbstractNoteView } from "./internal/AbstractNoteView";
 
 /** View for a synchronized, persistent sandbox note. */
@@ -39,7 +39,7 @@ export class SandboxNoteView extends AbstractNoteView {
 	/** On open, register this view with the ContentManager. */
 	async onOpen() {
 		this.plugin.editorSyncManager.addActiveView(this);
-		syncView(this);
+		syncViewContent(this);
 		await super.onOpen();
 	}
 

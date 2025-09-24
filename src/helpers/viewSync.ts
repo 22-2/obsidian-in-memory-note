@@ -20,7 +20,7 @@ export function setContent(view: AbstractNoteView, content: string) {
  * Synchronize the content of a new view with existing views.
  * @param view The instance of the SandboxNoteView to synchronize.
  */
-export function syncView(view: SandboxNoteView) {
+export function syncViewContent(view: SandboxNoteView) {
 	// If no other views are open, but there's initial content from startup, use it.
 	const initialContent =
 		view.plugin.editorSyncManager.currentSharedNoteContent;

@@ -16,7 +16,7 @@ const obsidianNoticeMethodFactory: log.MethodFactory = (
 				args[0]?.toString() || "An unknown error occurred.";
 			new Notice(errorMessage);
 		}
-		rawMethod(args);
+		rawMethod.apply(null, args);
 	};
 };
 

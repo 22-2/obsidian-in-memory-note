@@ -6,6 +6,7 @@ import {
 	SANDBOX_NOTE_ICON,
 } from "../utils/constants";
 import type { Manager } from "./Manager";
+import { convertToFileAndClear } from "src/views/internal/utils";
 
 /** Manages UI elements like ribbon icons and commands */
 export class InteractionManager implements Manager {
@@ -55,7 +56,7 @@ export class InteractionManager implements Manager {
 				const view = this.plugin.getActiveAbstractNoteView();
 				if (view) {
 					if (!checking) {
-						view.convertToFileAndClear();
+						convertToFileAndClear(view);
 					}
 					return true;
 				}

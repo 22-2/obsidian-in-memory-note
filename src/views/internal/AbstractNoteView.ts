@@ -19,6 +19,7 @@ import {
 import type SandboxNotePlugin from "src/main";
 import { HOT_SANDBOX_ID_PREFIX, SANDBOX_NOTE_ICON } from "src/utils/constants";
 import { EditorWrapper } from "./EditorWrapper";
+import { convertToFileAndClear } from "./utils";
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
@@ -44,9 +45,9 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	protected abstract get hasUnsavedChanges(): boolean;
-	protected abstract getBaseTitle(): string;
 	protected abstract handleSaveRequest(): Promise<void>;
 	protected abstract loadInitialContent(): Promise<string>;
+	public abstract getBaseTitle(): string;
 	public abstract getContent(): string;
 	public abstract getIcon(): string;
 	public abstract getViewType(): string;
@@ -85,8 +86,6 @@ export abstract class AbstractNoteView extends ItemView {
 		// leaf.setViewState が呼ばれることを期待する。
 		// しかし、leaf.setViewState は AbstractNoteView の setState の中から呼ばれるので、
 		// super.onOpen() を最初に呼ぶのが一番安全です。
-
-		this.registerActiveLeafEvents();
 
 		try {
 			await this.wrapper.initialize(this.contentEl, this.initialState);
@@ -140,7 +139,7 @@ export abstract class AbstractNoteView extends ItemView {
 				.setTitle("Convert to file")
 				.setIcon("file-pen-line")
 				.onClick(async () => {
-					await this.convertToFileAndClear();
+					await convertToFileAndClear(this);
 				})
 		).addItem((item) =>
 			item
@@ -159,56 +158,6 @@ export abstract class AbstractNoteView extends ItemView {
 		}
 	}
 
-	public async convertToFileAndClear() {
-		try {
-			const content = this.getContent();
-			const baseTitle = this.getBaseTitle();
-
-			// Sanitize title to create a valid filename
-			const sanitizedTitle =
-				baseTitle.replace(/[\\/:"*?<>|]+/g, "").trim() || "Untitled";
-
-			// Determine the folder for the new file, respecting Obsidian's settings
-			const parentFolder = this.app.fileManager.getNewFileParent("");
-
-			let initialPath: string;
-			if (parentFolder.isRoot()) {
-				initialPath = `${sanitizedTitle}.md`;
-			} else {
-				initialPath = `${parentFolder.path}/${sanitizedTitle}.md`;
-			}
-
-			// Find an available path to avoid overwriting existing files
-			const filePath = this.app.vault.getAvailablePath(initialPath, "md");
-
-			// Create the new file in the vault
-			const newFile = await this.app.vault.create(filePath, content);
-
-			// Open the new file in the current leaf, replacing this view
-			await this.leaf.openFile(newFile);
-
-			// Show a confirmation notice
-			new Notice(`${baseTitle} converted to file: ${newFile.path}`);
-
-			this.setContent("");
-		} catch (error) {
-			log.error("Sandbox Note: Failed to convert to file.", error);
-			new Notice(
-				"Sandbox Note: Failed to convert to file. See console for details."
-			);
-		}
-	}
-
-	private registerActiveLeafEvents() {
-		this.plugin.registerEvent(
-			this.app.workspace.on("active-leaf-change", (leaf) => {
-				if (leaf?.id === this.leaf.id) {
-					this.editor?.focus();
-				}
-			})
-		);
-	}
-
 	private handleInitializationError(error: unknown) {
 		log.error("Sandbox Note: Failed to initialize inline editor.", error);
 		new Notice("Sandbox Note: Failed to initialize inline editor.");
@@ -221,6 +170,15 @@ export abstract class AbstractNoteView extends ItemView {
 
 	private setupEventHandlers() {
 		if (!this.editor) return;
+
+		this.plugin.registerEvent(
+			this.app.workspace.on("active-leaf-change", (leaf) => {
+				if (leaf?.id === this.leaf.id) {
+					this.editor?.focus();
+				}
+			})
+		);
+
 		this.registerDomEvent(this.contentEl, "mousedown", (e) =>
 			handleClick(e, this.editor)
 		);

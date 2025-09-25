@@ -147,6 +147,7 @@ export abstract class AbstractNoteView extends ItemView {
 					this.setContent("");
 				})
 		);
+		super.onPaneMenu(menu, source);
 	}
 
 	public setContent(content: string) {

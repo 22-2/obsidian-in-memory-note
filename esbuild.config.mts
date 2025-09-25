@@ -26,12 +26,13 @@ const renamePlugin = (): esbuild.Plugin => ({
 const mode = process.argv[2];
 const prod = mode === "production";
 const e2e = mode === "e2e";
+const e2eDev = mode === "e2e-dev";
 
 const context = await esbuild.context({
 	banner: {
 		js: banner,
 	},
-	plugins: e2e ? [renamePlugin()] : [],
+	plugins: e2eDev || e2e ? [renamePlugin()] : [],
 	entryPoints: ["src/main.ts"],
 	bundle: true,
 	external: [
@@ -56,7 +57,7 @@ const context = await esbuild.context({
 	minify: prod,
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
-	outfile: e2e ? "dist/main.js" : "main.js",
+	outfile: e2eDev || e2e ? "dist/main.js" : "main.js",
 });
 
 if (prod || e2e) {

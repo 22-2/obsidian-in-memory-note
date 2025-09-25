@@ -61,10 +61,9 @@ export class HotSandboxNoteView extends AbstractNoteView {
 		await super.onOpen();
 		if (!this.noteGroupId) return;
 		this.plugin.editorSyncManager.addHotActiveView(this);
-		const initialContent =
-			await this.plugin.editorSyncManager.getHotNoteContent(
-				this.noteGroupId
-			);
+		const initialContent = this.plugin.editorSyncManager.getHotNoteContent(
+			this.noteGroupId
+		);
 		this.setContent(initialContent);
 	}
 

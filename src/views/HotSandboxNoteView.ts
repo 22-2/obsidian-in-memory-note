@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { WorkspaceLeaf } from "obsidian";
 import {
 	HOT_SANDBOX_NOTE_ICON,
+	HOT_SANDBOX_ID_PREFIX,
 	VIEW_TYPE_HOT_SANDBOX,
 } from "src/utils/constants";
 import type SandboxNotePlugin from "../main";
@@ -65,7 +66,7 @@ export class HotSandboxNoteView extends AbstractNoteView {
 		// もし設定されていない場合、ライフサイクルの問題が考えられるが、
 		// フォールバックとしてIDを生成し、処理を続行する。
 		if (!this.noteGroupId) {
-			this.noteGroupId = `hsbox-${nanoid()}`;
+			this.noteGroupId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
 		}
 
 		// エディタを初期化する前に、ビューをマネージャーに登録する。

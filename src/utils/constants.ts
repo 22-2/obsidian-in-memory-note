@@ -25,3 +25,5 @@ export const VIEW_TYPE_HOT_SANDBOX = "hot-sandbox-note-view";
 export const SANDBOX_NOTE_ICON = "package";
 export const IN_MEMORY_NOTE_ICON = "memory-stick";
 export const HOT_SANDBOX_NOTE_ICON = "flame";
+
+export const HOT_SANDBOX_ID_PREFIX = "hsbox-";

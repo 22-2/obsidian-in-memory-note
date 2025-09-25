@@ -1,5 +1,4 @@
-// E:\Desktop\coding\pub\obsidian-sandbox-note\src\views\internal\AbstractNoteView.ts
-// E:\Desktop\coding\pub\obsidian-sandbox-note\src\views\helpers\AbstractNoteView.ts
+// src/views/internal/AbstractNoteView.ts
 import {
 	ItemView,
 	MarkdownView,
@@ -10,15 +9,15 @@ import {
 } from "obsidian";
 
 import log from "loglevel";
+import { nanoid } from "nanoid";
 import {
 	handleClick,
 	handleContextMenu,
 	handleKeyDown,
 } from "src/helpers/clickHandler";
 import type SandboxNotePlugin from "src/main";
-import { SANDBOX_NOTE_ICON } from "src/utils/constants";
+import { HOT_SANDBOX_ID_PREFIX, SANDBOX_NOTE_ICON } from "src/utils/constants";
 import { EditorWrapper } from "./EditorWrapper";
-import { nanoid } from "nanoid";
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
@@ -27,7 +26,7 @@ export abstract class AbstractNoteView extends ItemView {
 	saveActionEl!: HTMLElement;
 	private initialState: any = null;
 	public isSourceMode = true;
-	public noteGroupId: string | null = null;
+	public noteGroupId: string | null = null; // ここで初期値としてnullを設定
 
 	navigation = true;
 
@@ -88,12 +87,13 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	async setState(state: any, result: ViewStateResult): Promise<void> {
+		// noteGroupIdの初期化をここで行う
 		if (state?.noteGroupId) {
 			this.noteGroupId = state.noteGroupId;
 			log.debug(`Restored note group ID: ${this.noteGroupId}`);
-		} else {
-			this.noteGroupId = `hsbox-${nanoid()}`;
-			log.debug(`Created new note group ID: ${this.noteGroupId}`);
+		} else if (!this.noteGroupId) {
+			log.error("noteGroupId not found in state");
+			this.noteGroupId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
 		}
 
 		if (typeof state.source === "boolean") {
@@ -112,7 +112,13 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	async onOpen() {
-		// this.applyViewStatePatch();
+		// super.onOpen() の呼び出しは AbstractNoteView の最後に移動させるか、
+		// ここで最初に呼び出すようにする。
+		// ここでは setState が確実に実行されるように、このクラスの setState が呼ばれる前に
+		// leaf.setViewState が呼ばれることを期待する。
+		// しかし、leaf.setViewState は AbstractNoteView の setState の中から呼ばれるので、
+		// super.onOpen() を最初に呼ぶのが一番安全です。
+
 		this.registerActiveLeafEvents();
 
 		try {

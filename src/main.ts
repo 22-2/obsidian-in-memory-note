@@ -80,14 +80,7 @@ export default class SandboxNotePlugin extends Plugin {
 		this.interactionManager = new InteractionManager(this);
 		this.editorPluginConnector = new EditorPluginConnector(this, emitter);
 		this.viewFactory = new ViewFactory(this);
-		this.workspaceEventManager = new ObsidianEventManager(
-			this,
-			emitter,
-			this.editorSyncManager,
-			this.editorPluginConnector,
-			this.data.settings,
-			this.saveManager
-		);
+		this.workspaceEventManager = new ObsidianEventManager(this, emitter);
 
 		// Event listeners that bridge views and managers
 		this.emitter.on("connect-editor-plugin", (payload) => {

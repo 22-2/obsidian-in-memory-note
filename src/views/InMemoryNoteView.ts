@@ -29,11 +29,6 @@ export class InMemoryNoteView extends AbstractNoteView {
 		return IN_MEMORY_NOTE_ICON;
 	}
 
-	/** Each in-memory view starts with a blank slate. */
-	async loadInitialContent(): Promise<string> {
-		return "";
-	}
-
 	getContent(): string {
 		return this.wrapper.getContent();
 	}

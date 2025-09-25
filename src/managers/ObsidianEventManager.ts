@@ -110,8 +110,6 @@ export class ObsidianEventManager implements Manager {
 			this.emitter.emit("save-requested", {
 				view: anySandboxView,
 			});
-
-			this.editorSyncManager.refreshAllViewTitles();
 		}
 	}
 

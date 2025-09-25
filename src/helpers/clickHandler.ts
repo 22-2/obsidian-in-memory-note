@@ -1,6 +1,5 @@
 import log from "loglevel";
 import { Editor, MarkdownEditView } from "obsidian";
-import type { Commands } from "obsidian-typings";
 import type { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 
 /** Handle right-click context menu events. */
@@ -36,22 +35,4 @@ export const handleClick = (e: MouseEvent, editor: Editor) => {
 		editor.setSelection(cursorPosition, cursorPosition);
 		editor.focus();
 	}, 0);
-};
-
-/** Handle keydown events, specifically for Ctrl+S save functionality. */
-export const handleKeyDown = (e: KeyboardEvent, view: AbstractNoteView) => {
-	const activeView = view.app.workspace.activeLeaf?.view;
-	if (activeView !== view) return;
-
-	if (!view.editor?.hasFocus()) return;
-	if (
-		view.plugin.data.settings.enableCtrlS &&
-		(e.ctrlKey || e.metaKey) &&
-		e.key === "s"
-	) {
-		e.preventDefault(); // Prevent default browser save action
-		e.stopPropagation(); // Stop the event from propagating further
-		log.debug("Saving note via Ctrl+S");
-		view.save();
-	}
 };

@@ -1,7 +1,6 @@
 import log from "loglevel";
 import { Plugin } from "obsidian";
 import type { AppEvents } from "./events/AppEvents";
-import { AppEventManager } from "./managers/AppEventManager";
 import { DatabaseManager } from "./managers/DatabaseManager";
 import { EditorPluginConnector } from "./managers/EditorPluginConnector";
 import { EditorSyncManager } from "./managers/EditorSyncManager";
@@ -30,7 +29,6 @@ export default class SandboxNotePlugin extends Plugin {
 	interactionManager!: InteractionManager;
 	editorPluginConnector!: EditorPluginConnector;
 	viewFactory!: ViewFactory;
-	eventManager!: AppEventManager;
 	workspaceEventManager!: ObsidianEventManager;
 	emitter!: EventEmitter<AppEvents>;
 	managers: Manager[] = [];
@@ -99,12 +97,6 @@ export default class SandboxNotePlugin extends Plugin {
 			this.editorPluginConnector,
 			this.data.settings
 		);
-		this.eventManager = new AppEventManager(
-			emitter,
-			this.editorSyncManager,
-			this.saveManager,
-			this.data.settings
-		);
 
 		this.managers.push(
 			this.editorSyncManager,
@@ -112,8 +104,7 @@ export default class SandboxNotePlugin extends Plugin {
 			this.interactionManager,
 			this.editorPluginConnector,
 			this.viewFactory,
-			this.workspaceEventManager,
-			this.eventManager
+			this.workspaceEventManager
 		);
 	}
 

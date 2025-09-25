@@ -1,4 +1,4 @@
-import type { SandboxNoteView } from "../views/SandboxNoteView";
+import { SandboxNoteView } from "../views/SandboxNoteView";
 import log from "loglevel";
 import type { AbstractNoteView } from "src/views/internal/AbstractNoteView"; // 追記
 import type { EventEmitter } from "src/utils/EventEmitter";
@@ -25,21 +25,53 @@ export class EditorSyncManager implements Manager {
 	}
 
 	public load(): void {
-		// Nothing to do
+		this.emitter.on(
+			"editor-content-changed",
+			this.handleEditorContentChanged
+		);
+		this.emitter.on("content-saved", this.handleContentSaved);
 	}
 
 	public unload(): void {
-		// Nothing to do
+		this.emitter.off(
+			"editor-content-changed",
+			this.handleEditorContentChanged
+		);
+		this.emitter.off("content-saved", this.handleContentSaved);
 	}
 
+	private handleEditorContentChanged = (
+		payload: AppEvents["editor-content-changed"]
+	) => {
+		const { content, sourceView } = payload;
+
+		if (
+			sourceView instanceof HotSandboxNoteView &&
+			sourceView.noteGroupId
+		) {
+			this.syncHotViews(sourceView.noteGroupId, content, sourceView);
+		} else if (sourceView instanceof SandboxNoteView) {
+			this.syncAll(content, sourceView);
+		}
+
+		this.refreshAllViewTitles();
+		this.refreshAllViewActionButtons();
+	};
+
+	private handleContentSaved = (payload: AppEvents["content-saved"]) => {
+		const { view } = payload;
+		if (view instanceof SandboxNoteView) {
+			this.markAsSaved();
+			this.refreshAllViewTitles();
+			this.refreshAllViewActionButtons();
+		}
+	};
+
 	public getGroupNumber(noteGroupId: string): number {
-		// 基準をアクティブなビューから、存在するすべてのノートコンテンツに変更し、番号付けを安定させます。
 		const sortedGroupIds = Array.from(this.hotNotesContent.keys()).sort();
 		const groupIndex = sortedGroupIds.indexOf(noteGroupId);
 		return groupIndex !== -1 ? groupIndex + 1 : 0;
 	}
-
-	// --- Methods for original SandboxNoteView ---
 
 	/** Update shared content and sync across all views */
 	syncAll(content: string, sourceView: AbstractNoteView) {
@@ -49,7 +81,6 @@ export class EditorSyncManager implements Manager {
 		this.currentSharedNoteContent = content;
 		this.updateUnsavedState();
 
-		// Synchronize content to all other active views
 		for (const view of this.activeViews) {
 			if (view !== sourceView) {
 				log.debug(`Syncing content to view: ${view.getViewType()}`);
@@ -58,7 +89,6 @@ export class EditorSyncManager implements Manager {
 		}
 	}
 
-	/** Updates the unsaved state and notifies views if it changed. */
 	private updateUnsavedState() {
 		const wasUnsaved = this.hasUnsavedChanges;
 		this.hasUnsavedChanges =
@@ -72,14 +102,12 @@ export class EditorSyncManager implements Manager {
 		}
 	}
 
-	/** Marks the current content as saved. */
 	markAsSaved() {
 		this.lastSavedContent = this.currentSharedNoteContent;
 		this.updateUnsavedState();
 		log.debug("Content marked as saved.");
 	}
 
-	/** Register a view as active */
 	addActiveView(view: SandboxNoteView) {
 		log.debug(
 			`Adding active view: ${view.getViewType()}, total: ${
@@ -87,11 +115,9 @@ export class EditorSyncManager implements Manager {
 			}`
 		);
 		this.activeViews.add(view);
-		// Ensure new view has correct button state
 		view.updateActionButtons();
 	}
 
-	/** Unregister a view */
 	removeActiveView(view: SandboxNoteView) {
 		log.debug(
 			`Removing active view: ${view.getViewType()}, remaining: ${
@@ -101,13 +127,11 @@ export class EditorSyncManager implements Manager {
 		this.activeViews.delete(view);
 	}
 
-	/** Refresh all view titles when settings change */
 	refreshAllViewTitles() {
 		for (const view of this.activeViews) {
 			view.leaf.updateHeader();
 		}
 
-		// Also refresh hot sandbox notes
 		for (const viewSet of this.hotActiveViews.values()) {
 			for (const view of viewSet) {
 				view.leaf.updateHeader();
@@ -115,20 +139,12 @@ export class EditorSyncManager implements Manager {
 		}
 	}
 
-	/** Refresh all view action buttons. */
 	public refreshAllViewActionButtons() {
 		for (const view of this.activeViews) {
 			view.updateActionButtons();
 		}
 	}
 
-	// --- Methods for new HotSandboxNoteView ---
-
-	/**
-	 * 新しいノートグループが作成されたときに呼び出され、
-	 * 番号付けのために内部コンテンツマップに登録します。
-	 * @param noteGroupId 新しいノートグループのID
-	 */
 	public registerNewHotNote(noteGroupId: string) {
 		if (!this.hotNotesContent.has(noteGroupId)) {
 			this.hotNotesContent.set(noteGroupId, "");
@@ -199,7 +215,6 @@ export class EditorSyncManager implements Manager {
 			if (view !== sourceView) {
 				view.setContent(content);
 			}
-			// Refresh title for all views in the group to show/hide asterisk
 			view.leaf.updateHeader();
 		}
 	}

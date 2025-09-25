@@ -3,7 +3,6 @@ import {
 	ItemView,
 	MarkdownView,
 	Menu,
-	Notice,
 	Scope,
 	type ViewStateResult,
 	WorkspaceLeaf,
@@ -11,16 +10,11 @@ import {
 
 import log from "loglevel";
 import { nanoid } from "nanoid";
-import {
-	handleClick,
-	handleContextMenu,
-	handleKeyDown,
-} from "src/helpers/clickHandler";
+import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
 import type SandboxNotePlugin from "src/main";
-import { HOT_SANDBOX_ID_PREFIX, SANDBOX_NOTE_ICON } from "src/utils/constants";
+import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
 import { EditorWrapper } from "./EditorWrapper";
 import { convertToFileAndClear } from "./utils";
-import type { HotSandboxNoteView } from "../HotSandboxNoteView";
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
@@ -28,7 +22,7 @@ export abstract class AbstractNoteView extends ItemView {
 	private saveActionEl!: HTMLElement;
 	protected plugin: SandboxNotePlugin;
 	public isSourceMode = true;
-	public noteGroupId: string | null = null; // ここで初期値としてnullを設定
+	public noteGroupId: string | null = null;
 	public scope: Scope;
 	public wrapper: EditorWrapper;
 
@@ -46,13 +40,11 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	protected abstract get hasUnsavedChanges(): boolean;
-	protected abstract handleSaveRequest(): Promise<void>;
-	protected abstract loadInitialContent(): Promise<string>;
 	public abstract getBaseTitle(): string;
 	public abstract getContent(): string;
 	public abstract getIcon(): string;
 	public abstract getViewType(): string;
-	public abstract save(): Promise<void>;
+	public abstract save(): void;
 
 	public override getDisplayText(): string {
 		const baseTitle = this.getBaseTitle();
@@ -63,7 +55,6 @@ export abstract class AbstractNoteView extends ItemView {
 	public override getState(): any {
 		const state = super.getState();
 
-		// Add the note group ID to the state
 		state.noteGroupId = this.noteGroupId;
 
 		if (this.editor) {
@@ -81,13 +72,6 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	public override async onOpen() {
-		// super.onOpen() の呼び出しは AbstractNoteView の最後に移動させるか、
-		// ここで最初に呼び出すようにする。
-		// ここでは setState が確実に実行されるように、このクラスの setState が呼ばれる前に
-		// leaf.setViewState が呼ばれることを期待する。
-		// しかし、leaf.setViewState は AbstractNoteView の setState の中から呼ばれるので、
-		// super.onOpen() を最初に呼ぶのが一番安全です。
-
 		try {
 			await this.wrapper.initialize(this.contentEl, this.initialState);
 			this.initialState = null;
@@ -107,15 +91,12 @@ export abstract class AbstractNoteView extends ItemView {
 		state: any,
 		result: ViewStateResult
 	): Promise<void> {
-		// noteGroupIdの初期化/復元をここで行います。
 		if (state?.noteGroupId) {
 			this.noteGroupId = state.noteGroupId;
 			log.debug(`Restored note group ID: ${this.noteGroupId}`);
 		} else if (!this.noteGroupId) {
-			// 新規ビュー作成時など、stateにIDがない場合は新しく生成します。
 			log.debug("noteGroupId not found in state, creating new one.");
 			this.noteGroupId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
-			// 新規ノートなので、一貫した番号付けのためにEditorSyncManagerに登録します。
 			this.plugin.editorSyncManager.registerNewHotNote(this.noteGroupId);
 		}
 
@@ -126,10 +107,9 @@ export abstract class AbstractNoteView extends ItemView {
 		this.initialState = state;
 		if (this.editor && state.content != null) {
 			this.setContent(state.content);
-			// The unsaved state is now managed centrally
 			await this.wrapper.virtualEditor.setState(state, result);
 			// @ts-ignore
-			result.close = false; // Prevent the view from being closed and reopened unnecessarily
+			result.close = false;
 		}
 		await super.setState(state, result);
 	}
@@ -189,8 +169,20 @@ export abstract class AbstractNoteView extends ItemView {
 			handleContextMenu(e, this.wrapper.virtualEditor.editMode)
 		);
 
-		this.scope.register(["Mod"], "s", () => {
-			this.handleSaveRequest();
+		this.scope.register(["Mod"], "s", (e: KeyboardEvent) => {
+			const activeView = this.app.workspace.activeLeaf?.view;
+			if (activeView !== this || !this.editor?.hasFocus()) {
+				return true; // Continue with default behavior
+			}
+
+			if (this.plugin.data.settings.enableCtrlS) {
+				e.preventDefault();
+				e.stopPropagation();
+				log.debug("Saving note via Ctrl+S");
+				this.save();
+				return false; // Prevent default save action
+			}
+			return true;
 		});
 	}
 

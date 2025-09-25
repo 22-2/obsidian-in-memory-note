@@ -1,5 +1,4 @@
 import type { AbstractNoteView } from "../views/internal/AbstractNoteView";
-import type { SandboxNoteView } from "../views/SandboxNoteView";
 
 export interface AppEvents {
 	"editor-content-changed": {
@@ -8,10 +7,10 @@ export interface AppEvents {
 	};
 	"save-requested": {
 		view: AbstractNoteView;
-		noteGroupId?: string;
-		content?: string;
 	};
-	"content-saved": void;
+	"content-saved": {
+		view: AbstractNoteView;
+	};
 	"unsaved-state-changed": {
 		hasUnsavedChanges: boolean;
 	};

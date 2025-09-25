@@ -23,8 +23,7 @@ export class EditorWrapper {
 		this.load(editorContainer); // Attach to DOM and focus
 
 		const initialContent =
-			initialState?.content ??
-			(await this.parentView.loadInitialContent());
+			initialState?.content ?? (await this.parentView.getContent());
 		this.content = initialContent;
 		this.parentView.setContent(initialContent);
 

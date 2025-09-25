@@ -34,6 +34,10 @@ export class InMemoryNoteView extends AbstractNoteView {
 		return "";
 	}
 
+	getContent(): string {
+		return this.wrapper.getContent();
+	}
+
 	/** In-memory notes are not saved, so this is a no-op. */
 	async save(): Promise<void> {
 		// Do nothing.

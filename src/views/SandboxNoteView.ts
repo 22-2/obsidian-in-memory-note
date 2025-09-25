@@ -58,6 +58,10 @@ export class SandboxNoteView extends AbstractNoteView {
 		}
 	}
 
+	getContent(): string {
+		return this.plugin.editorSyncManager.currentSharedNoteContent;
+	}
+
 	/**
 	 * Syncs Obsidian's internal active editor state with our virtual editor.
 	 * This ensures that commands and other editor features work correctly.

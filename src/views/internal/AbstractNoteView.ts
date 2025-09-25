@@ -2,6 +2,7 @@
 import {
 	ItemView,
 	MarkdownView,
+	Menu,
 	Notice,
 	type ViewStateResult,
 	WorkspaceLeaf,
@@ -42,6 +43,7 @@ export abstract class AbstractNoteView extends ItemView {
 	abstract save(): Promise<void>;
 	abstract getBaseTitle(): string;
 	abstract get hasUnsavedChanges(): boolean;
+	abstract getContent(): string;
 
 	getDisplayText(): string {
 		const baseTitle = this.getBaseTitle();
@@ -73,7 +75,7 @@ export abstract class AbstractNoteView extends ItemView {
 			state.content = this.editor.getValue();
 			state.source = this.isSourceMode;
 		} else {
-			state.content = this.wrapper.content;
+			state.content = this.wrapper.getContent();
 			state.source = this.isSourceMode;
 		}
 		return state;
@@ -107,6 +109,12 @@ export abstract class AbstractNoteView extends ItemView {
 		} catch (error) {
 			this.handleInitializationError(error);
 		}
+	}
+
+	onPaneMenu(menu: Menu, source: "more-options" | "tab-header" | string) {
+		menu.addItem((item) =>
+			item.setTitle("Convert to file").onClick(() => {})
+		);
 	}
 
 	private registerActiveLeafEvents() {

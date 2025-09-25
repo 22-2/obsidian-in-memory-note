@@ -10,7 +10,7 @@ export class EditorWrapper {
 	public virtualEditor!: UnsafeMarkdownView;
 	containerEl!: HTMLDivElement;
 	public targetEl: HTMLElement | null = null;
-	public content = "";
+	private content = "";
 
 	constructor(public parentView: AbstractNoteView) {}
 

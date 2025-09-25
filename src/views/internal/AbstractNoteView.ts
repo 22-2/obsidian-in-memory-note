@@ -18,6 +18,7 @@ import {
 import type SandboxNotePlugin from "src/main";
 import { SANDBOX_NOTE_ICON } from "src/utils/constants";
 import { EditorWrapper } from "./EditorWrapper";
+import { nanoid } from "nanoid";
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
@@ -26,6 +27,7 @@ export abstract class AbstractNoteView extends ItemView {
 	saveActionEl!: HTMLElement;
 	private initialState: any = null;
 	public isSourceMode = true;
+	public noteGroupId: string | null = null;
 
 	navigation = true;
 
@@ -68,6 +70,10 @@ export abstract class AbstractNoteView extends ItemView {
 
 	getState(): any {
 		const state = super.getState();
+
+		// Add the note group ID to the state
+		state.noteGroupId = this.noteGroupId;
+
 		if (this.editor) {
 			const editorState = MarkdownView.prototype.getState.call(
 				this.wrapper.virtualEditor
@@ -83,6 +89,14 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	async setState(state: any, result: ViewStateResult): Promise<void> {
+		if (state?.noteGroupId) {
+			this.noteGroupId = state.noteGroupId;
+			log.debug(`Restored note group ID: ${this.noteGroupId}`);
+		} else {
+			this.noteGroupId = `hsbox-${nanoid()}`;
+			log.debug(`Created new note group ID: ${this.noteGroupId}`);
+		}
+
 		if (typeof state.source === "boolean") {
 			this.isSourceMode = state.source;
 		}

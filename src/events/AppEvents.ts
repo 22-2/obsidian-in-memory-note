@@ -7,7 +7,9 @@ export interface AppEvents {
 		sourceView: AbstractNoteView;
 	};
 	"save-requested": {
-		view: SandboxNoteView;
+		view: AbstractNoteView;
+		noteGroupId?: string;
+		content?: string;
 	};
 	"content-saved": void;
 	"unsaved-state-changed": {

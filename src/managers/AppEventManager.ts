@@ -5,6 +5,7 @@ import type { EventEmitter } from "../utils/EventEmitter";
 import type { EditorSyncManager } from "./EditorSyncManager";
 import type { SaveManager } from "./SaveManager";
 import type { Manager } from "./Manager";
+import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 
 export class AppEventManager implements Manager {
 	private emitter: EventEmitter<AppEvents>;
@@ -13,18 +14,44 @@ export class AppEventManager implements Manager {
 	private settings: PluginSettings;
 
 	private onContentChanged = (payload: AppEvents["content-changed"]) => {
-		this.editorSyncManager.syncAll(payload.content, payload.sourceView);
+		const { content, sourceView } = payload;
 
 		if (
-			this.settings.enableAutoSave &&
-			payload.sourceView instanceof SandboxNoteView
+			sourceView instanceof HotSandboxNoteView &&
+			sourceView.noteGroupId
 		) {
-			this.saveManager.debouncedSave(payload.sourceView);
+			this.editorSyncManager.syncHotViews(
+				sourceView.noteGroupId,
+				content,
+				sourceView
+			);
+			if (this.settings.enableAutoSave) {
+				this.saveManager.debouncedHotSave(
+					sourceView.noteGroupId,
+					content
+				);
+			}
+		} else if (sourceView instanceof SandboxNoteView) {
+			this.editorSyncManager.syncAll(content, sourceView);
+			if (this.settings.enableAutoSave) {
+				this.saveManager.debouncedSave(sourceView);
+			}
 		}
 	};
 
 	private onSaveRequested = (payload: AppEvents["save-requested"]) => {
-		this.saveManager.saveNoteContentToFile(payload.view);
+		if (
+			payload.view instanceof HotSandboxNoteView &&
+			payload.noteGroupId &&
+			payload.content !== undefined
+		) {
+			this.saveManager.saveHotNoteContent(
+				payload.noteGroupId,
+				payload.content
+			);
+		} else if (payload.view instanceof SandboxNoteView) {
+			this.saveManager.saveNoteContentToFile(payload.view);
+		}
 	};
 
 	private onContentSaved = () => {

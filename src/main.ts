@@ -14,12 +14,15 @@ import { DEFAULT_DATA as DEFAULT_PLUGIN_DATA } from "./utils/constants";
 import { EventEmitter } from "./utils/EventEmitter";
 import { SandboxNoteView } from "./views/SandboxNoteView";
 import { AbstractNoteView } from "./views/internal/AbstractNoteView";
+import { DatabaseManager } from "./managers/DatabaseManager";
+import { HotSandboxNoteView } from "./views/HotSandboxNoteView";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
 	data: SandboxNotePluginData = DEFAULT_PLUGIN_DATA;
 
 	// Managers
+	databaseManager!: DatabaseManager;
 	editorSyncManager!: EditorSyncManager;
 	saveManager!: SaveManager;
 	interactionManager!: InteractionManager;
@@ -40,7 +43,9 @@ export default class SandboxNotePlugin extends Plugin {
 			manager.load();
 		}
 
-		// Initialize content manager with saved content
+		await this.restoreHotNotes();
+
+		// Initialize content manager with saved content for original sandbox
 		const savedContent = this.data.data.noteContent ?? "";
 		this.editorSyncManager.currentSharedNoteContent = savedContent;
 		this.editorSyncManager.lastSavedContent = savedContent;
@@ -48,39 +53,19 @@ export default class SandboxNotePlugin extends Plugin {
 		this.setupSettingsTab();
 
 		log.debug("Sandbox Note plugin loaded");
-		// main.ts の onload 内に追加
-		// this.app.workspace.onLayoutReady(() => {
-		// 	this.register(
-		// 		around(this.app.commands.commands["editor:toggle-source"], {
-		// 			checkCallback: (original) => {
-		// 				return (checking) => {
-		// 					console.log(
-		// 						"--- Toggle Source Command Triggered ---"
-		// 					);
-		// 					console.log(
-		// 						"Active Leaf:",
-		// 						this.app.workspace.activeLeaf?.view.getViewType()
-		// 					);
-		// 					// @ts-ignore
-		// 					const activeEditor =
-		// 						this.app.workspace.activeEditor;
-		// 					console.log("Active Editor:", activeEditor);
-		// 					if (activeEditor) {
-		// 						console.log(
-		// 							"Active Editor's Leaf:",
-		// 							activeEditor.leaf
-		// 						);
-		// 					}
-		// 					return original?.call(null, checking);
-		// 				};
-		// 			},
-		// 		})
-		// 	);
-		// });
+	}
+
+	private async restoreHotNotes() {
+		const allNotes = await this.databaseManager.getAllNotes();
+		this.editorSyncManager.setInitialHotNotes(allNotes);
+		log.debug(`Restored ${allNotes.length} hot sandbox notes from DB.`);
 	}
 
 	public getActiveAbstractNoteView() {
-		return this.app.workspace.getActiveViewOfType(AbstractNoteView);
+		return (
+			this.app.workspace.getActiveViewOfType(AbstractNoteView) ??
+			this.app.workspace.getActiveViewOfType(HotSandboxNoteView)
+		);
 	}
 
 	public getActiveSandboxNoteView() {
@@ -92,14 +77,20 @@ export default class SandboxNotePlugin extends Plugin {
 		const saveData = (data: SandboxNotePluginData) => this.saveData(data);
 		const emitter = new EventEmitter<AppEvents>();
 		this.emitter = emitter;
+		this.databaseManager = new DatabaseManager();
 
 		this.editorSyncManager = new EditorSyncManager(emitter);
-		this.saveManager = new SaveManager(emitter, this.data, saveData);
+		this.saveManager = new SaveManager(
+			emitter,
+			this.data,
+			saveData,
+			this.databaseManager
+		);
 		this.interactionManager = new InteractionManager(this);
 		this.editorPluginConnector = new EditorPluginConnector(this, emitter);
 		this.viewFactory = new ViewFactory(this);
 		this.workspaceEventManager = new ObsidianEventManager(
-			this, // Pass the plugin instance instead of `this.app`
+			this,
 			emitter,
 			this.editorSyncManager,
 			this.editorPluginConnector,
@@ -138,6 +129,7 @@ export default class SandboxNotePlugin extends Plugin {
 		for (const manager of this.managers) {
 			manager.unload();
 		}
+		this.databaseManager.close();
 		log.debug("Sandbox Note plugin unloaded");
 	}
 
@@ -149,6 +141,10 @@ export default class SandboxNotePlugin extends Plugin {
 	/** Create and activate new In-Memory Note view. */
 	async activateInMemoryView() {
 		return this.viewFactory.activateInMemoryView();
+	}
+
+	async activateNewHotSandboxView() {
+		return this.viewFactory.activateNewHotSandboxView();
 	}
 
 	/** Initialize logger with current settings. */

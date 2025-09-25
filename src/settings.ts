@@ -1,11 +1,17 @@
 import { PluginSettingTab, Setting } from "obsidian";
 import type SandboxNotePlugin from "./main";
 
+export interface HotSandboxNoteData {
+	id: string;
+	content: string;
+	mtime: number;
+}
 export interface SandboxNotePluginData {
 	settings: PluginSettings;
 	data: {
 		noteContent: string;
 		lastSaved: string;
+		hotSandboxNotes: Record<string, HotSandboxNoteData>;
 	};
 }
 

@@ -32,7 +32,9 @@
 	},
 	"dependencies": {
 		"@codemirror/view": "^6.38.2",
+		"dexie": "^4.2.0",
 		"loglevel": "^1.9.2",
-		"monkey-around": "^3.0.0"
+		"monkey-around": "^3.0.0",
+		"nanoid": "^5.1.6"
 	}
 }

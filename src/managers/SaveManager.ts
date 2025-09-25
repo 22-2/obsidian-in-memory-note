@@ -5,24 +5,34 @@ import type { AppEvents } from "src/events/AppEvents";
 import type { SandboxNotePluginData, PluginSettings } from "src/settings";
 import { debounce, Notice, type Debouncer } from "obsidian";
 import type { Manager } from "./Manager";
+import type { DatabaseManager } from "./DatabaseManager";
 /** Manages content persistence and auto-save functionality */
 export class SaveManager implements Manager {
 	private emitter: EventEmitter<AppEvents>;
 	private data: SandboxNotePluginData;
 	private saveData: (data: SandboxNotePluginData) => Promise<void>;
+	private databaseManager: DatabaseManager;
 	private isSaving = false;
 
 	/** Debounced save function */
 	debouncedSave: Debouncer<[SandboxNoteView], Promise<void>>;
 
+	private debouncedHotSaveFns = new Map<
+		string,
+		Debouncer<[string, string], void>
+	>();
+
 	constructor(
 		emitter: EventEmitter<AppEvents>,
 		data: SandboxNotePluginData,
-		saveData: (data: SandboxNotePluginData) => Promise<void>
+		saveData: (data: SandboxNotePluginData) => Promise<void>,
+		databaseManager: DatabaseManager
 	) {
 		this.emitter = emitter;
 		this.data = data;
 		this.saveData = saveData;
+		this.databaseManager = databaseManager;
+
 		this.debouncedSave = debounce(
 			(view: SandboxNoteView) => this.saveNoteContentToFile(view),
 			this.data.settings.autoSaveDebounceMs
@@ -37,6 +47,7 @@ export class SaveManager implements Manager {
 		// Nothing to do
 	}
 
+	// --- Original SandboxNote methods ---
 	/**
 	 * Save note content to data.json after performing necessary checks.
 	 * This method orchestrates the save operation.
@@ -118,7 +129,44 @@ export class SaveManager implements Manager {
 		}
 	) {
 		this.data.settings = pluginSettings;
-		this.data.data = noteContentBody;
+		this.data.data.noteContent = noteContentBody.noteContent;
+		this.data.data.lastSaved = noteContentBody.lastSaved;
 		await this.saveData(this.data);
+	}
+
+	// --- HotSandboxNote methods ---
+
+	public async saveHotNoteContent(noteGroupId: string, content: string) {
+		try {
+			await this.databaseManager.saveNote({
+				id: noteGroupId,
+				content,
+				mtime: Date.now(),
+			});
+			log.debug(
+				`Saved hot sandbox note content to IndexedDB for group: ${noteGroupId}`
+			);
+		} catch (error) {
+			log.error(
+				`Failed to save hot sandbox note content for group ${noteGroupId}:`,
+				error
+			);
+			new Notice("Failed to save hot sandbox note.");
+		}
+	}
+
+	public debouncedHotSave(noteGroupId: string, content: string) {
+		let debouncer = this.debouncedHotSaveFns.get(noteGroupId);
+		if (!debouncer) {
+			debouncer = debounce(
+				(id: string, newContent: string) => {
+					this.saveHotNoteContent(id, newContent);
+				},
+				this.data.settings.autoSaveDebounceMs,
+				true
+			);
+			this.debouncedHotSaveFns.set(noteGroupId, debouncer);
+		}
+		debouncer(noteGroupId, content);
 	}
 }

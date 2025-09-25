@@ -1,6 +1,10 @@
 import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 import type SandboxNotePlugin from "../main";
-import { IN_MEMORY_NOTE_ICON, SANDBOX_NOTE_ICON } from "../utils/constants";
+import {
+	HOT_SANDBOX_NOTE_ICON,
+	IN_MEMORY_NOTE_ICON,
+	SANDBOX_NOTE_ICON,
+} from "../utils/constants";
 import type { Manager } from "./Manager";
 
 /** Manages UI elements like ribbon icons and commands */
@@ -33,6 +37,16 @@ export class InteractionManager implements Manager {
 			},
 		});
 
+		// Command to open the new hot sandbox note
+		this.plugin.addCommand({
+			id: "open-hot-sandbox-note-view",
+			name: "Open new hot sandbox note",
+			icon: HOT_SANDBOX_NOTE_ICON,
+			callback: () => {
+				this.plugin.activateNewHotSandboxView();
+			},
+		});
+
 		this.plugin.addCommand({
 			id: "convert-to-file",
 			name: "Convert to file",
@@ -54,7 +68,7 @@ export class InteractionManager implements Manager {
 			id: "save-note",
 			name: "Save current note",
 			checkCallback: (checking) => {
-				const view = this.plugin.getActiveSandboxNoteView();
+				const view = this.plugin.getActiveAbstractNoteView();
 				if (view) {
 					if (!checking) {
 						view.save();
@@ -79,6 +93,15 @@ export class InteractionManager implements Manager {
 			"Open in-memory note",
 			() => {
 				this.plugin.activateInMemoryView();
+			}
+		);
+
+		// Ribbon icon to open the hot sandbox note
+		this.plugin.addRibbonIcon(
+			HOT_SANDBOX_NOTE_ICON,
+			"Open new hot sandbox note",
+			() => {
+				this.plugin.activateNewHotSandboxView();
 			}
 		);
 	}

@@ -144,6 +144,22 @@ export abstract class AbstractNoteView extends ItemView {
 		}
 	}
 
+	public syncActiveEditorState(): void {
+		const activeView = this.plugin.getActiveAbstractNoteView();
+		// @ts-ignore - Accessing a private API to manage the active editor.
+		const workspace = this.app.workspace;
+
+		if (activeView instanceof AbstractNoteView && activeView.editor) {
+			workspace._activeEditor = activeView.wrapper.virtualEditor;
+		} else if (
+			// @ts-expect-error
+			workspace._activeEditor?.leaf?.__FAKE_LEAF__ &&
+			!(activeView instanceof AbstractNoteView)
+		) {
+			workspace._activeEditor = null;
+		}
+	}
+
 	private handleInitializationError(error: unknown) {
 		log.error("Sandbox Note: Failed to initialize inline editor.", error);
 		this.contentEl.empty();

@@ -1,4 +1,3 @@
-import { SandboxNoteView } from "../views/SandboxNoteView";
 import log from "loglevel";
 import type { AbstractNoteView } from "src/views/internal/AbstractNoteView"; // 追記
 import type { EventEmitter } from "src/utils/EventEmitter";
@@ -9,12 +8,6 @@ import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 /** Manages shared content synchronization across views */
 export class EditorSyncManager implements Manager {
 	private emitter: EventEmitter<AppEvents>;
-
-	// --- For original SandboxNoteView ---
-	currentSharedNoteContent = "";
-	lastSavedContent = "";
-	hasUnsavedChanges = false;
-	activeViews: Set<SandboxNoteView> = new Set();
 
 	// --- For new HotSandboxNoteView ---
 	private hotNotesContent = new Map<string, string>();
@@ -29,7 +22,6 @@ export class EditorSyncManager implements Manager {
 			"editor-content-changed",
 			this.handleEditorContentChanged
 		);
-		this.emitter.on("content-saved", this.handleContentSaved);
 		this.emitter.on("view-opened", this.handleViewOpened);
 		this.emitter.on("view-closed", this.handleViewClosed);
 	}
@@ -39,20 +31,13 @@ export class EditorSyncManager implements Manager {
 			"editor-content-changed",
 			this.handleEditorContentChanged
 		);
-		this.emitter.off("content-saved", this.handleContentSaved);
 		this.emitter.off("view-opened", this.handleViewOpened);
 		this.emitter.off("view-closed", this.handleViewClosed);
 	}
 
 	private handleViewOpened = (payload: AppEvents["view-opened"]) => {
 		const { view } = payload;
-		if (view instanceof SandboxNoteView) {
-			this.addActiveView(view);
-			view.setContent(this.currentSharedNoteContent);
-			this.emitter.emit("unsaved-state-changed", {
-				hasUnsavedChanges: this.hasUnsavedChanges,
-			});
-		} else if (view instanceof HotSandboxNoteView) {
+		if (view instanceof HotSandboxNoteView) {
 			this.addHotActiveView(view);
 			if (view.noteGroupId) {
 				view.setContent(this.getHotNoteContent(view.noteGroupId));
@@ -62,9 +47,7 @@ export class EditorSyncManager implements Manager {
 
 	private handleViewClosed = (payload: AppEvents["view-closed"]) => {
 		const { view } = payload;
-		if (view instanceof SandboxNoteView) {
-			this.removeActiveView(view);
-		} else if (view instanceof HotSandboxNoteView) {
+		if (view instanceof HotSandboxNoteView) {
 			this.removeHotActiveView(view);
 		}
 	};
@@ -79,21 +62,9 @@ export class EditorSyncManager implements Manager {
 			sourceView.noteGroupId
 		) {
 			this.syncHotViews(sourceView.noteGroupId, content, sourceView);
-		} else if (sourceView instanceof SandboxNoteView) {
-			this.syncAll(content, sourceView);
 		}
 
 		this.refreshAllViewTitles();
-		this.refreshAllViewActionButtons();
-	};
-
-	private handleContentSaved = (payload: AppEvents["content-saved"]) => {
-		const { view } = payload;
-		if (view instanceof SandboxNoteView) {
-			this.markAsSaved();
-			this.refreshAllViewTitles();
-			this.refreshAllViewActionButtons();
-		}
 	};
 
 	public getGroupNumber(noteGroupId: string): number {
@@ -102,75 +73,11 @@ export class EditorSyncManager implements Manager {
 		return groupIndex !== -1 ? groupIndex + 1 : 0;
 	}
 
-	/** Update shared content and sync across all views */
-	syncAll(content: string, sourceView: AbstractNoteView) {
-		log.debug(
-			`Updating note content from view: ${sourceView.getViewType()}`
-		);
-		this.currentSharedNoteContent = content;
-		this.updateUnsavedState();
-
-		for (const view of this.activeViews) {
-			if (view !== sourceView) {
-				log.debug(`Syncing content to view: ${view.getViewType()}`);
-				view.setContent(content);
-			}
-		}
-	}
-
-	private updateUnsavedState() {
-		const wasUnsaved = this.hasUnsavedChanges;
-		this.hasUnsavedChanges =
-			this.currentSharedNoteContent !== this.lastSavedContent;
-
-		if (wasUnsaved !== this.hasUnsavedChanges) {
-			log.debug(`Unsaved state changed to: ${this.hasUnsavedChanges}`);
-			this.emitter.emit("unsaved-state-changed", {
-				hasUnsavedChanges: this.hasUnsavedChanges,
-			});
-		}
-	}
-
-	markAsSaved() {
-		this.lastSavedContent = this.currentSharedNoteContent;
-		this.updateUnsavedState();
-		log.debug("Content marked as saved.");
-	}
-
-	addActiveView(view: SandboxNoteView) {
-		log.debug(
-			`Adding active view: ${view.getViewType()}, total: ${
-				this.activeViews.size + 1
-			}`
-		);
-		this.activeViews.add(view);
-		view.updateActionButtons();
-	}
-
-	removeActiveView(view: SandboxNoteView) {
-		log.debug(
-			`Removing active view: ${view.getViewType()}, remaining: ${
-				this.activeViews.size - 1
-			}`
-		);
-		this.activeViews.delete(view);
-	}
-
 	refreshAllViewTitles() {
-		for (const view of this.activeViews) {
-			view.leaf.updateHeader();
-		}
-
 		for (const viewSet of this.hotActiveViews.values()) {
 			for (const view of viewSet) {
 				view.leaf.updateHeader();
 			}
-		}
-	}
-
-	public refreshAllViewActionButtons() {
-		for (const view of this.activeViews) {
-			view.updateActionButtons();
 		}
 	}
 

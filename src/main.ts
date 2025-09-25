@@ -16,7 +16,6 @@ import "./utils/setup-logger";
 import { overwriteLogLevel } from "./utils/setup-logger";
 import { HotSandboxNoteView } from "./views/HotSandboxNoteView";
 import { AbstractNoteView } from "./views/internal/AbstractNoteView";
-import { SandboxNoteView } from "./views/SandboxNoteView";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
@@ -46,11 +45,6 @@ export default class SandboxNotePlugin extends Plugin {
 
 		await this.restoreHotNotes();
 
-		// Initialize content manager with saved content for original sandbox
-		const savedContent = this.data.data.noteContent ?? "";
-		this.editorSyncManager.currentSharedNoteContent = savedContent;
-		this.editorSyncManager.lastSavedContent = savedContent;
-
 		this.setupSettingsTab();
 
 		log.debug("Sandbox Note plugin loaded");
@@ -67,10 +61,6 @@ export default class SandboxNotePlugin extends Plugin {
 			this.app.workspace.getActiveViewOfType(AbstractNoteView) ??
 			this.app.workspace.getActiveViewOfType(HotSandboxNoteView)
 		);
-	}
-
-	public getActiveSandboxNoteView() {
-		return this.app.workspace.getActiveViewOfType(SandboxNoteView);
 	}
 
 	/** Initialize all manager instances */
@@ -122,11 +112,6 @@ export default class SandboxNotePlugin extends Plugin {
 		this.addSettingTab(new SandboxNoteSettingTab(this));
 	}
 
-	/** Update shared content and sync across all views. */
-	updateNoteContent(content: string, sourceView: SandboxNoteView) {
-		this.editorSyncManager.syncAll(content, sourceView);
-	}
-
 	/** Cleanup on plugin unload. */
 	async onunload() {
 		for (const manager of this.managers) {
@@ -134,16 +119,6 @@ export default class SandboxNotePlugin extends Plugin {
 		}
 		this.databaseManager.close();
 		log.debug("Sandbox Note plugin unloaded");
-	}
-
-	/** Create and activate new Sandbox Note view. */
-	async activateSandboxView() {
-		return this.viewFactory.activateSandboxView();
-	}
-
-	/** Create and activate new In-Memory Note view. */
-	async activateInMemoryView() {
-		return this.viewFactory.activateInMemoryView();
 	}
 
 	async activateNewHotSandboxView() {
@@ -173,9 +148,7 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Save current plugin settings to storage. */
 	async saveSettings() {
-		await this.saveManager.saveSettings(this.data.settings, {
-			noteContent: this.editorSyncManager.currentSharedNoteContent,
-		});
+		await this.saveManager.saveSettings(this.data.settings);
 		// Refresh all view titles when settings change
 		this.editorSyncManager.refreshAllViewTitles();
 	}

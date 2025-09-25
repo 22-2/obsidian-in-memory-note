@@ -1,4 +1,3 @@
-import { SandboxNoteView } from "../views/SandboxNoteView";
 import log from "loglevel";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
@@ -14,15 +13,6 @@ export class SaveManager implements Manager {
 	private data: SandboxNotePluginData;
 	private saveData: (data: SandboxNotePluginData) => Promise<void>;
 	private databaseManager: DatabaseManager;
-	private isSaving = false;
-
-	// --- Properties moved from EditorSyncManager ---
-	private lastSavedContent = "";
-	public hasUnsavedChanges = false;
-	// ---------------------------------------------
-
-	/** Debounced save function */
-	debouncedSave: Debouncer<[SandboxNoteView], Promise<void>>;
 
 	private debouncedHotSaveFns = new Map<
 		string,
@@ -39,14 +29,6 @@ export class SaveManager implements Manager {
 		this.data = data;
 		this.saveData = saveData;
 		this.databaseManager = databaseManager;
-
-		// Initialize saved content state
-		this.lastSavedContent = data.data.noteContent ?? "";
-
-		this.debouncedSave = debounce(
-			(view: SandboxNoteView) => this.saveNoteContentToFile(view),
-			this.data.settings.autoSaveDebounceMs
-		);
 	}
 
 	public load(): void {
@@ -69,8 +51,6 @@ export class SaveManager implements Manager {
 		const { view } = payload;
 		if (view instanceof HotSandboxNoteView && view.noteGroupId) {
 			this.saveHotNoteContent(view.noteGroupId, view.getContent());
-		} else if (view instanceof SandboxNoteView) {
-			this.saveNoteContentToFile(view);
 		}
 	};
 
@@ -79,12 +59,7 @@ export class SaveManager implements Manager {
 	) => {
 		const { content, sourceView } = payload;
 
-		if (sourceView instanceof SandboxNoteView) {
-			this.updateUnsavedState(content);
-			if (this.data.settings.enableAutoSave) {
-				this.debouncedSave(sourceView);
-			}
-		} else if (
+		if (
 			sourceView instanceof HotSandboxNoteView &&
 			sourceView.noteGroupId
 		) {
@@ -95,83 +70,10 @@ export class SaveManager implements Manager {
 		}
 	};
 
-	// --- Original SandboxNote methods ---
-	/**
-	 * Save note content to data.json after performing necessary checks.
-	 * This method orchestrates the save operation.
-	 */
-	async saveNoteContentToFile(view: SandboxNoteView) {
-		this.debouncedSave.cancel();
-
-		if (!this.canSave(view)) {
-			return;
-		}
-
-		const content = view.wrapper.getContent();
-		log.debug(`Save triggered for view: ${view.getViewType()}`);
-
-		try {
-			this.isSaving = true;
-			await this.persistContent(content, view);
-		} catch (error) {
-			log.error(`Failed to auto-save note content: ${error}`);
-		} finally {
-			this.isSaving = false;
-		}
-	}
-
-	private canSave(view: SandboxNoteView): boolean {
-		if (this.isSaving) {
-			log.debug("Skipping save: A save is already in progress.");
-			return false;
-		}
-		return true;
-	}
-
-	private async persistContent(
-		content: string,
-		view: SandboxNoteView
-	): Promise<void> {
-		this.data.data.noteContent = content;
-		this.data.data.lastSaved = new Date().toISOString();
-
-		await this.saveData(this.data);
-		this.emitter.emit("content-saved", { view });
-		this.markAsSaved(content); // Update saved state after successful save
-
-		log.debug("Auto-saved note content to data.json using Obsidian API");
-	}
-
-	async saveSettings(
-		pluginSettings: PluginSettings,
-		noteContentBody: {
-			noteContent: string;
-		}
-	) {
+	async saveSettings(pluginSettings: PluginSettings) {
 		this.data.settings = pluginSettings;
-		this.data.data.noteContent = noteContentBody.noteContent;
 		await this.saveData(this.data);
 	}
-
-	// --- Methods moved from EditorSyncManager ---
-	private updateUnsavedState(currentContent: string) {
-		const wasUnsaved = this.hasUnsavedChanges;
-		this.hasUnsavedChanges = currentContent !== this.lastSavedContent;
-
-		if (wasUnsaved !== this.hasUnsavedChanges) {
-			log.debug(`Unsaved state changed to: ${this.hasUnsavedChanges}`);
-			this.emitter.emit("unsaved-state-changed", {
-				hasUnsavedChanges: this.hasUnsavedChanges,
-			});
-		}
-	}
-
-	private markAsSaved(savedContent: string) {
-		this.lastSavedContent = savedContent;
-		this.updateUnsavedState(savedContent);
-		log.debug("Content marked as saved.");
-	}
-	// ---------------------------------------------
 
 	// --- HotSandboxNote methods ---
 

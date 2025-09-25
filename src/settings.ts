@@ -9,8 +9,6 @@ export interface HotSandboxNoteData {
 export interface SandboxNotePluginData {
 	settings: PluginSettings;
 	data: {
-		noteContent: string;
-		lastSaved: string;
 		hotSandboxNotes: Record<string, HotSandboxNoteData>;
 	};
 }
@@ -20,10 +18,7 @@ export interface PluginSettings {
 	enableLogger: boolean;
 	enableAutoSave: boolean;
 	autoSaveDebounceMs: number;
-	// enableUnsafeCtrlS: boolean;
 	enableCtrlS: boolean;
-	// noteContent: string;
-	// lastSaved: string;
 }
 /** Settings tab for the plugin. */
 export class SandboxNoteSettingTab extends PluginSettingTab {
@@ -111,24 +106,6 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			});
 	}
 
-	/** Add unsafe Ctrl+S save setting. */
-	// private addUnsafeCtrlSSetting() {
-	// 	new Setting(this.containerEl)
-	// 		.setName("Enable Ctrl+S to save sandbox note")
-	// 		.setDesc(
-	// 			"Overrides the default save command (Ctrl+S) to save the content of the sandbox note. " +
-	// 				"This is an unsafe feature as it alters core Obsidian behavior."
-	// 		)
-	// 		.addToggle((toggle) => {
-	// 			toggle
-	// 				.setValue(this.plugin.data.settings.enableUnsafeCtrlS)
-	// 				.onChange(async (enabled) => {
-	// 					this.plugin.data.settings.enableUnsafeCtrlS = enabled;
-	// 					await this.plugin.saveSettings();
-	// 					// this.plugin.commandManager.updateSaveCommandMonkeyPatch();
-	// 				});
-	// 		});
-	// }
 	/** Add Ctrl+S save setting. */
 	private addCtrlSSetting() {
 		new Setting(this.containerEl)

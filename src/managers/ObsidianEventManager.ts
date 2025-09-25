@@ -4,8 +4,10 @@ import { debounce } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
 import type SandboxNotePlugin from "src/main";
 import type { PluginSettings } from "src/settings";
+import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import type { EventEmitter } from "src/utils/EventEmitter";
-import { SandboxNoteView } from "src/views/SandboxNoteView";
+import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
+import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import type { EditorPluginConnector } from "./EditorPluginConnector";
 import type { EditorSyncManager } from "./EditorSyncManager";
 import type { Manager } from "./Manager";
@@ -60,11 +62,18 @@ export class ObsidianEventManager implements Manager {
 	/** Connects the editor plugin to any existing sandbox views on layout ready or change. */
 	private setupSandboxViews(): void {
 		log.debug("Workspace layout ready/changed, setting up sandbox views.");
-		this.editorSyncManager.activeViews.forEach((view) => {
-			log.debug(`Connecting to existing view: ${view.getViewType()}`);
-			this.editorPluginConnector.connectEditorPluginToView(view);
-			this.syncActiveEditorState();
-		});
+		this.workspace
+			.getLeavesOfType(VIEW_TYPE_HOT_SANDBOX)
+			.forEach((leaf) => {
+				const view = leaf.view;
+				if (view instanceof HotSandboxNoteView) {
+					log.debug(
+						`Connecting to existing view: ${view.getViewType()}`
+					);
+					this.editorPluginConnector.connectEditorPluginToView(view);
+				}
+			});
+		this.syncActiveEditorState();
 	}
 
 	/**
@@ -74,7 +83,6 @@ export class ObsidianEventManager implements Manager {
 		log.debug(`Active leaf changed to: ${this.workspace.activeLeaf?.id}`);
 
 		this.syncActiveEditorState();
-		this.triggerAutoSave();
 		this.connectEditorPluginToActiveView();
 	};
 
@@ -83,37 +91,9 @@ export class ObsidianEventManager implements Manager {
 	 * This ensures that commands and other editor features work correctly.
 	 */
 	private syncActiveEditorState(): void {
-		const activeView = this.plugin.getActiveSandboxNoteView();
-		if (activeView instanceof SandboxNoteView) {
+		const activeView = this.plugin.getActiveAbstractNoteView();
+		if (activeView instanceof AbstractNoteView) {
 			activeView.syncActiveEditorState();
-		}
-	}
-
-	/**
-	 * Triggers auto-save on leaf change if the feature is enabled
-	 * and there are unsaved changes.
-	 */
-	private triggerAutoSave(): void {
-		if (
-			!this.settings.enableAutoSave ||
-			!this.saveManager.hasUnsavedChanges
-		) {
-			return;
-		}
-
-		// Get any active SandboxNoteView instance to perform the save.
-		const anySandboxView = this.editorSyncManager.activeViews
-			.values()
-			.next().value;
-
-		if (anySandboxView) {
-			log.debug(
-				"Active leaf changed, triggering auto-save for Sandbox Note."
-			);
-
-			this.emitter.emit("save-requested", {
-				view: anySandboxView,
-			});
 		}
 	}
 
@@ -121,7 +101,7 @@ export class ObsidianEventManager implements Manager {
 	 * Connects the editor plugin to the newly active sandbox view, if it is one.
 	 */
 	private connectEditorPluginToActiveView(): void {
-		const activeView = this.plugin.getActiveSandboxNoteView();
+		const activeView = this.plugin.getActiveAbstractNoteView();
 
 		if (activeView) {
 			this.editorPluginConnector.connectEditorPluginToView(activeView);

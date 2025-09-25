@@ -1,7 +1,7 @@
 {
 	"id": "sandbox-note",
 	"name": "Sandbox Note",
-	"version": "2.4.0",
+	"version": "2.5.0",
 	"minAppVersion": "0.15.0",
 	"description": "Provides a scratchpad for temporary notes that are discarded when the tab is closed.",
 	"author": "22-2",

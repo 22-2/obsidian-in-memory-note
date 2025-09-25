@@ -10,7 +10,10 @@
 		"check-types": "tsc -noEmit -skipLibCheck",
 		"repomix": "pnpm dlx repomix && code ./repomix-output.md",
 		"test": "vitest",
-		"version:full": "pnpm dlx tsx version-bump.ext.mts all"
+		"version:full": "pnpm dlx tsx version-bump.ext.mts all",
+		"test:e2e": "playwright test",
+		"test:e2e:ui": "playwright test --ui",
+		"test:e2e:debug": "cross-env DEBUG=pw:api playwright test"
 	},
 	"keywords": [],
 	"author": "22-2",

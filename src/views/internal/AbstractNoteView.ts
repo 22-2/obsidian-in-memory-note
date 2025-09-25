@@ -120,6 +120,14 @@ export abstract class AbstractNoteView extends ItemView {
 				.onClick(async () => {
 					await this.convertToFileAndClear();
 				})
+		).addItem((item) =>
+			item
+				.setTitle("Clear content")
+				.setIcon("trash")
+				.setWarning(true)
+				.onClick(() => {
+					this.setContent("");
+				})
 		);
 	}
 

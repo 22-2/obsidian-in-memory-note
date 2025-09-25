@@ -35,3 +35,7 @@ wheels/
 repomix-output.md
 .env
 .todo
+
+test-results
+.obsidian
+.obsidian-unpacked

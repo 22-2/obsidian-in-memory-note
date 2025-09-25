@@ -6,6 +6,7 @@ import {
 import type SandboxNotePlugin from "../main";
 import { AbstractNoteView } from "./internal/AbstractNoteView";
 import log from "loglevel";
+import { showConfirmModal } from "src/helpers/showConfirmModal";
 
 export class HotSandboxNoteView extends AbstractNoteView {
 	constructor(leaf: WorkspaceLeaf, plugin: SandboxNotePlugin) {
@@ -75,8 +76,10 @@ export class HotSandboxNoteView extends AbstractNoteView {
 
 		const isLastView = this.plugin.editorSyncManager.isLastHotView(this);
 		if (isLastView) {
-			const confirmed = confirm(
-				"This is the last tab for this hot sandbox note. Do you want to permanently delete its content?"
+			const confirmed = await showConfirmModal(
+				this.app,
+				"Delete Sandbox",
+				"Are you sure you want to delete this sandbox?"
 			);
 			if (confirmed) {
 				log.debug(

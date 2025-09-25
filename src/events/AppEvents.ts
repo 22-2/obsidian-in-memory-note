@@ -14,4 +14,16 @@ export interface AppEvents {
 	"unsaved-state-changed": {
 		hasUnsavedChanges: boolean;
 	};
+	"view-opened": {
+		view: AbstractNoteView;
+	};
+	"view-closed": {
+		view: AbstractNoteView;
+	};
+	"connect-editor-plugin": {
+		view: AbstractNoteView;
+	};
+	"register-new-hot-note": {
+		noteGroupId: string;
+	};
 }

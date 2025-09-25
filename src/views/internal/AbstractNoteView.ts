@@ -76,7 +76,7 @@ export abstract class AbstractNoteView extends ItemView {
 			await this.wrapper.initialize(this.contentEl, this.initialState);
 			this.initialState = null;
 			this.setupEventHandlers();
-			this.plugin.editorPluginConnector.connectEditorPluginToView(this);
+			this.plugin.emitter.emit("connect-editor-plugin", { view: this });
 		} catch (error) {
 			this.handleInitializationError(error);
 		}
@@ -97,7 +97,9 @@ export abstract class AbstractNoteView extends ItemView {
 		} else if (!this.noteGroupId) {
 			log.debug("noteGroupId not found in state, creating new one.");
 			this.noteGroupId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
-			this.plugin.editorSyncManager.registerNewHotNote(this.noteGroupId);
+			this.plugin.emitter.emit("register-new-hot-note", {
+				noteGroupId: this.noteGroupId,
+			});
 		}
 
 		if (typeof state.source === "boolean") {

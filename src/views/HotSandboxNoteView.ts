@@ -20,7 +20,7 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	getBaseTitle(): string {
-		const groupCount = this.plugin.editorSyncManager.getGroupNumber(
+		const groupCount = this.plugin.getGroupNumberForNote(
 			this.noteGroupId ?? ""
 		);
 		return `Hot Sandbox-${groupCount}`;
@@ -43,21 +43,16 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	getContent(): string {
-		if (!this.editor) {
-			return this.plugin.editorSyncManager.getHotNoteContent(
-				this.noteGroupId ?? ""
-			);
-		}
-		return this.editor.getValue();
+		return this.editor?.getValue() ?? "";
 	}
 
 	async onOpen() {
-		this.plugin.editorSyncManager.addHotActiveView(this);
+		this.plugin.emitter.emit("view-opened", { view: this });
 		await super.onOpen();
 	}
 
 	async onClose() {
-		this.plugin.editorSyncManager.removeHotActiveView(this);
+		this.plugin.emitter.emit("view-closed", { view: this });
 		await super.onClose();
 	}
 

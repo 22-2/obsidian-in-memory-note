@@ -49,6 +49,7 @@ export default class SandboxNotePlugin extends Plugin {
 		// Initialize content manager with saved content for original sandbox
 		const savedContent = this.data.data.noteContent ?? "";
 		this.editorSyncManager.currentSharedNoteContent = savedContent;
+		this.editorSyncManager.lastSavedContent = savedContent;
 
 		this.setupSettingsTab();
 
@@ -97,6 +98,14 @@ export default class SandboxNotePlugin extends Plugin {
 			this.data.settings,
 			this.saveManager
 		);
+
+		// Event listeners that bridge views and managers
+		this.emitter.on("connect-editor-plugin", (payload) => {
+			this.editorPluginConnector.connectEditorPluginToView(payload.view);
+		});
+		this.emitter.on("register-new-hot-note", (payload) => {
+			this.editorSyncManager.registerNewHotNote(payload.noteGroupId);
+		});
 
 		this.managers.push(
 			this.editorSyncManager,
@@ -147,6 +156,10 @@ export default class SandboxNotePlugin extends Plugin {
 			? log.setLevel("debug")
 			: log.setLevel("warn");
 		log.debug("Logger initialized");
+	}
+
+	public getGroupNumberForNote(noteGroupId: string): number {
+		return this.editorSyncManager.getGroupNumber(noteGroupId);
 	}
 
 	/** Load plugin settings from storage. */

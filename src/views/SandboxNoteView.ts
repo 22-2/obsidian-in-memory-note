@@ -6,6 +6,8 @@ import { AbstractNoteView } from "./internal/AbstractNoteView";
 
 /** View for a synchronized, persistent sandbox note. */
 export class SandboxNoteView extends AbstractNoteView {
+	private _hasUnsavedChanges = false;
+
 	constructor(leaf: WorkspaceLeaf, plugin: SandboxNotePlugin) {
 		super(leaf, plugin);
 	}
@@ -23,7 +25,7 @@ export class SandboxNoteView extends AbstractNoteView {
 	}
 
 	get hasUnsavedChanges(): boolean {
-		return this.plugin.saveManager.hasUnsavedChanges;
+		return this._hasUnsavedChanges;
 	}
 
 	save(): void {
@@ -31,27 +33,34 @@ export class SandboxNoteView extends AbstractNoteView {
 	}
 
 	async onOpen() {
-		this.plugin.editorSyncManager.addActiveView(this);
-		this.syncViewContent();
+		this.register(
+			this.plugin.emitter.on(
+				"unsaved-state-changed",
+				this.handleUnsavedStateChange
+			)
+		);
+		this.plugin.emitter.emit("view-opened", { view: this });
+
 		this.syncActiveEditorState();
 		await super.onOpen();
 	}
 
 	async onClose() {
-		this.plugin.editorSyncManager.removeActiveView(this);
+		this.plugin.emitter.emit("view-closed", { view: this });
 		await super.onClose();
 	}
 
-	private syncViewContent() {
-		const initialContent =
-			this.plugin.editorSyncManager.currentSharedNoteContent;
-		if (initialContent) {
-			this.setContent(initialContent);
+	private handleUnsavedStateChange = (payload: {
+		hasUnsavedChanges: boolean;
+	}) => {
+		if (this._hasUnsavedChanges !== payload.hasUnsavedChanges) {
+			this._hasUnsavedChanges = payload.hasUnsavedChanges;
+			this.leaf.updateHeader();
 		}
-	}
+	};
 
 	getContent(): string {
-		return this.plugin.editorSyncManager.currentSharedNoteContent;
+		return this.editor?.getValue() ?? "";
 	}
 
 	syncActiveEditorState(): void {

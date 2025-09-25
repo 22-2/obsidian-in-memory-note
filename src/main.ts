@@ -13,6 +13,7 @@ import { type SandboxNotePluginData, SandboxNoteSettingTab } from "./settings";
 import { DEFAULT_DATA as DEFAULT_PLUGIN_DATA } from "./utils/constants";
 import { EventEmitter } from "./utils/EventEmitter";
 import { SandboxNoteView } from "./views/SandboxNoteView";
+import { AbstractNoteView } from "./views/internal/AbstractNoteView";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
@@ -76,6 +77,14 @@ export default class SandboxNotePlugin extends Plugin {
 		// 		})
 		// 	);
 		// });
+	}
+
+	public getActiveAbstractNoteView() {
+		return this.app.workspace.getActiveViewOfType(AbstractNoteView);
+	}
+
+	public getActiveSandboxNoteView() {
+		return this.app.workspace.getActiveViewOfType(SandboxNoteView);
 	}
 
 	/** Initialize all manager instances */

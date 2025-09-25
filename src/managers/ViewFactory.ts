@@ -20,14 +20,14 @@ export class ViewFactory implements Manager {
 
 	/** Register custom view types with Obsidian */
 	public load(): void {
-		this.plugin.registerView(
-			VIEW_TYPE_SANDBOX,
-			(leaf) => new SandboxNoteView(leaf, this.plugin)
-		);
-		this.plugin.registerView(
-			VIEW_TYPE_IN_MEMORY,
-			(leaf) => new InMemoryNoteView(leaf, this.plugin)
-		);
+		// this.plugin.registerView(
+		// 	VIEW_TYPE_SANDBOX,
+		// 	(leaf) => new SandboxNoteView(leaf, this.plugin)
+		// );
+		// this.plugin.registerView(
+		// 	VIEW_TYPE_IN_MEMORY,
+		// 	(leaf) => new InMemoryNoteView(leaf, this.plugin)
+		// );
 		this.plugin.registerView(
 			VIEW_TYPE_HOT_SANDBOX,
 			(leaf) => new HotSandboxNoteView(leaf, this.plugin)

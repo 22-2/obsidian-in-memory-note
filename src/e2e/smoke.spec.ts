@@ -8,7 +8,12 @@ import {
 	splitActiveView,
 	waitForWorkspace,
 } from "./helpers";
-import { SANDBOX_VIEW_SELECTOR, TIMEOUT, window } from "./test-base";
+import {
+	pluginHandle,
+	SANDBOX_VIEW_SELECTOR,
+	TIMEOUT,
+	window,
+} from "./test-base";
 
 // --- Test Suites ---
 
@@ -92,6 +97,12 @@ test.describe.serial("Hot Sandbox Note: Hot Exit (Restart Test)", () => {
 
 		// Wait for restoration to complete.
 		await window.waitForTimeout(1000);
+
+		const count = await pluginHandle.evaluate((plugin) =>
+			plugin.databaseManager.getAllNotes().then((notes) => notes.length)
+		);
+
+		expect(count).toBe(1);
 
 		// Assert: Verify that the note and its content have been restored.
 		const restoredView = await getActiveSandboxLocator(window);

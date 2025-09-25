@@ -37,11 +37,11 @@ invariant(
 console.log("appPath:", appPath);
 console.log("vaultPath:", vaultPath);
 // --- Global State (updated to use beforeEach/afterEach) ---
-let app: ElectronApplication;
+let electronApp: ElectronApplication;
 export let window: Page;
-let appHandle: JSHandle<App>; // API操作のために維持
+export let appHandle: JSHandle<App>; // API操作のために維持
 
-let pluginHandle: JSHandle<SandboxNotePlugin>; // API操作のために維持
+export let pluginHandle: JSHandle<SandboxNotePlugin>; // API操作のために維持
 
 // --- Test Hooks (Updated to use beforeEach/afterEach) ---
 test.beforeEach(async ({}, testInfo) => {
@@ -55,8 +55,8 @@ test.beforeEach(async ({}, testInfo) => {
 	}
 
 	// アプリケーションを起動
-	app = await electron.launch({ args: [appPath, vaultPath] });
-	window = await app.firstWindow();
+	electronApp = await electron.launch({ args: [appPath, vaultPath] });
+	window = await electronApp.firstWindow();
 	await waitForWorkspace(window);
 	await focusRootWorkspace(window);
 
@@ -76,5 +76,5 @@ test.beforeEach(async ({}, testInfo) => {
 	// await closeAllTabs(appHandle);
 });
 test.afterEach(async () => {
-	await app?.close();
+	await electronApp?.close();
 });

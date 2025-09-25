@@ -13,6 +13,7 @@ import { _electron as electron } from "playwright";
 import type { App, WorkspaceLeaf } from "obsidian";
 
 import invariant from "tiny-invariant";
+import type SandboxNotePlugin from "src/main";
 
 const TIMEOUT = 5000;
 const SANDBOX_VIEW_SELECTOR =
@@ -41,6 +42,7 @@ console.log("vaultPath:", vaultPath);
 let app: ElectronApplication;
 let window: Page;
 let appHandle: JSHandle<App>; // API操作のために維持
+let pluginHandle: JSHandle<SandboxNotePlugin>; // API操作のために維持
 
 // --- Helper Functions (Updated to use pure selectors or require Page/appHandle) ---
 
@@ -64,7 +66,7 @@ async function openNewSandboxNote(page: Page) {
  */
 async function countTabs(appHandle: JSHandle<App>): Promise<number> {
 	return await appHandle.evaluate((app) => {
-		let count = 1;
+		let count = 0;
 		app.workspace.iterateRootLeaves((_) => count++);
 		return count;
 	});
@@ -86,30 +88,30 @@ async function getActiveSandboxLocator(page: Page): Promise<Locator> {
 /**
  * APIを介して開いているルートリーフ（メインウィンドウのタブ）を全て閉じる
  */
-async function closeAllTabs(appHandle: JSHandle<App>) {
-	const leavesHandle = await appHandle.evaluateHandle((app: App) => {
-		const leaves: WorkspaceLeaf[] = [];
-		app.workspace.iterateRootLeaves((leaf: WorkspaceLeaf) => {
-			// メインのルートスプリットに属するリーフのみを対象とする
-			if (leaf.parentSplit.id === (app.workspace as any).rootSplit.id) {
-				leaves.push(leaf);
-			}
-		});
-		return leaves;
-	});
+// async function closeAllTabs(appHandle: JSHandle<App>) {
+// 	const leavesHandle = await appHandle.evaluateHandle((app: App) => {
+// 		const leaves: WorkspaceLeaf[] = [];
+// 		app.workspace.iterateRootLeaves((leaf: WorkspaceLeaf) => {
+// 			// メインのルートスプリットに属するリーフのみを対象とする
+// 			if (leaf.parentSplit.id === (app.workspace as any).rootSplit.id) {
+// 				leaves.push(leaf);
+// 			}
+// 		});
+// 		return leaves;
+// 	});
 
-	const leavesCount = await leavesHandle.evaluate((leaves) => leaves.length);
+// 	const leavesCount = await leavesHandle.evaluate((leaves) => leaves.length);
 
-	// デフォルトで一つ残るため、1より大きい場合に閉じる
-	if (leavesCount > 1) {
-		await leavesHandle.evaluate((leaves) =>
-			leaves.forEach((leaf) => leaf.detach())
-		);
-	}
+// 	// デフォルトで一つ残るため、1より大きい場合に閉じる
+// 	if (leavesCount > 1) {
+// 		await leavesHandle.evaluate((leaves) =>
+// 			leaves.forEach((leaf) => leaf.detach())
+// 		);
+// 	}
 
-	// 1タブのみが残ることを確認（通常は新規ノートなど）
-	await expect(await countTabs(appHandle)).toBeLessThanOrEqual(1);
-}
+// 	// 1タブのみが残ることを確認（通常は新規ノートなど）
+// 	await expect(await countTabs(appHandle)).toBeLessThanOrEqual(1);
+// }
 
 function getEditor(viewLocator: Locator): Locator {
 	return viewLocator.locator(".cm-content");
@@ -130,10 +132,7 @@ function focusRootWorkspace(page: Page) {
 /**
  * Splits the active view by interacting with the UI (Pure Playwright Locator approach).
  */
-async function splitActiveView(
-	page: Page,
-	direction: "vertically" | "horizontally"
-) {
+async function splitActiveView(page: Page, direction: "right" | "down") {
 	// 1. アクティブなリーフ内の「More options」ボタンを見つけてクリック
 	await page
 		.locator(ACTIVE_LEAF_SELECTOR)
@@ -171,6 +170,13 @@ test.beforeEach(async () => {
 
 	// グローバルな appHandle を初期化
 	appHandle = await window.evaluateHandle(() => (window as any).app as App);
+	pluginHandle = await appHandle.evaluateHandle(
+		(app) => app.plugins.getPlugin("sandbox-note") as SandboxNotePlugin
+	);
+	await pluginHandle.evaluate((plugin) =>
+		plugin.databaseManager.clearAllNotes()
+	);
+	expect(await countTabs(appHandle)).toBe(1);
 
 	// Clean up existing tabs before each test (except for the restart restoration part)
 	// await closeAllTabs(appHandle);
@@ -206,7 +212,7 @@ test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
 	test("should sync content between two split views of the same note", async () => {
 		// Arrange: Open a note and split the view (using UI interaction).
 		await openNewSandboxNote(window);
-		await splitActiveView(window, "vertically");
+		await splitActiveView(window, "right");
 
 		// Get the views (both are present in the DOM)
 		const allSandboxViews = window.locator(SANDBOX_VIEW_SELECTOR);
@@ -226,7 +232,7 @@ test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
 		// Act: Type in the second editor to test reverse sync.
 		const reverseSyncText = " And this text from the second view.";
 		await secondEditor.press("End");
-		await secondEditor.type(reverseSyncText);
+		await secondEditor.fill(reverseSyncText);
 
 		// Assert: Verify the full text is now in the first editor.
 		await expect(firstEditor).toHaveText(syncText + reverseSyncText, {

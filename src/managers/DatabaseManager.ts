@@ -28,4 +28,8 @@ export class DatabaseManager extends Dexie {
 	async getAllNotes(): Promise<HotSandboxNoteData[]> {
 		return this.notes.toArray();
 	}
+
+	async clearAllNotes(): Promise<void> {
+		await this.notes.clear();
+	}
 }

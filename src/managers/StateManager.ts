@@ -83,49 +83,49 @@ export class StateManager implements Manager {
 		return Object.values(this.data.data.hotSandboxNotes);
 	}
 
-	getHotNoteContent(noteGroupId: string): string {
-		return this.data.data.hotSandboxNotes[noteGroupId]?.content ?? "";
+	getHotNoteContent(masterNoteId: string): string {
+		return this.data.data.hotSandboxNotes[masterNoteId]?.content ?? "";
 	}
 
-	registerNewHotNote(noteGroupId: string) {
-		if (!this.data.data.hotSandboxNotes[noteGroupId]) {
-			this.data.data.hotSandboxNotes[noteGroupId] = {
-				id: noteGroupId,
+	registerNewHotNote(masterNoteId: string) {
+		if (!this.data.data.hotSandboxNotes[masterNoteId]) {
+			this.data.data.hotSandboxNotes[masterNoteId] = {
+				id: masterNoteId,
 				content: "",
 				mtime: Date.now(),
 			};
-			log.debug(`Registered new hot note in state: ${noteGroupId}`);
+			log.debug(`Registered new hot note in state: ${masterNoteId}`);
 		}
 	}
 
-	updateHotNoteContent(noteGroupId: string, content: string) {
-		const note = this.data.data.hotSandboxNotes[noteGroupId];
+	updateHotNoteContent(masterNoteId: string, content: string) {
+		const note = this.data.data.hotSandboxNotes[masterNoteId];
 		if (note) {
 			note.content = content;
 			note.mtime = Date.now();
 		}
 	}
 
-	async saveHotNoteToDb(noteGroupId: string, content: string) {
-		this.updateHotNoteContent(noteGroupId, content);
+	async saveHotNoteToDb(masterNoteId: string, content: string) {
+		this.updateHotNoteContent(masterNoteId, content);
 		try {
-			const noteToSave = this.data.data.hotSandboxNotes[noteGroupId];
+			const noteToSave = this.data.data.hotSandboxNotes[masterNoteId];
 			if (noteToSave) {
 				await this.databaseManager.saveNote(noteToSave);
 				log.debug(
-					`Saved hot sandbox note to IndexedDB: ${noteGroupId}`
+					`Saved hot sandbox note to IndexedDB: ${masterNoteId}`
 				);
 			}
 		} catch (error) {
 			log.error(
-				`Failed to save hot sandbox note to DB ${noteGroupId}:`,
+				`Failed to save hot sandbox note to DB ${masterNoteId}:`,
 				error
 			);
 		}
 	}
 
-	private debouncedSaveHotNoteToDb(noteGroupId: string, content: string) {
-		let debouncer = this.debouncedHotSaveFns.get(noteGroupId);
+	private debouncedSaveHotNoteToDb(masterNoteId: string, content: string) {
+		let debouncer = this.debouncedHotSaveFns.get(masterNoteId);
 		if (!debouncer) {
 			debouncer = debounce(
 				(id: string, newContent: string) => {
@@ -134,17 +134,17 @@ export class StateManager implements Manager {
 				this.getSettings().autoSaveDebounceMs,
 				true
 			);
-			this.debouncedHotSaveFns.set(noteGroupId, debouncer);
+			this.debouncedHotSaveFns.set(masterNoteId, debouncer);
 		}
-		debouncer(noteGroupId, content);
+		debouncer(masterNoteId, content);
 	}
 
 	// --- Event Handlers ---
 
 	private handleSaveRequest = (payload: AppEvents["save-requested"]) => {
 		const { view } = payload;
-		if (view instanceof HotSandboxNoteView && view.noteGroupId) {
-			this.saveHotNoteToDb(view.noteGroupId, view.getContent());
+		if (view instanceof HotSandboxNoteView && view.masterNoteId) {
+			this.saveHotNoteToDb(view.masterNoteId, view.getContent());
 		}
 	};
 
@@ -155,14 +155,14 @@ export class StateManager implements Manager {
 
 		if (
 			sourceView instanceof HotSandboxNoteView &&
-			sourceView.noteGroupId
+			sourceView.masterNoteId
 		) {
 			// Update in-memory state first
-			this.updateHotNoteContent(sourceView.noteGroupId, content);
+			this.updateHotNoteContent(sourceView.masterNoteId, content);
 
 			// Then, trigger debounced save if auto-save is enabled
 			if (this.getSettings().enableAutoSave) {
-				this.debouncedSaveHotNoteToDb(sourceView.noteGroupId, content);
+				this.debouncedSaveHotNoteToDb(sourceView.masterNoteId, content);
 			}
 		}
 	};

@@ -5,7 +5,9 @@ export interface HotSandboxNoteData {
 	id: string;
 	content: string;
 	mtime: number;
+	// deleted: boolean;
 }
+
 export interface SandboxNotePluginData {
 	settings: PluginSettings;
 	data: {

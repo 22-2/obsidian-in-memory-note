@@ -5,6 +5,7 @@ import type { AppEvents } from "src/events/AppEvents";
 import type { Manager } from "./Manager";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import type { StateManager } from "./StateManager";
+import { uniqBy } from "src/utils";
 
 /** Manages shared content synchronization across views */
 export class EditorSyncManager implements Manager {
@@ -47,8 +48,8 @@ export class EditorSyncManager implements Manager {
 		const { view } = payload;
 		if (view instanceof HotSandboxNoteView) {
 			this.addHotActiveView(view);
-			if (view.noteGroupId) {
-				view.setContent(this.getHotNoteContent(view.noteGroupId));
+			if (view.masterNoteId) {
+				view.setContent(this.getHotNoteContent(view.masterNoteId));
 			}
 		}
 	};
@@ -67,21 +68,20 @@ export class EditorSyncManager implements Manager {
 
 		if (
 			sourceView instanceof HotSandboxNoteView &&
-			sourceView.noteGroupId
+			sourceView.masterNoteId
 		) {
-			this.syncHotViews(sourceView.noteGroupId, content, sourceView);
+			this.syncHotViews(sourceView.masterNoteId, content, sourceView);
 		}
 
 		this.refreshAllViewTitles();
 	};
 
-	public getGroupNumber(noteGroupId: string): number {
-		const sortedGroupIds = this.stateManager
-			.getAllHotNotes()
-			.map((n) => n.id)
-			.sort();
-		const groupIndex = sortedGroupIds.indexOf(noteGroupId);
-		return groupIndex !== -1 ? groupIndex + 1 : 0;
+	public indexOfMasterId(masterNoteId: string): number {
+		const masterNotes = uniqBy(
+			this.stateManager.getAllHotNotes(),
+			(n) => n.id
+		);
+		return masterNotes.findIndex((note) => note.id === masterNoteId);
 	}
 
 	refreshAllViewTitles() {
@@ -92,56 +92,58 @@ export class EditorSyncManager implements Manager {
 		}
 	}
 
-	public getHotNoteContent(noteGroupId: string): string {
-		return this.stateManager.getHotNoteContent(noteGroupId);
+	public getHotNoteContent(masterNoteId: string): string {
+		return this.stateManager.getHotNoteContent(masterNoteId);
 	}
 
 	public addHotActiveView(view: HotSandboxNoteView) {
-		if (!view.noteGroupId) return;
-		const { noteGroupId } = view;
-		if (!this.hotActiveViews.has(noteGroupId)) {
-			this.hotActiveViews.set(noteGroupId, new Set());
+		if (!view.masterNoteId) return;
+		const { masterNoteId } = view;
+		if (!this.hotActiveViews.has(masterNoteId)) {
+			this.hotActiveViews.set(masterNoteId, new Set());
 		}
-		this.hotActiveViews.get(noteGroupId)?.add(view);
+		this.hotActiveViews.get(masterNoteId)?.add(view);
 		log.debug(
-			`Added hot sandbox view to group ${noteGroupId}. Total in group: ${
-				this.hotActiveViews.get(noteGroupId)?.size
+			`Added hot sandbox view to group ${masterNoteId}. Total in group: ${
+				this.hotActiveViews.get(masterNoteId)?.size
 			}`
 		);
 		view.leaf.updateHeader();
 	}
 
 	public removeHotActiveView(view: HotSandboxNoteView) {
-		if (!view.noteGroupId) return;
-		const { noteGroupId } = view;
-		const viewSet = this.hotActiveViews.get(noteGroupId);
+		if (!view.masterNoteId) return;
+		const { masterNoteId } = view;
+		const viewSet = this.hotActiveViews.get(masterNoteId);
 		if (viewSet) {
 			viewSet.delete(view);
 			if (viewSet.size === 0) {
-				this.hotActiveViews.delete(noteGroupId);
+				this.hotActiveViews.delete(masterNoteId);
 			}
 		}
 		log.debug(
-			`Removed hot sandbox view from group ${noteGroupId}. Remaining in group: ${
+			`Removed hot sandbox view from group ${masterNoteId}. Remaining in group: ${
 				viewSet?.size ?? 0
 			}`
 		);
 	}
 
 	public isLastHotView(view: HotSandboxNoteView): boolean {
-		if (!view.noteGroupId) return false;
-		const viewSet = this.hotActiveViews.get(view.noteGroupId);
+		if (!view.masterNoteId) return false;
+		const viewSet = this.hotActiveViews.get(view.masterNoteId);
 		return viewSet?.size === 1 && viewSet.has(view);
 	}
 
 	public syncHotViews(
-		noteGroupId: string,
+		masterNoteId: string,
 		content: string,
 		sourceView: AbstractNoteView
 	) {
-		log.debug(`Syncing hot sandbox note content for group: ${noteGroupId}`);
+		log.debug(
+			`Syncing hot sandbox note content for group: ${masterNoteId}`
+		);
 
-		const viewSet = this.hotActiveViews.get(noteGroupId);
+		const viewSet = this.hotActiveViews.get(masterNoteId);
 		if (!viewSet) return;
 
 		for (const view of viewSet) {
@@ -152,7 +154,7 @@ export class EditorSyncManager implements Manager {
 		}
 	}
 
-	public clearHotNoteData(noteGroupId: string) {
-		this.hotActiveViews.delete(noteGroupId);
+	public clearHotNoteData(masterNoteId: string) {
+		this.hotActiveViews.delete(masterNoteId);
 	}
 }

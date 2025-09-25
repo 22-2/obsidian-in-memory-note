@@ -9,10 +9,18 @@ import {
 import type SandboxNotePlugin from "../main";
 import { AbstractNoteView } from "./internal/AbstractNoteView";
 import log from "loglevel";
+import type { EventEmitter } from "src/utils/EventEmitter";
+import type { AppEvents } from "src/events/AppEvents";
+import type { StateManager } from "src/managers/StateManager";
 
 export class HotSandboxNoteView extends AbstractNoteView {
-	constructor(leaf: WorkspaceLeaf, plugin: SandboxNotePlugin) {
-		super(leaf, plugin);
+	constructor(
+		leaf: WorkspaceLeaf,
+		protected emitter: EventEmitter<AppEvents>,
+		protected stateManager: StateManager,
+		private funcs: { indexOfMasterId: (masterId: string) => number }
+	) {
+		super(leaf, emitter, stateManager);
 	}
 
 	getViewType(): string {
@@ -20,9 +28,7 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	getBaseTitle(): string {
-		const groupCount = this.plugin.getGroupNumberForNote(
-			this.noteGroupId ?? ""
-		);
+		const groupCount = this.funcs.indexOfMasterId(this.masterNoteId ?? "");
 		return `Hot Sandbox-${groupCount}`;
 	}
 
@@ -31,13 +37,13 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	get hasUnsavedChanges(): boolean {
-		if (!this.noteGroupId) return false;
+		if (!this.masterNoteId) return false;
 		return this.getContent() !== "";
 	}
 
 	save(): void {
-		if (!this.noteGroupId) return;
-		this.plugin.emitter.emit("save-requested", {
+		if (!this.masterNoteId) return;
+		this.emitter.emit("save-requested", {
 			view: this,
 		});
 	}
@@ -47,12 +53,12 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	async onOpen() {
-		this.plugin.emitter.emit("view-opened", { view: this });
+		this.emitter.emit("view-opened", { view: this });
 		await super.onOpen();
 	}
 
 	async onClose() {
-		this.plugin.emitter.emit("view-closed", { view: this });
+		this.emitter.emit("view-closed", { view: this });
 		await super.onClose();
 	}
 

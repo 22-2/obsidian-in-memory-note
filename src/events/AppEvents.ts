@@ -25,7 +25,7 @@ export interface AppEvents {
 		view: AbstractNoteView;
 	};
 	"register-new-hot-note": {
-		noteGroupId: string;
+		masterNoteId: string;
 	};
 	"obsidian-layout-changed": void;
 	"obsidian-active-leaf-changed": {

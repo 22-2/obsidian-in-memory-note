@@ -1,6 +1,6 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\views\helpers\EditorWrapper.ts
 import { type ViewStateResult, WorkspaceLeaf } from "obsidian";
-import { noop } from "../../utils/noop";
+import { noop } from "src/utils";
 import type { AbstractNoteView } from "./AbstractNoteView";
 import { VirtualMarkdownView } from "./VirtualMarkdownView";
 import log from "loglevel";

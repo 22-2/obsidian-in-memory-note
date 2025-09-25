@@ -16,7 +16,13 @@ export class ViewFactory implements Manager {
 	public load(): void {
 		this.plugin.registerView(
 			VIEW_TYPE_HOT_SANDBOX,
-			(leaf) => new HotSandboxNoteView(leaf, this.plugin)
+			(leaf) =>
+				new HotSandboxNoteView(
+					leaf,
+					this.plugin.emitter,
+					this.plugin.stateManager,
+					this.plugin.editorSyncManager
+				)
 		);
 	}
 
@@ -26,7 +32,7 @@ export class ViewFactory implements Manager {
 	}
 
 	public async activateNewHotSandboxView() {
-		// Pass an empty state to ensure a new noteGroupId is created
+		// Pass an empty state to ensure a new masterNoteId is created
 		return this.activateAbstractView(VIEW_TYPE_HOT_SANDBOX, {});
 	}
 

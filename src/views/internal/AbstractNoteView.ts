@@ -15,22 +15,27 @@ import type SandboxNotePlugin from "src/main";
 import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
 import { EditorWrapper } from "./EditorWrapper";
 import { convertToFileAndClear } from "./utils";
+import type { StateManager } from "src/managers/StateManager";
+import type { EventEmitter } from "src/utils/EventEmitter";
+import type { AppEvents } from "src/events/AppEvents";
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
 	private initialState: any = null;
 	private saveActionEl!: HTMLElement;
-	protected plugin: SandboxNotePlugin;
 	public isSourceMode = true;
-	public noteGroupId: string | null = null;
+	public masterNoteId: string | null = null;
 	public scope: Scope;
 	public wrapper: EditorWrapper;
 
 	public navigation = true;
 
-	constructor(leaf: WorkspaceLeaf, plugin: SandboxNotePlugin) {
+	constructor(
+		leaf: WorkspaceLeaf,
+		protected emitter: EventEmitter<AppEvents>,
+		protected stateManager: StateManager
+	) {
 		super(leaf);
-		this.plugin = plugin;
 		this.wrapper = new EditorWrapper(this);
 		this.scope = new Scope(this.app.scope);
 	}
@@ -55,7 +60,7 @@ export abstract class AbstractNoteView extends ItemView {
 	public override getState(): any {
 		const state = super.getState();
 
-		state.noteGroupId = this.noteGroupId;
+		state.masterNoteId = this.masterNoteId;
 
 		if (this.editor) {
 			const editorState = MarkdownView.prototype.getState.call(
@@ -76,7 +81,7 @@ export abstract class AbstractNoteView extends ItemView {
 			await this.wrapper.initialize(this.contentEl, this.initialState);
 			this.initialState = null;
 			this.setupEventHandlers();
-			this.plugin.emitter.emit("connect-editor-plugin", { view: this });
+			this.emitter.emit("connect-editor-plugin", { view: this });
 		} catch (error) {
 			this.handleInitializationError(error);
 		}
@@ -91,14 +96,14 @@ export abstract class AbstractNoteView extends ItemView {
 		state: any,
 		result: ViewStateResult
 	): Promise<void> {
-		if (state?.noteGroupId) {
-			this.noteGroupId = state.noteGroupId;
-			log.debug(`Restored note group ID: ${this.noteGroupId}`);
-		} else if (!this.noteGroupId) {
-			log.debug("noteGroupId not found in state, creating new one.");
-			this.noteGroupId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
-			this.plugin.emitter.emit("register-new-hot-note", {
-				noteGroupId: this.noteGroupId,
+		if (state?.masterNoteId) {
+			this.masterNoteId = state.masterNoteId;
+			log.debug(`Restored note group ID: ${this.masterNoteId}`);
+		} else if (!this.masterNoteId) {
+			log.debug("masterNoteId not found in state, creating new one.");
+			this.masterNoteId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
+			this.emitter.emit("register-new-hot-note", {
+				masterNoteId: this.masterNoteId,
 			});
 		}
 
@@ -144,22 +149,6 @@ export abstract class AbstractNoteView extends ItemView {
 		}
 	}
 
-	public syncActiveEditorState(): void {
-		const activeView = this.plugin.getActiveAbstractNoteView();
-		// @ts-ignore - Accessing a private API to manage the active editor.
-		const workspace = this.app.workspace;
-
-		if (activeView instanceof AbstractNoteView && activeView.editor) {
-			workspace._activeEditor = activeView.wrapper.virtualEditor;
-		} else if (
-			// @ts-expect-error
-			workspace._activeEditor?.leaf?.__FAKE_LEAF__ &&
-			!(activeView instanceof AbstractNoteView)
-		) {
-			workspace._activeEditor = null;
-		}
-	}
-
 	private handleInitializationError(error: unknown) {
 		log.error("Sandbox Note: Failed to initialize inline editor.", error);
 		this.contentEl.empty();
@@ -169,15 +158,13 @@ export abstract class AbstractNoteView extends ItemView {
 		});
 	}
 	private setupEventHandlers() {
-		if (!this.editor) return;
+		if (!this.editor) return log.error("Editor not found");
 
-		this.plugin.registerEvent(
-			this.app.workspace.on("active-leaf-change", (leaf) => {
-				if (leaf?.id === this.leaf.id) {
-					this.editor?.focus();
-				}
-			})
-		);
+		this.emitter.on("obsidian-active-leaf-changed", (payload) => {
+			if (payload?.view?.leaf?.id === this.leaf.id) {
+				this.editor?.focus();
+			}
+		});
 
 		this.registerDomEvent(this.contentEl, "mousedown", (e) =>
 			handleClick(e, this.editor)
@@ -192,7 +179,7 @@ export abstract class AbstractNoteView extends ItemView {
 				return true; // Continue with default behavior
 			}
 
-			if (this.plugin.stateManager.getSettings().enableCtrlS) {
+			if (this.stateManager.getSettings().enableCtrlS) {
 				// 変更
 				e.preventDefault();
 				e.stopPropagation();
@@ -205,7 +192,7 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	public updateActionButtons() {
-		const settings = this.plugin.stateManager.getSettings(); // 変更
+		const settings = this.stateManager.getSettings(); // 変更
 		if (!settings.enableAutoSave) {
 			this.saveActionEl?.hide();
 			return;

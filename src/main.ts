@@ -86,7 +86,7 @@ export default class SandboxNotePlugin extends Plugin {
 			this.editorPluginConnector.connectEditorPluginToView(payload.view);
 		});
 		this.emitter.on("register-new-hot-note", (payload) => {
-			this.stateManager.registerNewHotNote(payload.noteGroupId);
+			this.stateManager.registerNewHotNote(payload.masterNoteId);
 		});
 		this.emitter.on("settings-changed", () => {
 			this.initializeLogger();
@@ -168,9 +168,5 @@ export default class SandboxNotePlugin extends Plugin {
 			log.setLevel("warn");
 		}
 		log.debug("Logger initialized");
-	}
-
-	public getGroupNumberForNote(noteGroupId: string): number {
-		return this.editorSyncManager.getGroupNumber(noteGroupId);
 	}
 }

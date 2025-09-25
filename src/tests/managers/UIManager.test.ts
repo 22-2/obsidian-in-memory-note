@@ -49,7 +49,7 @@ describe("InteractionManager", () => {
 		it("should add the commands with the correct parameters", () => {
 			uiManager.load();
 
-			expect(mockPlugin.addCommand).toHaveBeenCalledTimes(3);
+			expect(mockPlugin.addCommand).toHaveBeenCalledTimes(4);
 
 			expect(mockPlugin.addCommand).toHaveBeenCalledWith({
 				id: "open-sandbox-note-view",

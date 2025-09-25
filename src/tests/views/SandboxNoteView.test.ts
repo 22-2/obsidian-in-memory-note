@@ -73,6 +73,8 @@ describe("SandboxNoteView", () => {
 		plugin = {
 			app: app,
 			registerEvent: vi.fn(),
+			getActiveSandboxNoteView: vi.fn(),
+			getActiveAbstractNoteView: vi.fn(),
 			editorSyncManager: {
 				sharedNoteContent: "Initial Content From Plugin",
 				addActiveView: vi.fn(),

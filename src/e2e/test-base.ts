@@ -45,9 +45,12 @@ let pluginHandle: JSHandle<SandboxNotePlugin>; // API操作のために維持
 
 // --- Test Hooks (Updated to use beforeEach/afterEach) ---
 test.beforeEach(async ({}, testInfo) => {
+	console.log(`---------------${testInfo.title}---------------`);
 	const isRestorationStep = testInfo.title.includes("restore note content");
 
-	if (!isRestorationStep) {
+	console.log("isRestorationStep:", isRestorationStep);
+
+	if (isRestorationStep === false) {
 		initializeWorkspaceJSON();
 	}
 

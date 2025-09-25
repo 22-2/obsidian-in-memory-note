@@ -1,3 +1,4 @@
+// src/views/HotSandboxNoteView.ts
 import { WorkspaceLeaf } from "obsidian";
 import {
 	HOT_SANDBOX_NOTE_ICON,
@@ -18,9 +19,10 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	getBaseTitle(): string {
-		return `Hot Sandbox-${this.plugin.editorSyncManager.countActiveViews(
-			this
-		)}`;
+		const groupCount = this.plugin.editorSyncManager.getGroupNumber(
+			this.noteGroupId ?? ""
+		);
+		return `Hot Sandbox-${groupCount}`;
 	}
 
 	getIcon(): string {
@@ -60,8 +62,16 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	async onOpen() {
+		// まず親クラスのonOpenを呼び出し、その中でsetStateが実行されnoteGroupIdが設定されることを保証
 		await super.onOpen();
-		if (!this.noteGroupId) return;
+
+		if (!this.noteGroupId) {
+			log.error(
+				"HotSandboxNoteView: noteGroupId is null after super.onOpen. This should not happen."
+			);
+			return;
+		}
+
 		this.plugin.editorSyncManager.addHotActiveView(this);
 		const initialContent = this.plugin.editorSyncManager.getHotNoteContent(
 			this.noteGroupId

@@ -32,11 +32,16 @@ export class EditorSyncManager implements Manager {
 		// Nothing to do
 	}
 
-	public countActiveViews(view: AbstractNoteView): number {
-		if (view instanceof HotSandboxNoteView) {
-			return this.hotActiveViews.size;
-		}
-		return -1;
+	public getGroupNumber(noteGroupId: string): number {
+		let groupNumber = 0;
+		let i = 0;
+		this.hotActiveViews.forEach((_, id) => {
+			i++;
+			if (id === noteGroupId) {
+				groupNumber = i;
+			}
+		});
+		return groupNumber;
 	}
 
 	// --- Methods for original SandboxNoteView ---

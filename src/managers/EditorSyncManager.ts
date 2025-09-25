@@ -4,7 +4,7 @@ import type { AbstractNoteView } from "src/views/internal/AbstractNoteView"; // 
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
 import type { Manager } from "./Manager";
-import type { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
+import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 
 /** Manages shared content synchronization across views */
 export class EditorSyncManager implements Manager {
@@ -30,6 +30,13 @@ export class EditorSyncManager implements Manager {
 
 	public unload(): void {
 		// Nothing to do
+	}
+
+	public countActiveViews(view: AbstractNoteView): number {
+		if (view instanceof HotSandboxNoteView) {
+			return this.hotActiveViews.size;
+		}
+		return -1;
 	}
 
 	// --- Methods for original SandboxNoteView ---

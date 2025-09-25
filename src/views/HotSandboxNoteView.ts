@@ -18,7 +18,9 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	getBaseTitle(): string {
-		return "Hot Sandbox Note";
+		return `Hot Sandbox-${this.plugin.editorSyncManager.countActiveViews(
+			this
+		)}`;
 	}
 
 	getIcon(): string {

@@ -10,12 +10,13 @@ import { SaveManager } from "./managers/SaveManager";
 import { ViewFactory } from "./managers/ViewFactory";
 import { ObsidianEventManager } from "./managers/ObsidianEventManager";
 import { type SandboxNotePluginData, SandboxNoteSettingTab } from "./settings";
-import { DEFAULT_DATA as DEFAULT_PLUGIN_DATA } from "./utils/constants";
+import { DEFAULT_PLUGIN_DATA } from "./utils/constants";
 import { EventEmitter } from "./utils/EventEmitter";
 import { SandboxNoteView } from "./views/SandboxNoteView";
 import { AbstractNoteView } from "./views/internal/AbstractNoteView";
 import { DatabaseManager } from "./managers/DatabaseManager";
 import { HotSandboxNoteView } from "./views/HotSandboxNoteView";
+import "./utils/setup-logger";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
@@ -149,11 +150,9 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Initialize logger with current settings. */
 	initializeLogger(): void {
-		if (this.data.settings.enableLogger) {
-			log.enableAll();
-		} else {
-			log.disableAll();
-		}
+		this.data.settings.enableLogger
+			? log.setLevel("debug")
+			: log.setLevel("warn");
 		log.debug("Logger initialized");
 	}
 

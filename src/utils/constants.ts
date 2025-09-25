@@ -9,7 +9,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enableCtrlS: false,
 };
 
-export const DEFAULT_DATA: SandboxNotePluginData = {
+export const DEFAULT_PLUGIN_DATA: SandboxNotePluginData = {
 	settings: DEFAULT_SETTINGS,
 	data: {
 		noteContent: "",

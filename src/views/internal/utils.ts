@@ -36,8 +36,5 @@ export async function convertToFileAndClear(view: AbstractNoteView) {
 		view.setContent("");
 	} catch (error) {
 		log.error("Sandbox Note: Failed to convert to file.", error);
-		new Notice(
-			"Sandbox Note: Failed to convert to file. See console for details."
-		);
 	}
 }

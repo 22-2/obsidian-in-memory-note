@@ -71,7 +71,7 @@ export class SaveManager implements Manager {
 			await this.persistContent(content);
 		} catch (error) {
 			log.error(`Failed to auto-save note content: ${error}`);
-			new Notice("Failed to auto-save note content.");
+			// new Notice("Failed to auto-save note content.");
 		} finally {
 			this.isSaving = false;
 		}
@@ -151,7 +151,6 @@ export class SaveManager implements Manager {
 				`Failed to save hot sandbox note content for group ${noteGroupId}:`,
 				error
 			);
-			new Notice("Failed to save hot sandbox note.");
 		}
 	}
 

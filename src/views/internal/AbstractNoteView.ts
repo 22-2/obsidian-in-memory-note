@@ -20,6 +20,7 @@ import type SandboxNotePlugin from "src/main";
 import { HOT_SANDBOX_ID_PREFIX, SANDBOX_NOTE_ICON } from "src/utils/constants";
 import { EditorWrapper } from "./EditorWrapper";
 import { convertToFileAndClear } from "./utils";
+import type { HotSandboxNoteView } from "../HotSandboxNoteView";
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
@@ -110,6 +111,9 @@ export abstract class AbstractNoteView extends ItemView {
 		if (state?.noteGroupId) {
 			this.noteGroupId = state.noteGroupId;
 			log.debug(`Restored note group ID: ${this.noteGroupId}`);
+			this.plugin.editorSyncManager.addHotActiveView(
+				this as unknown as HotSandboxNoteView
+			);
 		} else if (!this.noteGroupId) {
 			log.error("noteGroupId not found in state");
 			this.noteGroupId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
@@ -160,7 +164,6 @@ export abstract class AbstractNoteView extends ItemView {
 
 	private handleInitializationError(error: unknown) {
 		log.error("Sandbox Note: Failed to initialize inline editor.", error);
-		new Notice("Sandbox Note: Failed to initialize inline editor.");
 		this.contentEl.empty();
 		this.contentEl.createEl("div", {
 			text: "Error: Could not initialize editor. This might be due to an Obsidian update.",

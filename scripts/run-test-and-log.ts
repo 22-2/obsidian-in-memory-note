@@ -2,7 +2,7 @@
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
-
+import notifier from "node-notifier";
 const LOG_DIR = "test-results";
 
 try {
@@ -22,7 +22,7 @@ try {
 
 	// 3. テストを実行し、出力をキャプチャ
 	// pnpm run test コマンドを実行し、標準出力と標準エラーをまとめて取得
-	const testCommand = "pnpm run test -- --silent";
+	const testCommand = "pnpm run test -- --silent --reporter dot";
 
 	// 標準入出力は親プロセスに引き継ぎ、テスト自体の実行結果をキャプチャ
 	const output = execSync(testCommand, {
@@ -56,4 +56,9 @@ try {
 
 	// 失敗をGit Hooksに伝える
 	// process.exit(1);
+	notifier.notify({
+		title: "E2E Tests Failed",
+		message: "Check the log file for details.",
+		open: logFilePath,
+	});
 }

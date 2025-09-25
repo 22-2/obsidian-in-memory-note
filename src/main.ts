@@ -4,18 +4,18 @@ import type { AppEvents } from "./events/AppEvents";
 import { DatabaseManager } from "./managers/DatabaseManager";
 import { EditorPluginConnector } from "./managers/EditorPluginConnector";
 import { EditorSyncManager } from "./managers/EditorSyncManager";
-import { InteractionManager } from "./managers/InteractionManager";
 import type { Manager } from "./managers/Manager";
 import { ObsidianEventManager } from "./managers/ObsidianEventManager";
 import { SaveManager } from "./managers/SaveManager";
 import { ViewFactory } from "./managers/ViewFactory";
 import { type SandboxNotePluginData, SandboxNoteSettingTab } from "./settings";
-import { DEFAULT_PLUGIN_DATA } from "./utils/constants";
+import { DEFAULT_PLUGIN_DATA, HOT_SANDBOX_NOTE_ICON } from "./utils/constants";
 import { EventEmitter } from "./utils/EventEmitter";
 import "./utils/setup-logger";
 import { overwriteLogLevel } from "./utils/setup-logger";
 import { HotSandboxNoteView } from "./views/HotSandboxNoteView";
 import { AbstractNoteView } from "./views/internal/AbstractNoteView";
+import { convertToFileAndClear } from "./views/internal/utils";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
@@ -25,7 +25,6 @@ export default class SandboxNotePlugin extends Plugin {
 	databaseManager!: DatabaseManager;
 	editorSyncManager!: EditorSyncManager;
 	saveManager!: SaveManager;
-	interactionManager!: InteractionManager;
 	editorPluginConnector!: EditorPluginConnector;
 	viewFactory!: ViewFactory;
 	workspaceEventManager!: ObsidianEventManager;
@@ -46,6 +45,7 @@ export default class SandboxNotePlugin extends Plugin {
 		await this.restoreHotNotes();
 
 		this.setupSettingsTab();
+		this.setupCommandsAndRibbons();
 
 		log.debug("Sandbox Note plugin loaded");
 	}
@@ -77,7 +77,6 @@ export default class SandboxNotePlugin extends Plugin {
 			saveData,
 			this.databaseManager
 		);
-		this.interactionManager = new InteractionManager(this);
 		this.editorPluginConnector = new EditorPluginConnector(this, emitter);
 		this.viewFactory = new ViewFactory(this);
 		this.workspaceEventManager = new ObsidianEventManager(this, emitter);
@@ -93,7 +92,6 @@ export default class SandboxNotePlugin extends Plugin {
 		this.managers.push(
 			this.editorSyncManager,
 			this.saveManager,
-			this.interactionManager,
 			this.editorPluginConnector,
 			this.viewFactory,
 			this.workspaceEventManager
@@ -103,6 +101,43 @@ export default class SandboxNotePlugin extends Plugin {
 	/** Setup plugin settings tab. */
 	private setupSettingsTab() {
 		this.addSettingTab(new SandboxNoteSettingTab(this));
+	}
+
+	private setupCommandsAndRibbons() {
+		// Command to open the new hot sandbox note
+		this.addCommand({
+			id: "open-hot-sandbox-note-view",
+			name: "Open new hot sandbox note",
+			icon: HOT_SANDBOX_NOTE_ICON,
+			callback: () => {
+				this.activateNewHotSandboxView();
+			},
+		});
+
+		this.addCommand({
+			id: "convert-to-file",
+			name: "Convert to file",
+			icon: "file-pen-line",
+			checkCallback: (checking) => {
+				const view = this.getActiveAbstractNoteView();
+				if (view) {
+					if (!checking) {
+						convertToFileAndClear(view);
+					}
+					return true;
+				}
+				return false;
+			},
+		});
+
+		// Ribbon icon to open the hot sandbox note
+		this.addRibbonIcon(
+			HOT_SANDBOX_NOTE_ICON,
+			"Open new hot sandbox note",
+			() => {
+				this.activateNewHotSandboxView();
+			}
+		);
 	}
 
 	/** Cleanup on plugin unload. */

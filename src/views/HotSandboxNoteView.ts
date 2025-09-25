@@ -63,18 +63,12 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	async onOpen() {
-		// onOpen が呼ばれる前に setState で noteGroupId が設定されているはず。
-		// もし設定されていない場合、ライフサイクルの問題が考えられるが、
-		// フォールバックとしてIDを生成し、処理を続行する。
-		if (!this.noteGroupId) {
-			this.noteGroupId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
-		}
-
-		// エディタを初期化する前に、ビューをマネージャーに登録する。
+		// noteGroupId の復元・生成は setState で行われるため、ここでの処理は不要です。
+		// このビューがアクティブになったことをマネージャーに登録します。
 		this.plugin.editorSyncManager.addHotActiveView(this);
 
-		// 親の onOpen を呼び出してエディタを初期化する。
-		// この中で loadInitialContent が呼ばれるため、正しい noteGroupId でコンテンツがロードされる。
+		// 親の onOpen を呼び出してエディタを初期化します。
+		// この中で loadInitialContent が呼ばれるため、正しい noteGroupId でコンテンツがロードされます。
 		await super.onOpen();
 	}
 

@@ -33,7 +33,8 @@ export class EditorSyncManager implements Manager {
 	}
 
 	public getGroupNumber(noteGroupId: string): number {
-		const sortedGroupIds = Array.from(this.hotActiveViews.keys()).sort();
+		// 基準をアクティブなビューから、存在するすべてのノートコンテンツに変更し、番号付けを安定させます。
+		const sortedGroupIds = Array.from(this.hotNotesContent.keys()).sort();
 		const groupIndex = sortedGroupIds.indexOf(noteGroupId);
 		return groupIndex !== -1 ? groupIndex + 1 : 0;
 	}
@@ -122,6 +123,18 @@ export class EditorSyncManager implements Manager {
 	}
 
 	// --- Methods for new HotSandboxNoteView ---
+
+	/**
+	 * 新しいノートグループが作成されたときに呼び出され、
+	 * 番号付けのために内部コンテンツマップに登録します。
+	 * @param noteGroupId 新しいノートグループのID
+	 */
+	public registerNewHotNote(noteGroupId: string) {
+		if (!this.hotNotesContent.has(noteGroupId)) {
+			this.hotNotesContent.set(noteGroupId, "");
+			log.debug(`Registered new hot note group: ${noteGroupId}`);
+		}
+	}
 
 	public setInitialHotNotes(notes: { id: string; content: string }[]) {
 		for (const note of notes) {

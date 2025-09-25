@@ -107,16 +107,16 @@ export abstract class AbstractNoteView extends ItemView {
 		state: any,
 		result: ViewStateResult
 	): Promise<void> {
-		// noteGroupIdの初期化をここで行う
+		// noteGroupIdの初期化/復元をここで行います。
 		if (state?.noteGroupId) {
 			this.noteGroupId = state.noteGroupId;
 			log.debug(`Restored note group ID: ${this.noteGroupId}`);
-			this.plugin.editorSyncManager.addHotActiveView(
-				this as unknown as HotSandboxNoteView
-			);
 		} else if (!this.noteGroupId) {
-			log.error("noteGroupId not found in state");
+			// 新規ビュー作成時など、stateにIDがない場合は新しく生成します。
+			log.debug("noteGroupId not found in state, creating new one.");
 			this.noteGroupId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
+			// 新規ノートなので、一貫した番号付けのためにEditorSyncManagerに登録します。
+			this.plugin.editorSyncManager.registerNewHotNote(this.noteGroupId);
 		}
 
 		if (typeof state.source === "boolean") {

@@ -50,8 +50,7 @@ export abstract class AbstractNoteView extends ItemView {
 
 	getDisplayText(): string {
 		const baseTitle = this.getBaseTitle();
-		const shouldShowUnsaved =
-			this.hasUnsavedChanges && Boolean(this.containerEl.isShown?.());
+		const shouldShowUnsaved = this.hasUnsavedChanges;
 		return shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
 	}
 

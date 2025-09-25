@@ -33,15 +33,9 @@ export class EditorSyncManager implements Manager {
 	}
 
 	public getGroupNumber(noteGroupId: string): number {
-		let groupNumber = 0;
-		let i = 0;
-		this.hotActiveViews.forEach((_, id) => {
-			i++;
-			if (id === noteGroupId) {
-				groupNumber = i;
-			}
-		});
-		return groupNumber;
+		const sortedGroupIds = Array.from(this.hotActiveViews.keys()).sort();
+		const groupIndex = sortedGroupIds.indexOf(noteGroupId);
+		return groupIndex !== -1 ? groupIndex + 1 : 0;
 	}
 
 	// --- Methods for original SandboxNoteView ---

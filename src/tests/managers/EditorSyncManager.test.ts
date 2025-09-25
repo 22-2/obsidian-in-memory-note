@@ -3,6 +3,7 @@ import type { SandboxNoteView } from "src/views/SandboxNoteView";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
+import type { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 
 // Helper to create a mock view
 const createMockView = (): SandboxNoteView =>
@@ -15,6 +16,14 @@ const createMockView = (): SandboxNoteView =>
 		updateActionButtons: vi.fn(),
 		// Add other properties and methods as needed for tests
 	} as unknown as SandboxNoteView);
+
+const createMockHotView = (noteGroupId: string): HotSandboxNoteView =>
+	({
+		noteGroupId,
+		leaf: {
+			updateHeader: vi.fn(),
+		},
+	} as unknown as HotSandboxNoteView);
 
 describe("EditorSyncManager", () => {
 	let editorSyncManager: EditorSyncManager;
@@ -114,6 +123,32 @@ describe("EditorSyncManager", () => {
 			expect(() =>
 				editorSyncManager.refreshAllViewTitles()
 			).not.toThrow();
+		});
+	});
+
+	describe("getGroupNumber", () => {
+		it("Group number should not be changed when view is re-created.", () => {
+			const viewA = createMockHotView("a");
+			const viewB = createMockHotView("b");
+
+			// Add two views
+			editorSyncManager.addHotActiveView(viewA);
+			editorSyncManager.addHotActiveView(viewB);
+
+			// Check group numbers
+			expect(editorSyncManager.getGroupNumber("a")).toBe(1);
+			expect(editorSyncManager.getGroupNumber("b")).toBe(2);
+
+			// Remove view A
+			editorSyncManager.removeHotActiveView(viewA);
+
+			// Re-add view A
+			editorSyncManager.addHotActiveView(viewA);
+
+			// Check group numbers again
+			// Before fix, getGroupNumber("a") will be 2.
+			expect(editorSyncManager.getGroupNumber("a")).toBe(1);
+			expect(editorSyncManager.getGroupNumber("b")).toBe(2);
 		});
 	});
 });

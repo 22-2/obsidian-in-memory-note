@@ -1,22 +1,23 @@
 import log from "loglevel";
 import { Plugin } from "obsidian";
 import type { AppEvents } from "./events/AppEvents";
+import { AppEventManager } from "./managers/AppEventManager";
+import { DatabaseManager } from "./managers/DatabaseManager";
 import { EditorPluginConnector } from "./managers/EditorPluginConnector";
 import { EditorSyncManager } from "./managers/EditorSyncManager";
-import { AppEventManager } from "./managers/AppEventManager";
 import { InteractionManager } from "./managers/InteractionManager";
 import type { Manager } from "./managers/Manager";
+import { ObsidianEventManager } from "./managers/ObsidianEventManager";
 import { SaveManager } from "./managers/SaveManager";
 import { ViewFactory } from "./managers/ViewFactory";
-import { ObsidianEventManager } from "./managers/ObsidianEventManager";
 import { type SandboxNotePluginData, SandboxNoteSettingTab } from "./settings";
 import { DEFAULT_PLUGIN_DATA } from "./utils/constants";
 import { EventEmitter } from "./utils/EventEmitter";
-import { SandboxNoteView } from "./views/SandboxNoteView";
-import { AbstractNoteView } from "./views/internal/AbstractNoteView";
-import { DatabaseManager } from "./managers/DatabaseManager";
-import { HotSandboxNoteView } from "./views/HotSandboxNoteView";
 import "./utils/setup-logger";
+import { overwriteLogLevel } from "./utils/setup-logger";
+import { HotSandboxNoteView } from "./views/HotSandboxNoteView";
+import { AbstractNoteView } from "./views/internal/AbstractNoteView";
+import { SandboxNoteView } from "./views/SandboxNoteView";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
@@ -36,6 +37,7 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Initialize plugin on load. */
 	async onload() {
+		overwriteLogLevel();
 		await this.loadSettings();
 		this.initializeLogger();
 		this.initializeManagers();

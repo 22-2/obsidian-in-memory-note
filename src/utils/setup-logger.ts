@@ -1,4 +1,4 @@
-import * as log from "loglevel";
+import log from "loglevel";
 import { Notice } from "obsidian"; // ObsidianのAPIからNoticeクラスをインポート
 
 const originalFactory = log.methodFactory;
@@ -20,7 +20,6 @@ const obsidianNoticeMethodFactory: log.MethodFactory = (
 	};
 };
 
-// @ts-expect-error
-log.methodFactory = obsidianNoticeMethodFactory;
-
-log.rebuild();
+export function overwriteLogLevel() {
+	log.methodFactory = obsidianNoticeMethodFactory;
+}

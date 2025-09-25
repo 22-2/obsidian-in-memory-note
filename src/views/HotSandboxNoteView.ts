@@ -8,6 +8,7 @@ import {
 } from "src/utils/constants";
 import type SandboxNotePlugin from "../main";
 import { AbstractNoteView } from "./internal/AbstractNoteView";
+import log from "loglevel";
 
 export class HotSandboxNoteView extends AbstractNoteView {
 	constructor(leaf: WorkspaceLeaf, plugin: SandboxNotePlugin) {
@@ -75,6 +76,10 @@ export class HotSandboxNoteView extends AbstractNoteView {
 		// 親の onOpen を呼び出してエディタを初期化する。
 		// この中で loadInitialContent が呼ばれるため、正しい noteGroupId でコンテンツがロードされる。
 		await super.onOpen();
+	}
+
+	async onSaveRequested(): Promise<void> {
+		log.debug("not implmented");
 	}
 
 	async onClose() {

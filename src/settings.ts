@@ -42,12 +42,14 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			.setName("Show debug messages")
 			.setDesc("Enable or disable debug messages in the console.")
 			.addToggle((toggle) => {
+				const settings = this.plugin.stateManager.getSettings();
 				toggle
-					.setValue(this.plugin.data.settings.enableLogger)
+					.setValue(settings.enableLogger)
 					.onChange(async (enabled) => {
-						this.plugin.data.settings.enableLogger = enabled;
-						this.plugin.initializeLogger();
-						await this.plugin.saveSettings();
+						await this.plugin.stateManager.updateSettings({
+							...settings,
+							enableLogger: enabled,
+						});
 					});
 			});
 	}
@@ -61,11 +63,14 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 					"This feature helps prevent data loss from unexpected shutdowns."
 			)
 			.addToggle((toggle) => {
+				const settings = this.plugin.stateManager.getSettings();
 				toggle
-					.setValue(this.plugin.data.settings.enableAutoSave)
+					.setValue(settings.enableAutoSave)
 					.onChange(async (enabled) => {
-						this.plugin.data.settings.enableAutoSave = enabled;
-						await this.plugin.saveSettings();
+						await this.plugin.stateManager.updateSettings({
+							...settings,
+							enableAutoSave: enabled,
+						});
 						// Re-render the dependent setting
 						this.display();
 					});
@@ -74,7 +79,8 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 
 	/** Add auto-save debounce delay setting. */
 	private addAutoSaveDebounceSetting() {
-		if (!this.plugin.data.settings.enableAutoSave) {
+		const settings = this.plugin.stateManager.getSettings();
+		if (!settings.enableAutoSave) {
 			return;
 		}
 
@@ -95,13 +101,12 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			.addDropdown((dropdown) => {
 				dropdown
 					.addOptions(options)
-					.setValue(
-						String(this.plugin.data.settings.autoSaveDebounceMs)
-					)
+					.setValue(String(settings.autoSaveDebounceMs))
 					.onChange(async (value) => {
-						this.plugin.data.settings.autoSaveDebounceMs =
-							Number.parseInt(value, 10);
-						await this.plugin.saveSettings();
+						await this.plugin.stateManager.updateSettings({
+							...settings,
+							autoSaveDebounceMs: Number.parseInt(value, 10),
+						});
 					});
 			});
 	}
@@ -114,11 +119,14 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 				"Overrides the default save command (Ctrl+S) to save the content of the sandbox note. "
 			)
 			.addToggle((toggle) => {
+				const settings = this.plugin.stateManager.getSettings();
 				toggle
-					.setValue(this.plugin.data.settings.enableCtrlS)
+					.setValue(settings.enableCtrlS)
 					.onChange(async (enabled) => {
-						this.plugin.data.settings.enableCtrlS = enabled;
-						await this.plugin.saveSettings();
+						await this.plugin.stateManager.updateSettings({
+							...settings,
+							enableCtrlS: enabled,
+						});
 					});
 			});
 	}

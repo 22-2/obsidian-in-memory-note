@@ -1,3 +1,4 @@
+import type { PluginSettings } from "src/settings";
 import type { AbstractNoteView } from "../views/internal/AbstractNoteView";
 
 export interface AppEvents {
@@ -29,5 +30,8 @@ export interface AppEvents {
 	"obsidian-layout-changed": void;
 	"obsidian-active-leaf-changed": {
 		view: AbstractNoteView | null;
+	};
+	"settings-changed": {
+		newSettings: PluginSettings;
 	};
 }

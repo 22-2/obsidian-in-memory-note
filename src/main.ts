@@ -6,7 +6,7 @@ import { EditorPluginConnector } from "./managers/EditorPluginConnector";
 import { EditorSyncManager } from "./managers/EditorSyncManager";
 import type { Manager } from "./managers/Manager";
 import { ObsidianEventManager } from "./managers/ObsidianEventManager";
-import { SaveManager } from "./managers/SaveManager";
+import { StateManager } from "./managers/StateManager";
 import { ViewFactory } from "./managers/ViewFactory";
 import { type SandboxNotePluginData, SandboxNoteSettingTab } from "./settings";
 import { DEFAULT_PLUGIN_DATA, HOT_SANDBOX_NOTE_ICON } from "./utils/constants";
@@ -19,12 +19,10 @@ import { convertToFileAndClear } from "./views/internal/utils";
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
-	data: SandboxNotePluginData = DEFAULT_PLUGIN_DATA;
-
 	// Managers
 	databaseManager!: DatabaseManager;
+	stateManager!: StateManager;
 	editorSyncManager!: EditorSyncManager;
-	saveManager!: SaveManager;
 	editorPluginConnector!: EditorPluginConnector;
 	viewFactory!: ViewFactory;
 	workspaceEventManager!: ObsidianEventManager;
@@ -34,26 +32,26 @@ export default class SandboxNotePlugin extends Plugin {
 	/** Initialize plugin on load. */
 	async onload() {
 		overwriteLogLevel();
-		await this.loadSettings();
-		this.initializeLogger();
 		this.initializeManagers();
 
-		for (const manager of this.managers) {
-			manager.load();
-		}
+		// Load all data via StateManager
+		await this.stateManager.load();
 
-		await this.restoreHotNotes();
+		// Initialize logger based on loaded settings
+		this.initializeLogger();
+
+		// Load other managers
+		for (const manager of this.managers) {
+			// StateManager is already loaded
+			if (manager !== this.stateManager) {
+				manager.load();
+			}
+		}
 
 		this.setupSettingsTab();
 		this.setupCommandsAndRibbons();
 
 		log.debug("Sandbox Note plugin loaded");
-	}
-
-	private async restoreHotNotes() {
-		const allNotes = await this.databaseManager.getAllNotes();
-		this.editorSyncManager.setInitialHotNotes(allNotes);
-		log.debug(`Restored ${allNotes.length} hot sandbox notes from DB.`);
 	}
 
 	public getActiveAbstractNoteView() {
@@ -65,17 +63,19 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Initialize all manager instances */
 	private initializeManagers() {
-		const saveData = (data: SandboxNotePluginData) => this.saveData(data);
 		const emitter = new EventEmitter<AppEvents>();
 		this.emitter = emitter;
 		this.databaseManager = new DatabaseManager();
 
-		this.editorSyncManager = new EditorSyncManager(emitter);
-		this.saveManager = new SaveManager(
+		// StateManager must be initialized first as others depend on it
+		this.stateManager = new StateManager(
+			this,
 			emitter,
-			this.data,
-			saveData,
 			this.databaseManager
+		);
+		this.editorSyncManager = new EditorSyncManager(
+			emitter,
+			this.stateManager
 		);
 		this.editorPluginConnector = new EditorPluginConnector(this, emitter);
 		this.viewFactory = new ViewFactory(this);
@@ -86,12 +86,15 @@ export default class SandboxNotePlugin extends Plugin {
 			this.editorPluginConnector.connectEditorPluginToView(payload.view);
 		});
 		this.emitter.on("register-new-hot-note", (payload) => {
-			this.editorSyncManager.registerNewHotNote(payload.noteGroupId);
+			this.stateManager.registerNewHotNote(payload.noteGroupId);
+		});
+		this.emitter.on("settings-changed", () => {
+			this.initializeLogger();
 		});
 
 		this.managers.push(
+			this.stateManager,
 			this.editorSyncManager,
-			this.saveManager,
 			this.editorPluginConnector,
 			this.viewFactory,
 			this.workspaceEventManager
@@ -155,29 +158,19 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Initialize logger with current settings. */
 	initializeLogger(): void {
-		this.data.settings.enableLogger
-			? log.setLevel("debug")
-			: log.setLevel("warn");
+		// StateManager might not be initialized on the very first call, so we check for it.
+		const settings = this.stateManager?.getSettings();
+		if (settings) {
+			settings.enableLogger
+				? log.setLevel("debug")
+				: log.setLevel("warn");
+		} else {
+			log.setLevel("warn");
+		}
 		log.debug("Logger initialized");
 	}
 
 	public getGroupNumberForNote(noteGroupId: string): number {
 		return this.editorSyncManager.getGroupNumber(noteGroupId);
-	}
-
-	/** Load plugin settings from storage. */
-	async loadSettings() {
-		this.data = Object.assign(
-			{},
-			DEFAULT_PLUGIN_DATA,
-			await this.loadData()
-		);
-	}
-
-	/** Save current plugin settings to storage. */
-	async saveSettings() {
-		await this.saveManager.saveSettings(this.data.settings);
-		// Refresh all view titles when settings change
-		this.editorSyncManager.refreshAllViewTitles();
 	}
 }

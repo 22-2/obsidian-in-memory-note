@@ -1,20 +1,22 @@
 import log from "loglevel";
-import type { AbstractNoteView } from "src/views/internal/AbstractNoteView"; // 追記
+import type { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
 import type { Manager } from "./Manager";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
+import type { StateManager } from "./StateManager";
 
 /** Manages shared content synchronization across views */
 export class EditorSyncManager implements Manager {
 	private emitter: EventEmitter<AppEvents>;
+	private stateManager: StateManager;
 
 	// --- For new HotSandboxNoteView ---
-	private hotNotesContent = new Map<string, string>();
 	private hotActiveViews = new Map<string, Set<AbstractNoteView>>();
 
-	constructor(emitter: EventEmitter<AppEvents>) {
+	constructor(emitter: EventEmitter<AppEvents>, stateManager: StateManager) {
 		this.emitter = emitter;
+		this.stateManager = stateManager;
 	}
 
 	public load(): void {
@@ -24,6 +26,7 @@ export class EditorSyncManager implements Manager {
 		);
 		this.emitter.on("view-opened", this.handleViewOpened);
 		this.emitter.on("view-closed", this.handleViewClosed);
+		this.emitter.on("settings-changed", this.handleSettingsChanged);
 	}
 
 	public unload(): void {
@@ -33,7 +36,12 @@ export class EditorSyncManager implements Manager {
 		);
 		this.emitter.off("view-opened", this.handleViewOpened);
 		this.emitter.off("view-closed", this.handleViewClosed);
+		this.emitter.off("settings-changed", this.handleSettingsChanged);
 	}
+
+	private handleSettingsChanged = () => {
+		this.refreshAllViewTitles();
+	};
 
 	private handleViewOpened = (payload: AppEvents["view-opened"]) => {
 		const { view } = payload;
@@ -68,7 +76,10 @@ export class EditorSyncManager implements Manager {
 	};
 
 	public getGroupNumber(noteGroupId: string): number {
-		const sortedGroupIds = Array.from(this.hotNotesContent.keys()).sort();
+		const sortedGroupIds = this.stateManager
+			.getAllHotNotes()
+			.map((n) => n.id)
+			.sort();
 		const groupIndex = sortedGroupIds.indexOf(noteGroupId);
 		return groupIndex !== -1 ? groupIndex + 1 : 0;
 	}
@@ -81,21 +92,8 @@ export class EditorSyncManager implements Manager {
 		}
 	}
 
-	public registerNewHotNote(noteGroupId: string) {
-		if (!this.hotNotesContent.has(noteGroupId)) {
-			this.hotNotesContent.set(noteGroupId, "");
-			log.debug(`Registered new hot note group: ${noteGroupId}`);
-		}
-	}
-
-	public setInitialHotNotes(notes: { id: string; content: string }[]) {
-		for (const note of notes) {
-			this.hotNotesContent.set(note.id, note.content);
-		}
-	}
-
 	public getHotNoteContent(noteGroupId: string): string {
-		return this.hotNotesContent.get(noteGroupId) ?? "";
+		return this.stateManager.getHotNoteContent(noteGroupId);
 	}
 
 	public addHotActiveView(view: HotSandboxNoteView) {
@@ -141,7 +139,6 @@ export class EditorSyncManager implements Manager {
 		content: string,
 		sourceView: AbstractNoteView
 	) {
-		this.hotNotesContent.set(noteGroupId, content);
 		log.debug(`Syncing hot sandbox note content for group: ${noteGroupId}`);
 
 		const viewSet = this.hotActiveViews.get(noteGroupId);
@@ -156,7 +153,6 @@ export class EditorSyncManager implements Manager {
 	}
 
 	public clearHotNoteData(noteGroupId: string) {
-		this.hotNotesContent.delete(noteGroupId);
 		this.hotActiveViews.delete(noteGroupId);
 	}
 }

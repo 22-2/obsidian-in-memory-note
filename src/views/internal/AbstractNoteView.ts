@@ -168,7 +168,6 @@ export abstract class AbstractNoteView extends ItemView {
 			cls: "sandbox-error-message",
 		});
 	}
-
 	private setupEventHandlers() {
 		if (!this.editor) return;
 
@@ -193,7 +192,8 @@ export abstract class AbstractNoteView extends ItemView {
 				return true; // Continue with default behavior
 			}
 
-			if (this.plugin.data.settings.enableCtrlS) {
+			if (this.plugin.stateManager.getSettings().enableCtrlS) {
+				// 変更
 				e.preventDefault();
 				e.stopPropagation();
 				log.debug("Saving note via Ctrl+S");
@@ -205,7 +205,8 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	public updateActionButtons() {
-		if (!this.plugin.data.settings.enableAutoSave) {
+		const settings = this.plugin.stateManager.getSettings(); // 変更
+		if (!settings.enableAutoSave) {
 			this.saveActionEl?.hide();
 			return;
 		}
@@ -218,7 +219,7 @@ export abstract class AbstractNoteView extends ItemView {
 		this.saveActionEl?.show();
 
 		const shouldShowUnsaved =
-			this.plugin.data.settings.enableAutoSave && this.hasUnsavedChanges;
+			settings.enableAutoSave && this.hasUnsavedChanges;
 
 		this.saveActionEl?.toggleClass("is-disabled", !shouldShowUnsaved);
 		this.saveActionEl?.setAttribute(

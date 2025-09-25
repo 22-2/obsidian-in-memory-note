@@ -9,7 +9,7 @@
 		"check-types": "tsc -noEmit -skipLibCheck",
 		"repomix": "pnpm dlx repomix && code ./repomix-output.md",
 		"test": "vitest",
-		"version:full": "node version-bump.ext.mjs all"
+		"version:full": "pnpm dlx tsx version-bump.ext.mts all"
 	},
 	"keywords": [],
 	"author": "22-2",
@@ -17,6 +17,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.2.4",
 		"@types/node": "24.5.2",
+		"@types/semver": "^7.7.1",
 		"builtin-modules": "5.0.0",
 		"dotenv": "^17.2.2",
 		"esbuild": "0.25.10",

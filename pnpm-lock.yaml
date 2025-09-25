@@ -24,6 +24,9 @@ importers:
       '@types/node':
         specifier: 24.5.2
         version: 24.5.2
+      '@types/semver':
+        specifier: ^7.7.1
+        version: 7.7.1
       builtin-modules:
         specifier: 5.0.0
         version: 5.0.0
@@ -910,6 +913,9 @@ packages:
 
   '@types/responselike@1.0.3':
     resolution: {integrity: sha512-H/+L+UkTV33uf49PH5pCAUBVPNj2nDBXTN+qS1dOwyyg24l3CcicicCA7ca+HMvJBZcFgl5r8e+RR6elsb4Lyw==}
+
+  '@types/semver@7.7.1':
+    resolution: {integrity: sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA==}
 
   '@types/tern@0.23.9':
     resolution: {integrity: sha512-ypzHFE/wBzh+BlH6rrBgS5I/Z7RD21pGhZ2rltb/+ZrVM1awdZwjx7hE5XfuYgHWk9uvV5HLZN3SloevCAp3Bw==}
@@ -2744,6 +2750,8 @@ snapshots:
   '@types/responselike@1.0.3':
     dependencies:
       '@types/node': 24.5.2
+
+  '@types/semver@7.7.1': {}
 
   '@types/tern@0.23.9':
     dependencies:

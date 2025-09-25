@@ -4,6 +4,7 @@ import { noop } from "src/utils";
 import type { AbstractNoteView } from "./AbstractNoteView";
 import { VirtualMarkdownView } from "./VirtualMarkdownView";
 import log from "loglevel";
+import type { AbstractNoteViewState } from "./types";
 
 /** Manages inline MarkdownView without physical file. */
 export class EditorWrapper {
@@ -15,7 +16,10 @@ export class EditorWrapper {
 	constructor(public parentView: AbstractNoteView) {}
 
 	/** Initialize the editor and load content. */
-	async initialize(target: HTMLElement, initialState: any) {
+	async initialize(
+		target: HTMLElement,
+		initialState: AbstractNoteViewState | null
+	) {
 		await this.onload(); // Create virtual editor
 		const editorContainer = target.createEl("div", {
 			cls: "sandbox-note-container",

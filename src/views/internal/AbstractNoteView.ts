@@ -18,10 +18,11 @@ import { convertToFileAndClear } from "./utils";
 import type { StateManager } from "src/managers/StateManager";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
+import type { AbstractNoteViewState, ObsidianViewState } from "./types";
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
-	private initialState: any = null;
+	private initialState: AbstractNoteViewState | null = null;
 	private saveActionEl!: HTMLElement;
 	public isSourceMode = true;
 	public masterNoteId: string | null = null;
@@ -57,22 +58,25 @@ export abstract class AbstractNoteView extends ItemView {
 		return shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
 	}
 
-	public override getState(): any {
-		const state = super.getState();
+	public override getState(): AbstractNoteViewState {
+		const state: AbstractNoteViewState = {
+			...(super.getState() as ObsidianViewState),
+			type: this.getViewType(),
+			state: {
+				masterNoteId: "",
+				content: "",
+			},
+		};
 
-		state.masterNoteId = this.masterNoteId;
-
-		if (this.editor) {
-			const editorState = MarkdownView.prototype.getState.call(
-				this.wrapper.virtualEditor
-			);
-			Object.assign(state, editorState);
-			state.content = this.editor.getValue();
-			state.source = this.isSourceMode;
+		if (this.masterNoteId) {
+			state.state.masterNoteId = this.masterNoteId;
 		} else {
-			state.content = this.wrapper.getContent();
-			state.source = this.isSourceMode;
+			log.error("masterNoteId not found in state, creating new one.");
+			state.state.masterNoteId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
 		}
+
+		state.state.content = this.editor.getValue();
+		state.source = this.isSourceMode;
 		return state;
 	}
 
@@ -93,7 +97,7 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	public override async setState(
-		state: any,
+		state: AbstractNoteViewState,
 		result: ViewStateResult
 	): Promise<void> {
 		if (state?.masterNoteId) {
@@ -118,6 +122,8 @@ export abstract class AbstractNoteView extends ItemView {
 			// @ts-ignore
 			result.close = false;
 		}
+		log.debug("setState.state", state);
+		log.debug("setState.result", result);
 		await super.setState(state, result);
 	}
 

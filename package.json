@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "pnpm dlx tsx esbuild.config.mts",
 		"build": "pnpm dlx tsx esbuild.config.mts production",
+		"build:e2e": "pnpm dlx tsx esbuild.config.mts e2e",
 		"check-types": "tsc -noEmit -skipLibCheck",
 		"repomix": "pnpm dlx repomix && code ./repomix-output.md",
 		"test": "vitest",

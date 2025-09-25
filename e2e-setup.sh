@@ -1,115 +1,112 @@
-#!/bin/bash
-# e2e-setup.sh
-# This script prepares the Obsidian E2E testing environment for macOS and Linux.
-# It unpacks Obsidian, builds the plugin, links it to the test vault,
-# and prompts the user to manually set up the vault in the unpacked Obsidian.
+#!/usr/bin/env bash
 
-# Strict mode for error handling
-set -euo pipefail
+# e2e-setup.sh
+# This script prepares the Obsidian E2E testing environment for Unix-like systems.
+
+# Exit immediately if a command exits with a non-zero status.
+set -e
 
 # --- Configuration ---
-# You might need to adjust this path based on your Obsidian installation
-# macOS example:
-OBSIDIAN_APP_PATH="/Applications/Obsidian.app/Contents/MacOS/Obsidian"
-# Linux AppImage example (run `./Obsidian-x.x.x.AppImage --appimage-extract` first, then point to the extracted executable):
-# OBSIDIAN_APP_PATH="/path/to/squashfs-root/obsidian"
-# Linux deb/rpm example:
-# OBSIDIAN_APP_PATH="/opt/Obsidian/obsidian"
-
-VAULT_NAME="e2e-vault" # Name for the test vault
+# ご自身の環境に合わせてこれらのパスを調整してください
+# Windows (Git Bash): "/c/Users/YourUser/AppData/Local/Programs/obsidian/Obsidian.exe"
+# macOS: "/Applications/Obsidian.app"
+# Linux: "/path/to/Obsidian.AppImage"
+OBSIDIAN_PATH="/c/Users/17890/AppData/Local/Programs/obsidian/Obsidian.exe"
+VAULT_NAME="e2e-vault"
+# モノレポのルートディレクトリからの、プラグインソースディレクトリへの相対パス
+PLUGIN_SOURCE_DIR="./"
 # --- End Configuration ---
 
-# --- Helper Functions for colored output ---
-info() { echo -e "\033[0;32m$1\033[0m"; }
-warn() { echo -e "\033[0;33m$1\033[0m"; }
-error() { echo -e "\033[0;31mError: $1\033[0m" >&2; exit 1; }
-prompt() { echo -e "\033[0;36m$1\033[0m"; }
+# --- Helper for colored output ---
+COLOR_GREEN='\033[0;32m'
+COLOR_YELLOW='\033[0;33m'
+COLOR_CYAN='\033[0;36m'
+COLOR_RED='\033[0;31m'
+COLOR_NC='\033[0m' # No Color
 
-# Resolve script directory (assumed to be the monorepo root)
-SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
-
-# --- 1. Get Plugin Info from manifest.json ---
-info "Reading plugin info from manifest.json..."
-MANIFEST_PATH="$SCRIPT_DIR/apps/obsidian-plugin/manifest.json"
-
+# --- Prerequisite Check ---
 if ! command -v jq &> /dev/null; then
-    error "jq is not installed. Please install it to parse manifest.json (e.g., 'brew install jq' or 'sudo apt-get install jq')."
-fi
-if [ ! -f "$MANIFEST_PATH" ]; then
-    error "manifest.json not found at '$MANIFEST_PATH'."
+    echo -e "${COLOR_RED}Error: 'jq' is not installed. Please install it to proceed.${COLOR_NC}"
+    exit 1
 fi
 
-PLUGIN_ID=$(jq -r '.id' "$MANIFEST_PATH")
-PLUGIN_NAME=$(jq -r '.name' "$MANIFEST_PATH")
+# --- Derived Paths and Variables ---
+# スクリプトの場所（= モノレポのルート）を基準に各パスを解決
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+PLUGIN_SOURCE_FULL_PATH="${SCRIPT_DIR}/${PLUGIN_SOURCE_DIR}"
+PLUGIN_MANIFEST_PATH="${PLUGIN_SOURCE_FULL_PATH}/manifest.json"
+
+# --- 1. Read Plugin Manifest ---
+echo -e "${COLOR_CYAN}Reading plugin info from ${PLUGIN_MANIFEST_PATH}...${COLOR_NC}"
+if [ ! -f "$PLUGIN_MANIFEST_PATH" ]; then
+    echo -e "${COLOR_RED}Error: Plugin manifest not found at '${PLUGIN_MANIFEST_PATH}'. Please check the 'PLUGIN_SOURCE_DIR' configuration.${COLOR_NC}"
+    exit 1
+fi
+PLUGIN_ID=$(jq -r '.id' "$PLUGIN_MANIFEST_PATH")
+PLUGIN_NAME=$(jq -r '.name' "$PLUGIN_MANIFEST_PATH")
 
 if [ -z "$PLUGIN_ID" ] || [ "$PLUGIN_ID" == "null" ]; then
-    error "Could not read plugin 'id' from '$MANIFEST_PATH'."
+    echo -e "${COLOR_RED}Error: Could not read 'id' from '${PLUGIN_MANIFEST_PATH}'.${COLOR_NC}"
+    exit 1
 fi
+echo "  - Plugin ID: ${PLUGIN_ID}"
+echo "  - Plugin Name: ${PLUGIN_NAME}"
 
-echo "  - Plugin ID: $PLUGIN_ID"
-echo "  - Plugin Name: $PLUGIN_NAME"
-info "Done."
-
-# --- Resolve Paths (after getting plugin ID) ---
-VAULT_PATH="$SCRIPT_DIR/$VAULT_NAME"
-OBSIDIAN_UNPACKED_PATH="$SCRIPT_DIR/.obsidian-unpacked"
-PLUGIN_PATH="$VAULT_PATH/.obsidian/plugins/$PLUGIN_ID" # Dynamically set path
+# --- Resolve remaining paths using plugin info ---
+VAULT_PATH="${SCRIPT_DIR}/${VAULT_NAME}"
+OBSIDIAN_UNPACKED_PATH="${SCRIPT_DIR}/.obsidian-unpacked"
+PLUGIN_BUILD_DIR="${PLUGIN_SOURCE_FULL_PATH}/dist"
+PLUGIN_LINK_PATH="${VAULT_PATH}/.obsidian/plugins/${PLUGIN_ID}"
 
 # --- Path Validation ---
-if [ ! -x "$OBSIDIAN_APP_PATH" ]; then
-    error "Obsidian executable not found or not executable at '$OBSIDIAN_APP_PATH'. Please update the script with the correct path."
-fi
 if [ ! -d "$VAULT_PATH" ]; then
     echo "Creating test vault directory: $VAULT_PATH"
     mkdir -p "$VAULT_PATH"
 fi
 
 # --- 2. Unpack Obsidian ---
-info "\nUnpacking Obsidian from '$OBSIDIAN_APP_PATH' to '$OBSIDIAN_UNPACKED_PATH'..."
+echo -e "\n${COLOR_GREEN}Unpacking Obsidian...${COLOR_NC}"
 rm -rf "$OBSIDIAN_UNPACKED_PATH"
 
-# Determine the path to asar files. This logic works for macOS and some Linux installations.
-OBSIDIAN_BASE_DIR=$(dirname "$OBSIDIAN_APP_PATH")
-# On macOS, it's typically in ../Resources
-ASAR_PATH="$OBSIDIAN_BASE_DIR/../Resources/app.asar"
-OBSIDIAN_ASAR_PATH="$OBSIDIAN_BASE_DIR/../Resources/obsidian.asar"
-# A fallback for some Linux structures
-if [ ! -f "$ASAR_PATH" ]; then
-    ASAR_PATH="$OBSIDIAN_BASE_DIR/resources/app.asar"
-    OBSIDIAN_ASAR_PATH="$OBSIDIAN_BASE_DIR/resources/obsidian.asar"
+# OSごとにasarファイルの場所を特定
+if [[ "$OSTYPE" == "darwin"* ]]; then # macOS
+    ASAR_PATH="${OBSIDIAN_PATH}/Contents/Resources/app.asar"
+else # Windows or Linux
+    OBSIDIAN_BASE_DIR=$(dirname "$OBSIDIAN_PATH")
+    ASAR_PATH="${OBSIDIAN_BASE_DIR}/resources/app.asar"
 fi
+
 if [ ! -f "$ASAR_PATH" ]; then
-    error "app.asar not found at expected paths. For AppImage, you need to extract it first with --appimage-extract."
+    echo -e "${COLOR_RED}Error: app.asar not found at '${ASAR_PATH}'. Please verify your Obsidian installation path.${COLOR_NC}"
+    exit 1
 fi
+OBSIDIAN_ASAR_PATH=$(dirname "$ASAR_PATH")/obsidian.asar
 
 npx @electron/asar extract "$ASAR_PATH" "$OBSIDIAN_UNPACKED_PATH"
 cp "$OBSIDIAN_ASAR_PATH" "$OBSIDIAN_UNPACKED_PATH/"
-info "Done."
+echo -e "${COLOR_GREEN}Done.${COLOR_NC}"
 
 # --- 3. Build Plugin ---
-info "\nBuilding plugin..."
+echo -e "\n${COLOR_GREEN}Building plugin...${COLOR_NC}"
 (cd "$SCRIPT_DIR" && pnpm build)
-info "Done."
+echo -e "${COLOR_GREEN}Done.${COLOR_NC}"
 
 # --- 4. Link Built Plugin ---
-info "\nLinking built plugin to '$PLUGIN_PATH'..."
-mkdir -p "$(dirname "$PLUGIN_PATH")"
-# Use ln -sf to create/update the symbolic link
-ln -sf "$SCRIPT_DIR/apps/obsidian-plugin/dist" "$PLUGIN_PATH"
-info "Done."
+echo -e "\n${COLOR_GREEN}Linking built plugin to ${PLUGIN_LINK_PATH}...${COLOR_NC}"
+mkdir -p "$(dirname "$PLUGIN_LINK_PATH")"
+ln -sfn "$PLUGIN_BUILD_DIR" "$PLUGIN_LINK_PATH"
+echo -e "${COLOR_GREEN}Done.${COLOR_NC}"
 
 # --- 5. Launch Unpacked Obsidian and Manual Setup Prompt ---
-warn "\nObsidian will now start. Please:"
-warn "  - Open '$VAULT_PATH' as a vault,"
-warn "  - Go to 'Settings -> Community plugins',"
-warn "  - Turn 'Restricted mode' OFF,"
-warn "  - Enable the '$PLUGIN_NAME' plugin," # Use plugin name from manifest
-warn "  - Then close Obsidian."
-prompt "Press [ENTER] to continue..."
+echo -e "\n${COLOR_YELLOW}Obsidian will now start. Please perform the following manual setup:${COLOR_NC}"
+echo -e "${COLOR_YELLOW}  1. Open '${VAULT_PATH}' as a vault.${COLOR_NC}"
+echo -e "${COLOR_YELLOW}  2. Go to 'Settings -> Community plugins'.${COLOR_NC}"
+echo -e "${COLOR_YELLOW}  3. Turn 'Restricted mode' OFF.${COLOR_NC}"
+echo -e "${COLOR_YELLOW}  4. Enable the '${PLUGIN_NAME}' plugin.${COLOR_NC}"
+echo -e "${COLOR_YELLOW}  5. Close Obsidian to continue.${COLOR_NC}"
+read -p "$(echo -e ${COLOR_CYAN}Press [ENTER] to launch Obsidian...${COLOR_NC})"
 
-read -r
+echo -e "\n${COLOR_GREEN}Launching unpacked Obsidian for manual setup...${COLOR_NC}"
+npx electron "${OBSIDIAN_UNPACKED_PATH}/main.js"
 
-info "\nLaunching unpacked Obsidian for manual setup..."
-npx electron "$OBSIDIAN_UNPACKED_PATH/main.js"
-
-info "\nManual setup completed. You can now run your Playwright tests."
+echo -e "\n${COLOR_GREEN}Setup process finished. You can now run your Playwright tests.${COLOR_NC}"

@@ -2,7 +2,7 @@
 import { MarkdownView, WorkspaceLeaf } from "obsidian";
 import type { EditorWrapper } from "./EditorWrapper";
 
-export class UnsafeMarkdownView extends MarkdownView {
+export class VirtualMarkdownView extends MarkdownView {
 	constructor(leaf: WorkspaceLeaf, public wrapper: EditorWrapper) {
 		super(leaf);
 	}

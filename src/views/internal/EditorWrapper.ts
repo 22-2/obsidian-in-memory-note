@@ -2,12 +2,12 @@
 import { type ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { noop } from "../../utils/noop";
 import type { AbstractNoteView } from "./AbstractNoteView";
-import { UnsafeMarkdownView } from "./UnsafeMarkdownView";
+import { VirtualMarkdownView } from "./VirtualMarkdownView";
 import log from "loglevel";
 
 /** Manages inline MarkdownView without physical file. */
 export class EditorWrapper {
-	public virtualEditor!: UnsafeMarkdownView;
+	public virtualEditor!: VirtualMarkdownView;
 	containerEl!: HTMLDivElement;
 	public targetEl: HTMLElement | null = null;
 	private content = "";
@@ -84,7 +84,7 @@ export class EditorWrapper {
 		this.containerEl = document.createElement("div");
 		this.containerEl.addClasses(["sandbox-inline-editor"]);
 
-		this.virtualEditor = new UnsafeMarkdownView(
+		this.virtualEditor = new VirtualMarkdownView(
 			this.createFakeLeaf(),
 			this
 		);

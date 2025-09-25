@@ -9,7 +9,7 @@ import {
 } from "vitest";
 import SandboxNotePlugin from "../main";
 import { App, Notice } from "obsidian";
-import { UnsafeMarkdownView } from "../views/internal/UnsafeMarkdownView";
+import { VirtualMarkdownView } from "../views/internal/VirtualMarkdownView";
 
 vi.mock("../views/internal/UnsafeMarkdownView", () => {
 	const UnsafeMarkdownView = vi.fn();
@@ -94,7 +94,7 @@ describe("SandboxNotePlugin", () => {
 	});
 
 	it("should proceed with initialization if compatibility check passes", async () => {
-		(UnsafeMarkdownView as Mock).mockImplementation(() => ({
+		(VirtualMarkdownView as Mock).mockImplementation(() => ({
 			unload: vi.fn(),
 		}));
 

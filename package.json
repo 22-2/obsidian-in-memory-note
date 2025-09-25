@@ -14,7 +14,11 @@
 		"version:full": "pnpm dlx tsx version-bump.ext.mts all",
 		"test:e2e": "playwright test",
 		"test:e2e:ui": "playwright test --ui",
-		"test:e2e:debug": "cross-env DEBUG=pw:api playwright test"
+		"test:e2e:debug": "cross-env DEBUG=pw:api playwright test",
+		"prepare": "husky",
+		"check-os": "pnpm dlx tsx scripts/check-os.ts",
+		"e2e:run-and-log": "pnpm dlx tsx scripts/run-test-and-log.ts",
+		"precommit:windows-only": "pnpm run check-os && pnpm run e2e:run-and-log"
 	},
 	"keywords": [],
 	"author": "22-2",

@@ -22,15 +22,15 @@ import { EditorWrapper } from "./EditorWrapper";
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
-	plugin: SandboxNotePlugin;
-	public wrapper: EditorWrapper;
-	saveActionEl!: HTMLElement;
 	private initialState: any = null;
+	private saveActionEl!: HTMLElement;
+	protected plugin: SandboxNotePlugin;
 	public isSourceMode = true;
 	public noteGroupId: string | null = null; // ここで初期値としてnullを設定
 	public scope: Scope;
+	public wrapper: EditorWrapper;
 
-	navigation = true;
+	public navigation = true;
 
 	constructor(leaf: WorkspaceLeaf, plugin: SandboxNotePlugin) {
 		super(leaf);
@@ -39,38 +39,26 @@ export abstract class AbstractNoteView extends ItemView {
 		this.scope = new Scope(this.app.scope);
 	}
 
-	get editor() {
+	public get editor() {
 		return this.wrapper.virtualEditor?.editor;
 	}
 
-	abstract getViewType(): string;
-	abstract loadInitialContent(): Promise<string>;
-	abstract save(): Promise<void>;
-	abstract getBaseTitle(): string;
-	abstract get hasUnsavedChanges(): boolean;
-	abstract getContent(): string;
-	abstract handleSaveRequest(): Promise<void>;
+	protected abstract get hasUnsavedChanges(): boolean;
+	protected abstract getBaseTitle(): string;
+	protected abstract handleSaveRequest(): Promise<void>;
+	protected abstract loadInitialContent(): Promise<string>;
+	public abstract getContent(): string;
+	public abstract getIcon(): string;
+	public abstract getViewType(): string;
+	public abstract save(): Promise<void>;
 
-	getDisplayText(): string {
+	public override getDisplayText(): string {
 		const baseTitle = this.getBaseTitle();
 		const shouldShowUnsaved = this.hasUnsavedChanges;
 		return shouldShowUnsaved ? `*${baseTitle}` : baseTitle;
 	}
 
-	getIcon() {
-		return SANDBOX_NOTE_ICON;
-	}
-
-	setContent(content: string) {
-		if (this.editor && this.editor.getValue() !== content) {
-			this.editor.setValue(content);
-			// The central manager now handles the unsaved state.
-			// Refresh the tab title to reflect any state changes from the manager.
-			this.leaf.updateHeader();
-		}
-	}
-
-	getState(): any {
+	public override getState(): any {
 		const state = super.getState();
 
 		// Add the note group ID to the state
@@ -90,7 +78,35 @@ export abstract class AbstractNoteView extends ItemView {
 		return state;
 	}
 
-	async setState(state: any, result: ViewStateResult): Promise<void> {
+	public override async onOpen() {
+		// super.onOpen() の呼び出しは AbstractNoteView の最後に移動させるか、
+		// ここで最初に呼び出すようにする。
+		// ここでは setState が確実に実行されるように、このクラスの setState が呼ばれる前に
+		// leaf.setViewState が呼ばれることを期待する。
+		// しかし、leaf.setViewState は AbstractNoteView の setState の中から呼ばれるので、
+		// super.onOpen() を最初に呼ぶのが一番安全です。
+
+		this.registerActiveLeafEvents();
+
+		try {
+			await this.wrapper.initialize(this.contentEl, this.initialState);
+			this.initialState = null;
+			this.setupEventHandlers();
+			this.plugin.editorPluginConnector.connectEditorPluginToView(this);
+		} catch (error) {
+			this.handleInitializationError(error);
+		}
+	}
+
+	public override async onClose() {
+		this.wrapper.unload();
+		this.contentEl.empty();
+	}
+
+	public override async setState(
+		state: any,
+		result: ViewStateResult
+	): Promise<void> {
 		// noteGroupIdの初期化をここで行う
 		if (state?.noteGroupId) {
 			this.noteGroupId = state.noteGroupId;
@@ -115,27 +131,10 @@ export abstract class AbstractNoteView extends ItemView {
 		await super.setState(state, result);
 	}
 
-	async onOpen() {
-		// super.onOpen() の呼び出しは AbstractNoteView の最後に移動させるか、
-		// ここで最初に呼び出すようにする。
-		// ここでは setState が確実に実行されるように、このクラスの setState が呼ばれる前に
-		// leaf.setViewState が呼ばれることを期待する。
-		// しかし、leaf.setViewState は AbstractNoteView の setState の中から呼ばれるので、
-		// super.onOpen() を最初に呼ぶのが一番安全です。
-
-		this.registerActiveLeafEvents();
-
-		try {
-			await this.wrapper.initialize(this.contentEl, this.initialState);
-			this.initialState = null;
-			this.setupEventHandlers();
-			this.plugin.editorPluginConnector.connectEditorPluginToView(this);
-		} catch (error) {
-			this.handleInitializationError(error);
-		}
-	}
-
-	onPaneMenu(menu: Menu, source: "more-options" | "tab-header" | string) {
+	public override onPaneMenu(
+		menu: Menu,
+		source: "more-options" | "tab-header" | string
+	) {
 		menu.addItem((item) =>
 			item
 				.setTitle("Convert to file")
@@ -154,7 +153,16 @@ export abstract class AbstractNoteView extends ItemView {
 		);
 	}
 
-	async convertToFileAndClear() {
+	public setContent(content: string) {
+		if (this.editor && this.editor.getValue() !== content) {
+			this.editor.setValue(content);
+			// The central manager now handles the unsaved state.
+			// Refresh the tab title to reflect any state changes from the manager.
+			this.leaf.updateHeader();
+		}
+	}
+
+	public async convertToFileAndClear() {
 		try {
 			const content = this.getContent();
 			const baseTitle = this.getBaseTitle();
@@ -228,7 +236,7 @@ export abstract class AbstractNoteView extends ItemView {
 		});
 	}
 
-	updateActionButtons() {
+	public updateActionButtons() {
 		if (!this.plugin.data.settings.enableAutoSave) {
 			this.saveActionEl?.hide();
 			return;
@@ -249,10 +257,5 @@ export abstract class AbstractNoteView extends ItemView {
 			"aria-disabled",
 			String(!shouldShowUnsaved)
 		);
-	}
-
-	async onClose() {
-		this.wrapper.unload();
-		this.contentEl.empty();
 	}
 }

@@ -78,7 +78,7 @@ export class HotSandboxNoteView extends AbstractNoteView {
 		await super.onOpen();
 	}
 
-	async onSaveRequested(): Promise<void> {
+	async handleSaveRequest(): Promise<void> {
 		log.debug("not implmented");
 	}
 

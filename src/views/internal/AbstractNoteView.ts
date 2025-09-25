@@ -49,7 +49,7 @@ export abstract class AbstractNoteView extends ItemView {
 	abstract getBaseTitle(): string;
 	abstract get hasUnsavedChanges(): boolean;
 	abstract getContent(): string;
-	abstract onSaveRequested(): Promise<void>;
+	abstract handleSaveRequest(): Promise<void>;
 
 	getDisplayText(): string {
 		const baseTitle = this.getBaseTitle();
@@ -224,7 +224,7 @@ export abstract class AbstractNoteView extends ItemView {
 		);
 
 		this.scope.register(["Mod"], "s", () => {
-			this.onSaveRequested();
+			this.handleSaveRequest();
 		});
 	}
 

@@ -22,7 +22,7 @@ try {
 
 	// 3. テストを実行し、出力をキャプチャ
 	// pnpm run test コマンドを実行し、標準出力と標準エラーをまとめて取得
-	const testCommand = "pnpm run test -- --silent --reporter dot";
+	const testCommand = "pnpm run test:e2e -- --silent --reporter=line";
 
 	// 標準入出力は親プロセスに引き継ぎ、テスト自体の実行結果をキャプチャ
 	const output = execSync(testCommand, {

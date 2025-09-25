@@ -4,6 +4,7 @@ import {
 	MarkdownView,
 	Menu,
 	Notice,
+	Scope,
 	type ViewStateResult,
 	WorkspaceLeaf,
 } from "obsidian";
@@ -27,6 +28,7 @@ export abstract class AbstractNoteView extends ItemView {
 	private initialState: any = null;
 	public isSourceMode = true;
 	public noteGroupId: string | null = null; // ここで初期値としてnullを設定
+	public scope: Scope;
 
 	navigation = true;
 
@@ -34,6 +36,7 @@ export abstract class AbstractNoteView extends ItemView {
 		super(leaf);
 		this.plugin = plugin;
 		this.wrapper = new EditorWrapper(this);
+		this.scope = new Scope(this.app.scope);
 	}
 
 	get editor() {
@@ -219,15 +222,10 @@ export abstract class AbstractNoteView extends ItemView {
 			handleContextMenu(e, this.wrapper.virtualEditor.editMode)
 		);
 
-		// Use the capture phase to reliably catch the Ctrl+S hotkey, which is otherwise difficult to intercept in Obsidian.
-		this.registerDomEvent(
-			window,
-			"keydown",
-			(e) => handleKeyDown(e, this),
-			{
-				capture: true,
-			}
-		);
+		this.scope.register(["Mod"], "s", () => {
+			this.save();
+			log.debug("saved!");
+		});
 	}
 
 	updateActionButtons() {

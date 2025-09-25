@@ -77,40 +77,40 @@ export class HotSandboxNoteView extends AbstractNoteView {
 		await super.onOpen();
 	}
 
-	// async onClose() {
-	// 	if (!this.noteGroupId) {
-	// 		log.error("invalid noteGroupId in HotSandboxNoteView.close()");
-	// 		new Notice("Invalid noteGroupId in HotSandboxNoteView.close()");
-	// 		return;
-	// 	}
+	async onClose() {
+		// if (!this.noteGroupId) {
+		// 	log.error("invalid noteGroupId in HotSandboxNoteView.close()");
+		// 	new Notice("Invalid noteGroupId in HotSandboxNoteView.close()");
+		// 	return;
+		// }
 
-	// 	const isLastView = this.plugin.editorSyncManager.isLastHotView(this);
-	// 	if (isLastView) {
-	// 		const confirmed = await showConfirmModal(
-	// 			this.app,
-	// 			"Delete Sandbox",
-	// 			"Are you sure you want to delete this sandbox?"
-	// 		);
-	// 		if (confirmed) {
-	// 			log.debug(
-	// 				`Deleting hot sandbox note content for group: ${this.noteGroupId}`
-	// 			);
-	// 			await this.plugin.databaseManager.deleteNote(this.noteGroupId);
-	// 			this.plugin.editorSyncManager.clearHotNoteData(
-	// 				this.noteGroupId
-	// 			);
-	// 		} else {
-	// 			// User cancelled, but the tab will still close.
-	// 			// The data remains in the DB for the next session.
-	// 			log.debug(
-	// 				`User cancelled deletion for hot sandbox note: ${this.noteGroupId}`
-	// 			);
-	// 		}
-	// 	}
+		// const isLastView = this.plugin.editorSyncManager.isLastHotView(this);
+		// if (isLastView) {
+		// 	const confirmed = await showConfirmModal(
+		// 		this.app,
+		// 		"Delete Sandbox",
+		// 		"Are you sure you want to delete this sandbox?"
+		// 	);
+		// 	if (confirmed) {
+		// 		log.debug(
+		// 			`Deleting hot sandbox note content for group: ${this.noteGroupId}`
+		// 		);
+		// 		await this.plugin.databaseManager.deleteNote(this.noteGroupId);
+		// 		this.plugin.editorSyncManager.clearHotNoteData(
+		// 			this.noteGroupId
+		// 		);
+		// 	} else {
+		// 		// User cancelled, but the tab will still close.
+		// 		// The data remains in the DB for the next session.
+		// 		log.debug(
+		// 			`User cancelled deletion for hot sandbox note: ${this.noteGroupId}`
+		// 		);
+		// 	}
+		// }
 
-	// 	this.plugin.editorSyncManager.removeHotActiveView(this);
-	// 	await super.onClose();
-	// }
+		this.plugin.editorSyncManager.removeHotActiveView(this);
+		await super.onClose();
+	}
 
 	// HotSandboxNoteView doesn't need the save button in the header,
 	// as saving is fully automatic.

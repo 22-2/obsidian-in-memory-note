@@ -39,6 +39,8 @@ export class AppEventManager implements Manager {
 				this.saveManager.debouncedSave(sourceView);
 			}
 		}
+		this.editorSyncManager.refreshAllViewTitles();
+		this.editorSyncManager.refreshAllViewActionButtons();
 	};
 
 	private onSaveRequested = (payload: AppEvents["save-requested"]) => {
@@ -60,11 +62,6 @@ export class AppEventManager implements Manager {
 		this.editorSyncManager.markAsSaved();
 	};
 
-	private onUnsavedStateChanged = () => {
-		this.editorSyncManager.refreshAllViewTitles();
-		this.editorSyncManager.refreshAllViewActionButtons();
-	};
-
 	constructor(
 		emitter: EventEmitter<AppEvents>,
 		editorSyncManager: EditorSyncManager,
@@ -81,13 +78,11 @@ export class AppEventManager implements Manager {
 		this.emitter.on("editor-content-changed", this.onEditorContentChanged);
 		this.emitter.on("save-requested", this.onSaveRequested);
 		this.emitter.on("content-saved", this.onContentSaved);
-		this.emitter.on("unsaved-state-changed", this.onUnsavedStateChanged);
 	}
 
 	public unload(): void {
 		this.emitter.off("editor-content-changed", this.onEditorContentChanged);
 		this.emitter.off("save-requested", this.onSaveRequested);
 		this.emitter.off("content-saved", this.onContentSaved);
-		this.emitter.off("unsaved-state-changed", this.onUnsavedStateChanged);
 	}
 }

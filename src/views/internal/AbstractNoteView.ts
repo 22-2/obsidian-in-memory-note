@@ -156,9 +156,6 @@ export abstract class AbstractNoteView extends ItemView {
 	public setContent(content: string) {
 		if (this.editor && this.editor.getValue() !== content) {
 			this.editor.setValue(content);
-			// The central manager now handles the unsaved state.
-			// Refresh the tab title to reflect any state changes from the manager.
-			this.leaf.updateHeader();
 		}
 	}
 

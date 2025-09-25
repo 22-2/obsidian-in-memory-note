@@ -1,5 +1,7 @@
 // src/utils/EventEmitter.ts
 
+import log from "loglevel";
+
 type Listener<T> = (payload: T) => void;
 
 export class EventEmitter<Events extends object> {
@@ -21,6 +23,7 @@ export class EventEmitter<Events extends object> {
     }
 
     emit<K extends keyof Events>(event: K, payload: Events[K]): void {
+		log.debug(`Emitting event: ${event.toString()}`, payload);
         this.listeners[event]?.forEach((l) => l(payload));
     }
 }

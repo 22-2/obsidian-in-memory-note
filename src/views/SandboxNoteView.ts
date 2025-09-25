@@ -23,7 +23,7 @@ export class SandboxNoteView extends AbstractNoteView {
 	}
 
 	get hasUnsavedChanges(): boolean {
-		return this.plugin.editorSyncManager.hasUnsavedChanges;
+		return this.plugin.saveManager.hasUnsavedChanges;
 	}
 
 	save(): void {

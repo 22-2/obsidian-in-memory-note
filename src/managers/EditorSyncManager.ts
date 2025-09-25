@@ -12,8 +12,6 @@ export class EditorSyncManager implements Manager {
 
 	// --- For original SandboxNoteView ---
 	currentSharedNoteContent = "";
-	lastSavedContent = "";
-	hasUnsavedChanges = false;
 	activeViews: Set<SandboxNoteView> = new Set();
 
 	// --- For new HotSandboxNoteView ---
@@ -61,7 +59,8 @@ export class EditorSyncManager implements Manager {
 	private handleContentSaved = (payload: AppEvents["content-saved"]) => {
 		const { view } = payload;
 		if (view instanceof SandboxNoteView) {
-			this.markAsSaved();
+			// The unsaved state is now managed by SaveManager,
+			// but we still need to refresh the UI (e.g., remove '*' from title).
 			this.refreshAllViewTitles();
 			this.refreshAllViewActionButtons();
 		}
@@ -79,7 +78,6 @@ export class EditorSyncManager implements Manager {
 			`Updating note content from view: ${sourceView.getViewType()}`
 		);
 		this.currentSharedNoteContent = content;
-		this.updateUnsavedState();
 
 		for (const view of this.activeViews) {
 			if (view !== sourceView) {
@@ -87,25 +85,6 @@ export class EditorSyncManager implements Manager {
 				view.setContent(content);
 			}
 		}
-	}
-
-	private updateUnsavedState() {
-		const wasUnsaved = this.hasUnsavedChanges;
-		this.hasUnsavedChanges =
-			this.currentSharedNoteContent !== this.lastSavedContent;
-
-		if (wasUnsaved !== this.hasUnsavedChanges) {
-			log.debug(`Unsaved state changed to: ${this.hasUnsavedChanges}`);
-			this.emitter.emit("unsaved-state-changed", {
-				hasUnsavedChanges: this.hasUnsavedChanges,
-			});
-		}
-	}
-
-	markAsSaved() {
-		this.lastSavedContent = this.currentSharedNoteContent;
-		this.updateUnsavedState();
-		log.debug("Content marked as saved.");
 	}
 
 	addActiveView(view: SandboxNoteView) {

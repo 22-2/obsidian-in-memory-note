@@ -9,6 +9,7 @@ import { SandboxNoteView } from "src/views/SandboxNoteView";
 import type { EditorPluginConnector } from "./EditorPluginConnector";
 import type { EditorSyncManager } from "./EditorSyncManager";
 import type { Manager } from "./Manager";
+import type { SaveManager } from "./SaveManager";
 
 /** Manages Obsidian workspace event handling */
 export class ObsidianEventManager implements Manager {
@@ -19,6 +20,7 @@ export class ObsidianEventManager implements Manager {
 	private editorSyncManager: EditorSyncManager;
 	private editorPluginConnector: EditorPluginConnector;
 	private settings: PluginSettings;
+	private saveManager: SaveManager;
 	private debouncedSetupSandboxViews: () => void;
 
 	constructor(
@@ -26,7 +28,8 @@ export class ObsidianEventManager implements Manager {
 		emitter: EventEmitter<AppEvents>,
 		editorSyncManager: EditorSyncManager,
 		editorPluginConnector: EditorPluginConnector,
-		settings: PluginSettings
+		settings: PluginSettings,
+		saveManager: SaveManager
 	) {
 		this.plugin = plugin;
 		this.app = plugin.app;
@@ -35,6 +38,7 @@ export class ObsidianEventManager implements Manager {
 		this.editorSyncManager = editorSyncManager;
 		this.editorPluginConnector = editorPluginConnector;
 		this.settings = settings;
+		this.saveManager = saveManager;
 		this.debouncedSetupSandboxViews = debounce(
 			this.setupSandboxViews.bind(this),
 			50
@@ -92,7 +96,7 @@ export class ObsidianEventManager implements Manager {
 	private triggerAutoSave(): void {
 		if (
 			!this.settings.enableAutoSave ||
-			!this.editorSyncManager.hasUnsavedChanges
+			!this.saveManager.hasUnsavedChanges
 		) {
 			return;
 		}

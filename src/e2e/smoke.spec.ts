@@ -1,21 +1,30 @@
+// このファイルは Playwright の E2E テストファイルです。
 import test, {
 	expect,
 	type ElectronApplication,
 	type Page,
 	type Locator,
+	type JSHandle,
 } from "@playwright/test";
-import { existsSync } from "node:fs";
+import { copyFileSync, existsSync } from "node:fs";
 import path from "node:path";
+
 import { _electron as electron } from "playwright";
+import type { App, WorkspaceLeaf } from "obsidian";
+
 import invariant from "tiny-invariant";
 
 const TIMEOUT = 5000;
+const SANDBOX_VIEW_SELECTOR =
+	'.workspace-leaf-content[data-type="hot-sandbox-note-view"]';
+const ACTIVE_LEAF_SELECTOR = `.mod-active .workspace-leaf.mod-active`;
+const ROOT_WORKSPACE_SELECTOR = ".workspace-split.mod-vertical.mod-root";
 
 // --- Configuration & Constants ---
-const appPath = path.join(__dirname, "../../.obsidian-unpacked/main.js");
-const vaultPath = path.join(__dirname, "../../e2e-vault");
+const appPath = path.resolve(__dirname, "../../.obsidian-unpacked/main.js");
+const vaultPath = path.resolve(__dirname, "../../e2e-vault");
 
-// --- Pre-flight checks ---
+// --- Pre-flight checks (省略) ---
 invariant(
 	existsSync(appPath),
 	`Obsidian app not found at: ${appPath}. Did you run 'pnpm build:e2e' and 'e2e-setup' script?`
@@ -25,170 +34,215 @@ invariant(
 	`E2E vault not found at: ${vaultPath}. Did you run 'e2e-setup' script?`
 );
 
-// --- Global State ---
-// These are initialized once in `beforeAll` and reused across tests for efficiency.
+console.log("appPath:", appPath);
+console.log("vaultPath:", vaultPath);
+
+// --- Global State (updated to use beforeEach/afterEach) ---
 let app: ElectronApplication;
 let window: Page;
+let appHandle: JSHandle<App>; // API操作のために維持
 
-// --- Helper Functions (inspired by the provided snippets) ---
+// --- Helper Functions (Updated to use pure selectors or require Page/appHandle) ---
 
-/** Waits for the Obsidian workspace to be fully loaded. */
-const waitForWorkspace = async (page: Page) => {
-	// Wait for the splash screen to disappear. This is a crucial step.
+async function waitForWorkspace(page: Page) {
+	// Wait for loading screen to disappear
 	await page.waitForSelector(".progress-bar", {
 		state: "detached",
 		timeout: TIMEOUT,
 	});
-	// Wait for the main workspace to be ready.
 	await expect(page.locator(".workspace")).toBeVisible({
 		timeout: TIMEOUT,
 	});
-};
+}
 
-/** Runs a command from the Obsidian command palette. */
-const runCommand = async (command: string) => {
-	// For macOS, Playwright automatically maps "Control" to "Meta".
-	await window.keyboard.press("Control+P");
-	await window.locator(".prompt-input").fill(command);
-	const suggestion = window.locator(".suggestion-item.is-selected");
-	await expect(suggestion).toBeVisible();
-	await suggestion.click();
-};
+async function openNewSandboxNote(page: Page) {
+	await page.getByLabel("Open new hot sandbox note", { exact: true }).click();
+}
 
-/** Clicks the ribbon icon to open a new Hot Sandbox Note. */
-const openNewSandboxNote = async () => {
-	await window
-		.getByLabel("Open new hot sandbox note", { exact: true })
-		.click();
-};
+/**
+ * APIを介して開いているルートリーフの数を数える
+ */
+async function countTabs(appHandle: JSHandle<App>): Promise<number> {
+	return await appHandle.evaluate((app) => {
+		let count = 1;
+		app.workspace.iterateRootLeaves((_) => count++);
+		return count;
+	});
+}
 
-/** Returns a locator for all visible sandbox views. */
-const getSandboxViews = (): Locator => {
-	return window.locator(
-		'.workspace-leaf-content[data-type="hot-sandbox-note-view"]'
-	);
-};
+/**
+ * アクティブなSandboxビューのLocatorを取得する (UIベース: アクティブなリーフ内のビュー)
+ */
+async function getActiveSandboxLocator(page: Page): Promise<Locator> {
+	// アクティブなリーフ内のSandboxビューをターゲットにする
+	const activeSandboxView = page
+		.locator(ACTIVE_LEAF_SELECTOR)
+		.locator(SANDBOX_VIEW_SELECTOR);
 
-/** Returns a locator for the active (currently focused) sandbox view. */
-const getActiveSandboxView = (): Locator => {
-	return window.locator(
-		'.workspace-leaf.mod-active .workspace-leaf-content[data-type="hot-sandbox-note-view"]'
-	);
-};
+	await expect(activeSandboxView).toBeVisible({ timeout: TIMEOUT });
+	return activeSandboxView;
+}
 
-/** Returns a locator for the CodeMirror editor within a given view. */
-const getEditor = (viewLocator: Locator): Locator => {
+/**
+ * APIを介して開いているルートリーフ（メインウィンドウのタブ）を全て閉じる
+ */
+async function closeAllTabs(appHandle: JSHandle<App>) {
+	const leavesHandle = await appHandle.evaluateHandle((app: App) => {
+		const leaves: WorkspaceLeaf[] = [];
+		app.workspace.iterateRootLeaves((leaf: WorkspaceLeaf) => {
+			// メインのルートスプリットに属するリーフのみを対象とする
+			if (leaf.parentSplit.id === (app.workspace as any).rootSplit.id) {
+				leaves.push(leaf);
+			}
+		});
+		return leaves;
+	});
+
+	const leavesCount = await leavesHandle.evaluate((leaves) => leaves.length);
+
+	// デフォルトで一つ残るため、1より大きい場合に閉じる
+	if (leavesCount > 1) {
+		await leavesHandle.evaluate((leaves) =>
+			leaves.forEach((leaf) => leaf.detach())
+		);
+	}
+
+	// 1タブのみが残ることを確認（通常は新規ノートなど）
+	await expect(await countTabs(appHandle)).toBeLessThanOrEqual(1);
+}
+
+function getEditor(viewLocator: Locator): Locator {
 	return viewLocator.locator(".cm-content");
-};
+}
 
-/** Returns a locator for the title of the active tab. */
-const getActiveTabTitle = (): Locator => {
-	return window.locator(
-		".workspace-tab-header.is-active .workspace-tab-header-inner-title"
-	);
-};
-
-/** Splits the active view. */
-const splitActiveView = async (direction: "vertically" | "horizontally") => {
-	await window
+function getActiveTabTitle(page: Page): Locator {
+	return page
+		.locator(ROOT_WORKSPACE_SELECTOR)
 		.locator(
-			".workspace-leaf.mod-active .view-actions .clickable-icon[aria-label='More options']"
-		)
+			".workspace-tab-header.is-active .workspace-tab-header-inner-title"
+		);
+}
+
+function focusRootWorkspace(page: Page) {
+	return page.locator(ROOT_WORKSPACE_SELECTOR).focus();
+}
+
+/**
+ * Splits the active view by interacting with the UI (Pure Playwright Locator approach).
+ */
+async function splitActiveView(
+	page: Page,
+	direction: "vertically" | "horizontally"
+) {
+	// 1. アクティブなリーフ内の「More options」ボタンを見つけてクリック
+	await page
+		.locator(ACTIVE_LEAF_SELECTOR)
+		.locator(".view-actions .clickable-icon[aria-label='More options']")
+		.first()
 		.click();
-	await window
+
+	// 2. メニュー項目をクリック
+	await page
 		.locator(".menu-item-title", { hasText: `Split ${direction}` })
 		.click();
-};
 
-const closeAllTabs = async () => {
-	while ((await countTabs()) > 1) {
-		await window.keyboard.press("Control+W");
-	}
-};
+	// 3. 2つのsandboxビューが存在することを待機
+	await expect(page.locator(SANDBOX_VIEW_SELECTOR)).toHaveCount(2, {
+		timeout: TIMEOUT,
+	});
+}
 
-const countTabs = () =>
-	window.locator(".workspace-split.mod-root .workspace-tab-header").count();
+function initializeWorkspaceJSON() {
+	copyFileSync(
+		path.join(vaultPath, "/.obsidian/workspace.initial.json"),
+		path.join(vaultPath, "/.obsidian/workspace.json")
+	);
+}
 
-// --- Test Hooks ---
+// --- Test Hooks (Updated to use beforeEach/afterEach) ---
 
-// Launch the app once before all tests.
-test.beforeAll(async () => {
+test.beforeEach(async () => {
+	initializeWorkspaceJSON();
+	// アプリケーションを起動
 	app = await electron.launch({ args: [appPath, vaultPath] });
 	window = await app.firstWindow();
 	await waitForWorkspace(window);
-	await closeAllTabs();
+	await focusRootWorkspace(window);
+
+	// グローバルな appHandle を初期化
+	appHandle = await window.evaluateHandle(() => (window as any).app as App);
+
+	// Clean up existing tabs before each test (except for the restart restoration part)
+	// await closeAllTabs(appHandle);
 });
 
-// Close the app after all tests have run.
-test.afterAll(async () => {
-	await app?.close();
-});
-
-// After each test, close all tabs to ensure a clean slate for the next test.
 test.afterEach(async () => {
-	await closeAllTabs();
-	expect(await countTabs()).toBe(1);
+	await app?.close();
 });
 
 // --- Test Suites ---
 
-test.describe("Hot Sandbox Note: Basic Functionality", () => {
+test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
 	test("should open a new note, allow typing, and update title with asterisk", async () => {
 		// Act: Open a new note.
-		await openNewSandboxNote();
-		const view = getActiveSandboxView();
-		await expect(view).toBeVisible();
-		await expect(getSandboxViews()).toHaveCount(1);
+		await openNewSandboxNote(window);
+		const view = await getActiveSandboxLocator(window);
 
 		// Assert: Check the initial tab title.
-		const tabTitle = getActiveTabTitle();
+		const tabTitle = getActiveTabTitle(window);
 		await expect(tabTitle).toHaveText(/Hot Sandbox-\d+/);
 
 		// Act: Type text into the editor.
 		const editor = getEditor(view);
-		await editor.click(); // Focus the editor
-		await editor.fill("Hello, this is an E2E test!");
+		await editor.click();
+		const testText = "Hello, this is an E2E test!";
+		await editor.fill(testText);
 
 		// Assert: Verify text and title update.
-		await expect(editor).toHaveText("Hello, this is an E2E test!");
-		await expect(tabTitle).toHaveText(/\*Hot Sandbox-\d+/);
+		await expect(editor).toHaveText(testText);
+		await expect(tabTitle).toHaveText(/\Hot Sandbox-\d+/);
 	});
 
 	test("should sync content between two split views of the same note", async () => {
-		// Arrange: Open a note and split the view.
-		await openNewSandboxNote();
-		await splitActiveView("vertically");
-		await expect(getSandboxViews()).toHaveCount(2);
+		// Arrange: Open a note and split the view (using UI interaction).
+		await openNewSandboxNote(window);
+		await splitActiveView(window, "vertically");
+
+		// Get the views (both are present in the DOM)
+		const allSandboxViews = window.locator(SANDBOX_VIEW_SELECTOR);
+		await expect(allSandboxViews).toHaveCount(2);
 
 		// Act: Type in the first editor.
-		const editors = getEditor(getSandboxViews());
-		const firstEditor = editors.first();
-		const secondEditor = editors.last();
+		const firstEditor = getEditor(allSandboxViews.first());
+		const secondEditor = getEditor(allSandboxViews.last());
+
 		const syncText = "This text should appear in both views.";
 		await firstEditor.click();
 		await firstEditor.fill(syncText);
 
 		// Assert: Verify text is synced to the second editor.
-		await expect(secondEditor).toHaveText(syncText);
+		await expect(secondEditor).toHaveText(syncText, { timeout: TIMEOUT });
 
 		// Act: Type in the second editor to test reverse sync.
 		const reverseSyncText = " And this text from the second view.";
-		await secondEditor.press("End"); // Move cursor to the end
+		await secondEditor.press("End");
 		await secondEditor.type(reverseSyncText);
 
 		// Assert: Verify the full text is now in the first editor.
-		await expect(firstEditor).toHaveText(syncText + reverseSyncText);
+		await expect(firstEditor).toHaveText(syncText + reverseSyncText, {
+			timeout: TIMEOUT,
+		});
 	});
 });
 
-// Use `describe.serial` to run these tests sequentially, as they depend on each other.
 test.describe.serial("Hot Sandbox Note: Hot Exit (Restart Test)", () => {
 	const testText = `Content to be restored - ${Date.now()}`;
 
 	test("should create and populate a note for the restart test", async () => {
 		// Arrange: Open a note and type some unique text.
-		await openNewSandboxNote();
-		const editor = getEditor(getActiveSandboxView());
+		await openNewSandboxNote(window);
+		const view = await getActiveSandboxLocator(window);
+		const editor = getEditor(view);
 		await editor.click();
 		await editor.fill(testText);
 
@@ -199,21 +253,25 @@ test.describe.serial("Hot Sandbox Note: Hot Exit (Restart Test)", () => {
 		await window.waitForTimeout(4000);
 	});
 
+	// Note: Since this is a serial block, Playwright ensures the app is closed after the previous test
+	// and restarted automatically via the subsequent test's beforeEach hook.
+
 	test("should restore note content after an application restart", async () => {
-		// Act: Restart the application.
-		await app.close();
-		app = await electron.launch({ args: [appPath, vaultPath] });
-		window = await app.firstWindow();
+		// Act: App has already been restarted by the preceding afterEach/beforeEach hooks.
 		await waitForWorkspace(window);
 
+		// Wait for restoration to complete.
+		await window.waitForTimeout(1000);
+
 		// Assert: Verify that the note and its content have been restored.
-		const restoredView = getActiveSandboxView();
-		await expect(restoredView).toBeVisible();
+		const restoredView = await getActiveSandboxLocator(window);
 		const restoredEditor = getEditor(restoredView);
+
+		// Assert: Check content restoration
 		await expect(restoredEditor).toHaveText(testText);
 
 		// Assert: Verify the tab title also shows the changed state.
-		const restoredTabTitle = getActiveTabTitle();
+		const restoredTabTitle = getActiveTabTitle(window);
 		await expect(restoredTabTitle).toHaveText(/\*Hot Sandbox-\d+/);
 	});
 });

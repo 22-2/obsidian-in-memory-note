@@ -21,7 +21,7 @@ export class SyncEditorPlugin implements PluginValue {
 		if (update.docChanged) {
 			const updatedContent = update.state.doc.toString();
 
-			this.emitter.emit("content-changed", {
+			this.emitter.emit("editor-content-changed", {
 				content: updatedContent,
 				sourceView: this.connectedView,
 			});

@@ -2,7 +2,7 @@ import type { AbstractNoteView } from "../views/internal/AbstractNoteView";
 import type { SandboxNoteView } from "../views/SandboxNoteView";
 
 export interface AppEvents {
-	"content-changed": {
+	"editor-content-changed": {
 		content: string;
 		sourceView: AbstractNoteView;
 	};

@@ -13,7 +13,9 @@ export class AppEventManager implements Manager {
 	private saveManager: SaveManager;
 	private settings: PluginSettings;
 
-	private onContentChanged = (payload: AppEvents["content-changed"]) => {
+	private onEditorContentChanged = (
+		payload: AppEvents["editor-content-changed"]
+	) => {
 		const { content, sourceView } = payload;
 
 		if (
@@ -76,14 +78,14 @@ export class AppEventManager implements Manager {
 	}
 
 	public load(): void {
-		this.emitter.on("content-changed", this.onContentChanged);
+		this.emitter.on("editor-content-changed", this.onEditorContentChanged);
 		this.emitter.on("save-requested", this.onSaveRequested);
 		this.emitter.on("content-saved", this.onContentSaved);
 		this.emitter.on("unsaved-state-changed", this.onUnsavedStateChanged);
 	}
 
 	public unload(): void {
-		this.emitter.off("content-changed", this.onContentChanged);
+		this.emitter.off("editor-content-changed", this.onEditorContentChanged);
 		this.emitter.off("save-requested", this.onSaveRequested);
 		this.emitter.off("content-saved", this.onContentSaved);
 		this.emitter.off("unsaved-state-changed", this.onUnsavedStateChanged);

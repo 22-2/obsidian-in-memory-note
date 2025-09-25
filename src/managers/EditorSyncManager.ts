@@ -111,6 +111,7 @@ export class EditorSyncManager implements Manager {
 		for (const view of this.activeViews) {
 			view.leaf.updateHeader();
 		}
+
 		// Also refresh hot sandbox notes
 		for (const viewSet of this.hotActiveViews.values()) {
 			for (const view of viewSet) {

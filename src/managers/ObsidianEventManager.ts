@@ -45,7 +45,7 @@ export class ObsidianEventManager implements Manager {
 	 * Handles active leaf changes and emits an event with the new active view.
 	 */
 	private handleActiveLeafChange = () => {
-		const activeView = this.plugin.getActiveAbstractNoteView();
+		const activeView = this.plugin.getActiveView();
 		log.debug(`Active leaf changed to: ${this.workspace.activeLeaf?.id}`);
 		this.emitter.emit("obsidian-active-leaf-changed", { view: activeView });
 	};

@@ -54,11 +54,8 @@ export default class SandboxNotePlugin extends Plugin {
 		log.debug("Sandbox Note plugin loaded");
 	}
 
-	public getActiveAbstractNoteView() {
-		return (
-			this.app.workspace.getActiveViewOfType(AbstractNoteView) ??
-			this.app.workspace.getActiveViewOfType(HotSandboxNoteView)
-		);
+	public getActiveView() {
+		return this.app.workspace.getActiveViewOfType(HotSandboxNoteView);
 	}
 
 	/** Initialize all manager instances */
@@ -122,7 +119,7 @@ export default class SandboxNotePlugin extends Plugin {
 			name: "Convert to file",
 			icon: "file-pen-line",
 			checkCallback: (checking) => {
-				const view = this.getActiveAbstractNoteView();
+				const view = this.getActiveView();
 				if (view) {
 					if (!checking) {
 						convertToFileAndClear(view);

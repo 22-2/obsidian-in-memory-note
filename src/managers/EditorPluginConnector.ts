@@ -78,7 +78,7 @@ export class EditorPluginConnector implements Manager {
 	 * This ensures that commands and other editor features work correctly.
 	 */
 	private syncActiveEditorState(): void {
-		const activeView = this.plugin.getActiveAbstractNoteView();
+		const activeView = this.plugin.getActiveView();
 		// @ts-ignore
 		const workspace = this.plugin.app.workspace;
 

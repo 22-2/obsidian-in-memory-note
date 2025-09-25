@@ -3,12 +3,12 @@ import { Plugin } from "obsidian";
 import type { AppEvents } from "./events/AppEvents";
 import { EditorPluginConnector } from "./managers/EditorPluginConnector";
 import { EditorSyncManager } from "./managers/EditorSyncManager";
-import { EventManager } from "./managers/EventManager";
+import { AppEventManager } from "./managers/AppEventManager";
 import { InteractionManager } from "./managers/InteractionManager";
 import type { Manager } from "./managers/Manager";
 import { SaveManager } from "./managers/SaveManager";
 import { ViewFactory } from "./managers/ViewFactory";
-import { WorkspaceEventManager } from "./managers/WorkspaceEventManager";
+import { ObsidianEventManager } from "./managers/ObsidianEventManager";
 import { type SandboxNotePluginData, SandboxNoteSettingTab } from "./settings";
 import { DEFAULT_DATA as DEFAULT_PLUGIN_DATA } from "./utils/constants";
 import { EventEmitter } from "./utils/EventEmitter";
@@ -25,8 +25,8 @@ export default class SandboxNotePlugin extends Plugin {
 	interactionManager!: InteractionManager;
 	editorPluginConnector!: EditorPluginConnector;
 	viewFactory!: ViewFactory;
-	eventManager!: EventManager;
-	workspaceEventManager!: WorkspaceEventManager;
+	eventManager!: AppEventManager;
+	workspaceEventManager!: ObsidianEventManager;
 	emitter!: EventEmitter<AppEvents>;
 	managers: Manager[] = [];
 
@@ -98,14 +98,14 @@ export default class SandboxNotePlugin extends Plugin {
 		this.interactionManager = new InteractionManager(this);
 		this.editorPluginConnector = new EditorPluginConnector(this, emitter);
 		this.viewFactory = new ViewFactory(this);
-		this.workspaceEventManager = new WorkspaceEventManager(
+		this.workspaceEventManager = new ObsidianEventManager(
 			this, // Pass the plugin instance instead of `this.app`
 			emitter,
 			this.editorSyncManager,
 			this.editorPluginConnector,
 			this.data.settings
 		);
-		this.eventManager = new EventManager(
+		this.eventManager = new AppEventManager(
 			emitter,
 			this.editorSyncManager,
 			this.saveManager,

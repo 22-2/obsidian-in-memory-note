@@ -11,7 +11,7 @@ import type { EditorSyncManager } from "./EditorSyncManager";
 import type { Manager } from "./Manager";
 
 /** Manages Obsidian workspace event handling */
-export class WorkspaceEventManager implements Manager {
+export class ObsidianEventManager implements Manager {
 	private plugin: SandboxNotePlugin;
 	private app: App;
 	private workspace: Workspace;

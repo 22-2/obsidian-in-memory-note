@@ -6,7 +6,7 @@ import type { EditorSyncManager } from "./EditorSyncManager";
 import type { SaveManager } from "./SaveManager";
 import type { Manager } from "./Manager";
 
-export class EventManager implements Manager {
+export class AppEventManager implements Manager {
 	private emitter: EventEmitter<AppEvents>;
 	private editorSyncManager: EditorSyncManager;
 	private saveManager: SaveManager;

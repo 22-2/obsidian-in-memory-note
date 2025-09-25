@@ -67,8 +67,7 @@ export class SandboxNoteView extends AbstractNoteView {
 	 * This ensures that commands and other editor features work correctly.
 	 */
 	syncActiveEditorState(): void {
-		const activeView =
-			this.app.workspace.getActiveViewOfType(SandboxNoteView);
+		const activeView = this.plugin.getActiveSandboxNoteView();
 		// @ts-ignore - Accessing a private API to manage the active editor.
 		const workspace = this.app.workspace;
 

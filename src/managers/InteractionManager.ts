@@ -33,15 +33,28 @@ export class InteractionManager implements Manager {
 			},
 		});
 
+		this.plugin.addCommand({
+			id: "convert-to-file",
+			name: "Convert to file",
+			icon: "file-pen-line",
+			checkCallback: (checking) => {
+				const view = this.plugin.getActiveAbstractNoteView();
+				if (view) {
+					if (!checking) {
+						view.convertToFileAndClear();
+					}
+					return true;
+				}
+				return false;
+			},
+		});
+
 		// Command to save the current note (if it's saveable)
 		this.plugin.addCommand({
 			id: "save-note",
 			name: "Save current note",
 			checkCallback: (checking) => {
-				const view =
-					this.plugin.app.workspace.getActiveViewOfType(
-						AbstractNoteView
-					);
+				const view = this.plugin.getActiveSandboxNoteView();
 				if (view) {
 					if (!checking) {
 						view.save();

@@ -79,7 +79,7 @@ export class WorkspaceEventManager implements Manager {
 	 * This ensures that commands and other editor features work correctly.
 	 */
 	private syncActiveEditorState(): void {
-		const activeView = this.workspace.getActiveViewOfType(SandboxNoteView);
+		const activeView = this.plugin.getActiveSandboxNoteView();
 		if (activeView instanceof SandboxNoteView) {
 			activeView.syncActiveEditorState();
 		}
@@ -119,10 +119,9 @@ export class WorkspaceEventManager implements Manager {
 	 * Connects the editor plugin to the newly active sandbox view, if it is one.
 	 */
 	private connectEditorPluginToActiveView(): void {
-		const activeView = this.workspace.getActiveViewOfType(SandboxNoteView);
+		const activeView = this.plugin.getActiveSandboxNoteView();
 
-		// Only proceed if the new active view is a SandboxNoteView.
-		if (activeView instanceof SandboxNoteView) {
+		if (activeView) {
 			this.editorPluginConnector.connectEditorPluginToView(activeView);
 		}
 	}

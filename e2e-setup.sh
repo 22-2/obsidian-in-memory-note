@@ -22,8 +22,8 @@ if ! command -v jq &> /dev/null; then
     echo -e "${COLOR_RED}Error: 'jq' is not installed. Please install it to proceed.${COLOR_NC}"
     exit 1
 fi
-if ! command -v npx &> /dev/null; then
-    echo -e "${COLOR_RED}Error: 'npx' is not installed. Please make sure Node.js and npm/pnpm are installed.${COLOR_NC}"
+if ! command -v pnpm &> /dev/null; then
+    echo -e "${COLOR_RED}Error: 'pnpm' is not installed. Please make sure it is available in the environment.${COLOR_NC}"
     exit 1
 fi
 
@@ -64,27 +64,30 @@ mkdir -p "$OBSIDIAN_UNPACKED_PATH"
 # Manually extract app.asar to avoid various cross-platform issues.
 echo "Extracting ${APP_ASAR_PATH} to ${OBSIDIAN_UNPACKED_PATH}"
 
-# Use `asar list --is-pack` to get structured JSON output.
-# Then, parse with `jq` to reliably identify files and directories.
-npx @electron/asar list --is-pack "${APP_ASAR_PATH}" | jq -c '.[]' | while IFS= read -r json_line; do
+# Generate a temporary file with the asar content list as JSON
+ASAR_CONTENT_JSON=$(mktemp)
+trap 'rm -f -- "$ASAR_CONTENT_JSON"' EXIT
+pnpm exec asar list --is-pack "${APP_ASAR_PATH}" > "$ASAR_CONTENT_JSON"
 
-    # Normalize path separators for consistency
-    filepath=$(echo "$json_line" | jq -r '.path' | sed 's/\\/\//g')
-    filetype=$(echo "$json_line" | jq -r '.type')
-
+# Create all directories first
+jq -r '.[] | select(.type == "directory") | .path' "$ASAR_CONTENT_JSON" | sed 's/\\/\//g' | while IFS= read -r dirpath; do
     # Skip empty lines or root directory entries
-    if [ -z "$filepath" ] || [ "$filepath" == "/" ]; then
+    if [ -z "$dirpath" ] || [ "$dirpath" == "/" ]; then
         continue
     fi
+    mkdir -p "${OBSIDIAN_UNPACKED_PATH}/${dirpath}"
+done
 
-    dest_path="${OBSIDIAN_UNPACKED_PATH}/${filepath}"
-
-    if [ "$filetype" == "directory" ]; then
-        mkdir -p "$dest_path"
-    elif [ "$filetype" == "file" ]; then
-        mkdir -p "$(dirname "$dest_path")"
-        npx @electron/asar extract-file "${APP_ASAR_PATH}" "$filepath" > "$dest_path"
+# Extract all files
+jq -r '.[] | select(.type == "file") | .path' "$ASAR_CONTENT_JSON" | sed 's/\\/\//g' | while IFS= read -r filepath; do
+    # Skip empty lines
+    if [ -z "$filepath" ]; then
+        continue
     fi
+    dest_path="${OBSIDIAN_UNPACKED_PATH}/${filepath}"
+    # Ensure the parent directory exists, just in case
+    mkdir -p "$(dirname "$dest_path")"
+    pnpm exec asar extract-file "${APP_ASAR_PATH}" "$filepath" > "$dest_path"
 done
 
 # Copy obsidian.asar if it exists

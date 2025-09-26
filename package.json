@@ -25,6 +25,7 @@
 	"license": "MIT",
 	"devDependencies": {
 		"@biomejs/biome": "2.2.4",
+		"@electron/asar": "^4.0.1",
 		"@playwright/test": "^1.55.1",
 		"@types/node": "24.5.2",
 		"@types/node-notifier": "^8.0.5",

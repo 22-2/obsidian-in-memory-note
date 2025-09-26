@@ -35,6 +35,7 @@ jobs:
                   echo "set man-db/auto-update false" | sudo debconf-communicate
                   sudo dpkg-reconfigure man-db
                   sudo apt-get update -q
+                  # xvfbなど、Playwright Electronテストに必要なX関連の依存関係をインストール
                   sudo apt-get install -y -q xvfb herbstluftwm dzen2 x11-xserver-utils
                   sudo apt-mark hold man-db
                   pnpm exec playwright install --with-deps
@@ -55,10 +56,9 @@ jobs:
 
             - name: Run Playwright tests
               run: |
-                  # Electronアプリをヘッドレスで実行するためにxvfbをインストール
-                  sudo apt-get update && sudo apt-get install -y xvfb
-                  # xvfb上で指定のテストファイルを実行
-                  xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" pnpm playwright test src/e2e/sandbox-vault.spec.mts
+                  # Playwright Issue #11932の知見に基づき、
+                  # xvfbのオプションとテスト実行コマンドを明確に区切るために -- を使用します。
+                  xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- pnpm playwright test src/e2e/sandbox-vault.spec.mts
 
             - name: Upload Playwright report
               if: always() # テストが失敗してもレポートをアップロードする

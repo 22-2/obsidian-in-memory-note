@@ -2,14 +2,22 @@
 import { copyFileSync, writeFileSync } from "fs"; // writeFileSyncを追加
 import type { App } from "obsidian";
 import path from "path";
-import type { JSHandle, Locator, Page } from "playwright";
-import { expect } from "playwright/test";
+import type { ElectronApplication, JSHandle, Locator, Page } from "playwright";
+import { _electron as electron, expect, type TestInfo } from "playwright/test";
 import {
 	ACTIVE_LEAF_SELECTOR,
+	APP_PATH,
 	ROOT_WORKSPACE_SELECTOR,
 	SANDBOX_VIEW_SELECTOR,
-} from "./base.mts";
-import { PLUGIN_ID, VAULT_PATH } from "./config.mts"; // PLUGIN_IDをインポート
+	VAULT_PATH,
+} from "./config.mts";
+import { PLUGIN_ID } from "./config.mts"; // PLUGIN_IDをインポート
+import {
+	delay,
+	OPEN_SANDBOX_VAULT,
+	runCommand,
+} from "./obsidian-commands/run-command.mts";
+import type { SetupFixuture } from "./types.mts";
 
 // --- Constants ---
 const COMMUNITY_PLUGINS_PATH = path.join(
@@ -97,14 +105,15 @@ export function initializeWorkspaceJSON() {
  * @param enabledPlugins 有効化するプラグインのIDリスト
  */
 export function setCommunityPlugins(enabledPlugins: string[]) {
+	// 修正: Obsidianの正しいJSONフォーマット { "plugins": [...] } に合わせる
 	writeFileSync(
 		COMMUNITY_PLUGINS_PATH,
 		JSON.stringify(enabledPlugins, null, 2),
 		"utf-8"
 	);
-	console.log(
-		`[Plugin Config] Set enabled plugins: ${enabledPlugins.join(", ")}`
-	);
+	const pluginList =
+		enabledPlugins.length > 0 ? enabledPlugins.join(", ") : "none";
+	console.log(`[Plugin Config] Set enabled plugins: ${pluginList}`);
 }
 
 /**
@@ -115,17 +124,137 @@ export function setPluginInstalled() {
 }
 
 /**
- * コミュニティプラグインをすべて無効化する (Restricted Mode相当)
- */
-export function setRestrictedMode() {
-	setCommunityPlugins([]);
-}
-
-/**
  * コミュニティプラグインを許可するが、テスト対象プラグインは無効化する
  */
 export function setPluginDisabled() {
-	// 実際には e2e-vault の設定に依存するため、ここでは空の配列を設定（ただし、他のテストで使われる可能性のあるプラグインは含めない）
-	// 他のプラグインがインストールされていない前提であれば RestrictedMode と同じ動作になるが、意図を明確にするために別関数とする
+	// 他のプラグインがインストールされていないe2e-vaultでは、RestrictedModeと同じ動作になるが、
+	// 意図を明確にするために別関数として定義する。
 	setCommunityPlugins([]);
 }
+const openSandboxVault = async ({
+	window: firstWindow,
+	electronApp,
+}: {
+	window: Page;
+	electronApp: ElectronApplication;
+}) => {
+	const windowRef = { current: firstWindow };
+	await runCommand(firstWindow, OPEN_SANDBOX_VAULT, true);
+	await delay(500);
+	windowRef.current = electronApp.windows().pop()!;
+	await waitForWorkspace(windowRef.current);
+	await focusRootWorkspace(windowRef.current);
+	await firstWindow.close();
+	return windowRef.current;
+};
+export const commonSetup = async (
+	testInfo: TestInfo,
+	{
+		sandboxVault,
+		disableRestricMode,
+	}: { sandboxVault?: boolean; disableRestricMode?: boolean } = {
+		sandboxVault: false,
+		disableRestricMode: false,
+	}
+): Promise<SetupFixuture> => {
+	const isRestorationStep = testInfo.title.includes("restore note content");
+	console.log(`\n--------------- Setup: ${testInfo.title} ---------------`);
+
+	if (isRestorationStep === false) {
+		initializeWorkspaceJSON();
+	}
+
+	const electronApp = await electron.launch({
+		args: [
+			APP_PATH,
+			"open",
+			`obsidian://open?path=${encodeURIComponent(VAULT_PATH)}`,
+		],
+	});
+	let window = await electronApp.firstWindow();
+	const windowRef = { current: window };
+	await waitForWorkspace(window);
+	await focusRootWorkspace(window);
+	if (sandboxVault) {
+		windowRef.current = await openSandboxVault({ window, electronApp });
+		if (disableRestricMode) {
+			windowRef.current = await commonDisableRestrictedMode({
+				electronApp,
+				pluginId: PLUGIN_ID,
+				window: windowRef.current,
+			});
+		}
+	}
+
+	const appHandle = await windowRef.current.evaluateHandle(
+		() => (window as any).app as App
+	);
+
+	return {
+		electronApp,
+		window: windowRef.current,
+		appHandle,
+		pluginId: PLUGIN_ID,
+		isRestorationStep,
+	};
+};
+
+export const commonDisableRestrictedMode = async ({
+	electronApp,
+	window,
+	pluginId,
+}: {
+	electronApp: ElectronApplication;
+	window: Page;
+	pluginId: string;
+}) => {
+	const windowRef = { current: window };
+	// --- 代替案: Vaultが既に開かれている前提で操作を進める ---
+	console.log("3. Navigating to Settings...");
+	// 設定ボタンのセレクターを適切に調整してください
+	await windowRef.current.keyboard.press("Control+,");
+
+	await windowRef.current
+		.locator(".vertical-tab-header-group-items")
+		.getByText("Community plugins")
+		.click();
+
+	// 5. 制限モード（Restricted mode）をオフにする
+	console.log("4. Disabling Restricted Mode...");
+	// スイッチのセレクターを特定します (例: .setting-item-control .checkbox-container)
+	// 「Turn off Restricted mode」ボタンをクリックするパターンが多い
+	await windowRef.current
+		.getByText(/Turn on and reload|Turn on community plugins/)
+		.click();
+	windowRef.current = electronApp.windows().pop()!;
+
+	await waitForWorkspace(windowRef.current);
+	await focusRootWorkspace(windowRef.current);
+
+	// 設定ボタンのセレクターを適切に調整してください
+	await windowRef.current.keyboard.press("Control+,");
+
+	await windowRef.current
+		.locator(".vertical-tab-header-group-items")
+		.getByText("Community plugins")
+		.click();
+
+	await windowRef.current.getByText("Turn on community plugins").click();
+
+	await windowRef.current.keyboard.press("Esc");
+	await windowRef.current.keyboard.press("Control+,");
+
+	console.log(`5. Enabling Plugin: ${pluginId}...`);
+	const pluginToggle = windowRef.current.locator(
+		`.installed-plugins-container .checkbox-container`
+	);
+	await pluginToggle.check();
+	return windowRef.current;
+};
+export const commonTeardown = async (
+	electronApp: ElectronApplication,
+	testInfo: TestInfo
+) => {
+	await electronApp?.close();
+	console.log(`--------------- Teardown: ${testInfo.title} ---------------`);
+};

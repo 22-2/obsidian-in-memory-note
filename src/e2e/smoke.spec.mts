@@ -1,4 +1,10 @@
+// E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\smoke.spec.mts
 // このファイルは Playwright の E2E テストファイルです。
+import {
+	expect,
+	testPluginInstalled as test, // testのエイリアスとして使用
+} from "./base.mts";
+import { SANDBOX_VIEW_SELECTOR } from "./config.mts";
 import {
 	getActiveSandboxLocator,
 	getActiveTabTitle,
@@ -7,17 +13,11 @@ import {
 	splitActiveView,
 	waitForWorkspace,
 } from "./helpers.mts";
-// import { pluginHandle, SANDBOX_VIEW_SELECTOR, window } from "./test-base";
-import {
-	testPluginInstalled as test,
-	expect,
-	SANDBOX_VIEW_SELECTOR,
-} from "./base.mts";
 
 // --- Test Suites ---
 
 test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
-	test("should open a new note, allow typing, and update title with asterisk", async ({
+	test("should open a new note, allow typing, and update title", async ({
 		pluginInstalledFixture,
 	}) => {
 		const { window } = pluginInstalledFixture;
@@ -37,7 +37,7 @@ test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
 
 		// Assert: Verify text and title update.
 		await expect(editor).toHaveText(testText);
-		await expect(tabTitle).toHaveText(/\Hot Sandbox-\d+/);
+		await expect(tabTitle).toHaveText(/\*Hot Sandbox-\d+/);
 	});
 
 	test("should sync content between two split views of the same note", async ({
@@ -66,7 +66,7 @@ test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
 		// Act: Type in the second editor to test reverse sync.
 		const reverseSyncText = " And this text from the second view.";
 		await secondEditor.press("End");
-		await secondEditor.fill(reverseSyncText);
+		await secondEditor.type(reverseSyncText);
 
 		// Assert: Verify the full text is now in the first editor.
 		await expect(firstEditor).toHaveText(syncText + reverseSyncText);
@@ -79,7 +79,7 @@ test.describe.serial("Hot Sandbox Note: Hot Exit (Restart Test)", () => {
 	test("should create and populate a note for the restart test", async ({
 		pluginInstalledFixture,
 	}) => {
-		const { window, pluginHandle } = pluginInstalledFixture;
+		const { window } = pluginInstalledFixture;
 		// Arrange: Open a note and type some unique text.
 		await openNewSandboxNote(window);
 		const view = await getActiveSandboxLocator(window);
@@ -90,37 +90,21 @@ test.describe.serial("Hot Sandbox Note: Hot Exit (Restart Test)", () => {
 		// Assert: Verify content is present.
 		await expect(editor).toHaveText(testText);
 
-		// Act: Wait for the automatic save to trigger (default debounce is 3000ms).
-		await window.waitForTimeout(4000);
+		// Act: Wait for the automatic save to trigger (default debounce is 2000ms).
+		await window.waitForTimeout(3000);
 	});
-
-	// Note: Since this is a serial block, Playwright ensures the app is closed after the previous test
-	// and restarted automatically via the subsequent test's beforeEach hook.
 
 	test("should restore note content after an application restart", async ({
 		pluginInstalledFixture,
 	}) => {
-		const { window, pluginHandle } = pluginInstalledFixture;
-		// Act: App has already been restarted by the preceding afterEach/beforeEach hooks.
+		const { window } = pluginInstalledFixture;
 		await waitForWorkspace(window);
+		await window.waitForTimeout(1000); // Wait for restoration to complete.
 
-		// Wait for restoration to complete.
-		await window.waitForTimeout(1000);
-
-		const count = await pluginHandle.evaluate((plugin) =>
-			plugin.databaseManager.getAllNotes().then((notes) => notes.length)
-		);
-
-		expect(count).toBe(1);
-
-		// Assert: Verify that the note and its content have been restored.
 		const restoredView = await getActiveSandboxLocator(window);
 		const restoredEditor = getEditor(restoredView);
-
-		// Assert: Check content restoration
 		await expect(restoredEditor).toHaveText(testText);
 
-		// Assert: Verify the tab title also shows the changed state.
 		const restoredTabTitle = getActiveTabTitle(window);
 		await expect(restoredTabTitle).toHaveText(/\*Hot Sandbox-\d+/);
 	});

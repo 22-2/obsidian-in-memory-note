@@ -39,3 +39,16 @@ export const ELECTRON_ARGS = [
 	"open",
 	`obsidian://open?path=${encodeURIComponent(VAULT_PATH)}`,
 ];
+// --- Configuration & Constants ---
+// const __dirname = path.dirname(fileURLToPath(import.meta.url));
+export const APP_PATH = path.resolve(
+	__dirname,
+	"../../.obsidian-unpacked/main.js"
+);
+// export const VAULT_PATH = path.resolve(__dirname, "../../e2e-vault");
+// 汎用セレクター (他のファイルからインポートされる)
+
+export const SANDBOX_VIEW_SELECTOR =
+	'.workspace-leaf-content[data-type="hot-sandbox-note-view"]';
+export const ACTIVE_LEAF_SELECTOR = `.mod-active .workspace-leaf.mod-active`;
+export const ROOT_WORKSPACE_SELECTOR = ".workspace-split.mod-vertical.mod-root";

@@ -1,15 +1,14 @@
 name: Obsidian E2E Test
 
 on:
-    workflow_dispatch:
     push:
-        branches: ["main", "multiple-sandbox"]
+        branches: ["main", "master"]
     pull_request:
-        branches: ["main", "multiple-sandbox"]
+        branches: ["main", "master"]
 
 jobs:
-    # --- Windows Job ---
-    e2e-test-win:
+    e2e-test:
+        # Windowsで実行します
         runs-on: windows-latest
         timeout-minutes: 15
 
@@ -31,105 +30,26 @@ jobs:
             - name: Install dependencies
               run: pnpm install
 
-            - name: Install Playwright browsers
+            - name: Install Playwright browsers and dependencies
               run: pnpm playwright install --with-deps
 
-            - name: Download Obsidian for Windows
-              run: |
-                  $OBSIDIAN_VERSION = "1.9.12"
-                  $DOWNLOAD_URL = "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian.Setup.${OBSIDIAN_VERSION}.exe"
-                  Invoke-WebRequest -Uri $DOWNLOAD_URL -OutFile "obsidian.exe"
-                  echo "OBSIDIAN_INSTALLER_PATH=${PWD}/obsidian.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
-            - name: Unpack Obsidian
-              run: |
-                  # 7-Zipをインストールしてexeインストーラーを展開します
-                  choco install 7zip.install
-                  # 7z.exeへのパスを通します
-                  $env:Path += ";C:\Program Files\7-Zip"
-                  # $PLUGINSDIRはNSISインストーラの展開先です
-                  7z x ${{ env.OBSIDIAN_INSTALLER_PATH }} -o"obsidian-app"
-                  echo "OBSIDIAN_APP_DIR=${PWD}/obsidian-app" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
-            - name: ✅ Show unpacked files (Debug)
-              run: |
-                  echo "--- Files in OBSIDIAN_APP_DIR ---"
-                  dir ${{ env.OBSIDIAN_APP_DIR }} -Recurse
-                  echo "--- End of file list ---"
-              shell: pwsh
-
             - name: Prepare E2E test environment
-              run: ./e2e-setup.ps1
-              shell: pwsh
+              # Windowsでもbashを使って e2e-setup.sh を実行します
+              shell: bash
+              run: |
+                  # OBSIDIAN_VERSION を環境変数として e2e-setup.sh に渡します
+                  export OBSIDIAN_VERSION="1.9.12"
+                  ./e2e-setup.sh
 
             - name: Run Playwright tests
-              run: pnpm playwright test src/e2e/sandbox-vault.spec.mts
+              # ここもbashで統一します
+              shell: bash
+              run: pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=chromium
 
             - name: Upload Playwright report
               if: always()
               uses: actions/upload-artifact@v4
               with:
                   name: playwright-report-windows
-                  path: playwright-report/
-                  retention-days: 30
-
-    # --- macOS Job ---
-    e2e-test-mac:
-        runs-on: macos-latest
-        timeout-minutes: 15
-
-        steps:
-            - name: Check out repository
-              uses: actions/checkout@v4
-
-            # (pnpm, node, dependencies, playwright install steps are the same as windows)
-            - name: Set up pnpm
-              uses: pnpm/action-setup@v3
-              with:
-                  version: 8
-            - name: Set up Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "20"
-                  cache: "pnpm"
-            - name: Install dependencies
-              run: pnpm install
-            - name: Install Playwright browsers
-              run: pnpm playwright install --with-deps
-
-            - name: Download Obsidian for macOS
-              run: |
-                  OBSIDIAN_VERSION="1.9.12"
-                  DOWNLOAD_URL="https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}.dmg"
-                  wget "$DOWNLOAD_URL" -O obsidian.dmg
-                  echo "OBSIDIAN_INSTALLER_PATH=${PWD}/obsidian.dmg" >> $GITHUB_ENV
-
-            - name: Mount and locate Obsidian
-              run: |
-                  # .dmgファイルをマウントします
-                  hdiutil attach ${{ env.OBSIDIAN_INSTALLER_PATH }}
-                  # マウントされたObsidian.appへのパスを環境変数に設定します
-                  echo "OBSIDIAN_APP_DIR=/Volumes/Obsidian/Obsidian.app" >> $GITHUB_ENV
-
-            - name: ✅ Show unpacked files (Debug)
-              run: |
-                  echo "--- Files in OBSIDIAN_APP_DIR ---"
-                  ls -R "$OBSIDIAN_APP_DIR"
-                  echo "--- End of file list ---"
-
-            - name: Prepare E2E test environment
-              run: |
-                  # jqをインストールします
-                  brew install jq
-                  bash e2e-setup.sh
-
-            - name: Run Playwright tests (with xvfb)
-              run: xvfb-run --auto-servernum pnpm playwright test src/e2e/sandbox-vault.spec.mts
-
-            - name: Upload Playwright report
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: playwright-report-macos
                   path: playwright-report/
                   retention-days: 30

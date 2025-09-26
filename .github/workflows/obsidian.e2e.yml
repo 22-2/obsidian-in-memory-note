@@ -44,13 +44,7 @@ jobs:
               run: |
                   curl -L -o /usr/bin/jq.exe https://github.com/jqlang/jq/releases/latest/download/jq-win64.exe
 
-            - name: Prepare E2E test environment
-              shell: bash
-              run: |
-                  chmod +x e2e-setup.sh
-                  ./e2e-setup.sh
-
-            - name: List project files # For debugging purposes
+            - name: PWD # For debugging purposes
               shell: bash
               run: |
                   pwd
@@ -59,6 +53,12 @@ jobs:
               shell: bash
               run: |
                   npx @telosh/filetree --exclude node_modules,.git
+
+            - name: Prepare E2E test environment
+              shell: bash
+              run: |
+                  chmod +x e2e-setup.sh
+                  ./e2e-setup.sh
 
             - name: Run Playwright tests
               run: pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=chromium

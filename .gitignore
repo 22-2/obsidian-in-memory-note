@@ -37,7 +37,7 @@ repomix-output.md
 .todo
 
 test-results
-.obsidian-unpacked
+!.obsidian-unpacked/obsidian.asar
 *.md
 .aichat
 playwright-report

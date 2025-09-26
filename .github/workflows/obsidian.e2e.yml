@@ -46,7 +46,9 @@ jobs:
 
             - name: Prepare E2E test environment
               shell: bash
-              run: ./e2e-setup.sh
+              run: |
+                  chmod +x e2e-setup.sh
+                  ./e2e-setup.sh
 
             - name: Run Playwright tests
               run: pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=chromium

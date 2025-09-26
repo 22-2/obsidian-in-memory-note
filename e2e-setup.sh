@@ -64,9 +64,8 @@ mkdir -p "$OBSIDIAN_UNPACKED_PATH"
 # Manually extract app.asar to avoid absolute path issues on Windows
 echo "Extracting ${APP_ASAR_PATH} to ${OBSIDIAN_UNPACKED_PATH}"
 
-# List all files in the asar archive and extract them one by one
-# Use a while loop to handle filenames with spaces correctly
-npx @electron/asar list "${APP_ASAR_PATH}" | while IFS= read -r filepath; do
+# List all files, normalize path separators to slashes, then extract one by one
+npx @electron/asar list "${APP_ASAR_PATH}" | sed 's/\\/\//g' | while IFS= read -r filepath; do
     # On Windows, the path might start with a slash which we need to remove
     filepath_clean="${filepath#/}"
 

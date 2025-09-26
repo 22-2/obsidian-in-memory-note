@@ -42,7 +42,7 @@ jobs:
             - name: Download Obsidian (Windows)
               if: runner.os == 'Windows'
               run: |
-                  $OBSIDIAN_VERSION="1.5.12"
+                  $OBSIDIAN_VERSION="1.9.12"
                   Invoke-WebRequest -Uri "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}.exe" -OutFile "Obsidian.exe"
                   # Playwright設定ファイルから参照される環境変数を設定
                   echo "OBSIDIAN_APP_PATH=${PWD}/Obsidian.exe" >> $env:GITHUB_ENV
@@ -51,9 +51,9 @@ jobs:
             - name: Download Obsidian (macOS)
               if: runner.os == 'macOS'
               run: |
-                  OBSIDIAN_VERSION="1.5.12"
+                  OBSIDIAN_VERSION="1.9.12"
                   # macOS ARM64ランナー用にarm64版のDMGをダウンロード
-                  curl -L "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}-arm64.dmg" -o "Obsidian.dmg"
+                  curl -L "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}.dmg" -o "Obsidian.dmg"
                   hdiutil attach Obsidian.dmg
                   # Playwright設定ファイルから参照される環境変数を設定
                   echo "OBSIDIAN_APP_PATH=/Volumes/Obsidian/Obsidian.app" >> $GITHUB_ENV

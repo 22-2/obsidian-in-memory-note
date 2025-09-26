@@ -58,7 +58,7 @@ jobs:
               run: |
                   # Playwright Issue #11932の知見に基づき、
                   # xvfbのオプションとテスト実行コマンドを明確に区切るために -- を使用します。
-                  xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- pnpm playwright test src/e2e/sandbox-vault.spec.mts
+                  xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npx playwright test src/e2e/sandbox-vault.spec.mts
 
             - name: Upload Playwright report
               if: always() # テストが失敗してもレポートをアップロードする

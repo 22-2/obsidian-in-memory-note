@@ -104,6 +104,10 @@ export const commonSetup = async (
 			"open",
 			`obsidian://open?path=${encodeURIComponent(VAULT_PATH)}`,
 		],
+		env: {
+			...process.env,
+			NODE_ENV: "development",
+		},
 	});
 
 	let window = await electronApp.firstWindow();

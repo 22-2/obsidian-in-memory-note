@@ -37,7 +37,8 @@ repomix-output.md
 .todo
 
 test-results
-!.obsidian-unpacked/obsidian.asar
+!e2e-assets/obsidian.asar
+!e2e-assets/app.asar
 *.md
 .aichat
 playwright-report

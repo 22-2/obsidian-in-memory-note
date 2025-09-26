@@ -35,8 +35,8 @@ jobs:
             - name: Install dependencies
               run: pnpm install
 
-            - name: Install Playwright Browsers
-              run: pnpm playwright install --with-deps
+            - name: Install Playwright
+              run: pnpm playwright install chromium
 
             - name: Install jq (Windows)
               if: runner.os == 'Windows'
@@ -53,7 +53,7 @@ jobs:
             - name: List project files # For debugging purposes
               shell: bash
               run: |
-                  npx @telosh/filetree --use-gitignore
+                  npx @telosh/filetree --exclude node_modules,.git
 
             - name: Run Playwright tests
               run: pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=chromium

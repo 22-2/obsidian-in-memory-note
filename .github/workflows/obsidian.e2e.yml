@@ -9,7 +9,12 @@ on:
 
 jobs:
     e2e-test:
-        runs-on: ubuntu-latest
+        # マトリックス戦略を使用して、WindowsとmacOSの両方でテストを実行
+        strategy:
+            matrix:
+                os: [windows-latest, macos-latest]
+
+        runs-on: ${{ matrix.os }}
         timeout-minutes: 15
 
         steps:
@@ -19,51 +24,68 @@ jobs:
             - name: Set up pnpm
               uses: pnpm/action-setup@v3
               with:
-                  version: 8 # ご利用のpnpmバージョンに合わせてください
+                  version: 8
 
             - name: Set up Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: "20" # ご利用のNode.jsバージョンに合わせてください
+                  node-version: "20"
                   cache: "pnpm"
 
             - name: Install dependencies
               run: pnpm install
 
-            - name: Disable man-db auto-update permanently and install Playwright dependencies
-              run: |
-                  echo "set man-db/auto-update false" | sudo debconf-communicate
-                  sudo dpkg-reconfigure man-db
-                  sudo apt-get update -q
-                  # xvfbなど、Playwright Electronテストに必要なX関連の依存関係をインストール
-                  sudo apt-get install -y -q xvfb herbstluftwm dzen2 x11-xserver-utils
-                  sudo apt-mark hold man-db
-                  pnpm exec playwright install --with-deps
+            # WindowsとmacOSでは、Linux固有の依存関係インストールは不要
+            - name: Install Playwright dependencies (Windows/macOS)
+              if: startsWith(matrix.os, 'windows') || startsWith(matrix.os, 'macos')
+              run: pnpm exec playwright install --with-deps
 
-            - name: Download Obsidian
+            - name: Download Obsidian (Windows)
+              if: startsWith(matrix.os, 'windows')
               run: |
-                  # CIでの安定性のため、バージョンを固定することを推奨します
+                  $OBSIDIAN_VERSION="1.5.12"
+                  # Windows版インストーラー (.exe) をダウンロード
+                  Invoke-WebRequest -Uri "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}.exe" -OutFile "Obsidian-${OBSIDIAN_VERSION}.exe"
+                  # PATHを環境変数に設定 (WindowsのCIではPath設定が異なる場合があるため)
+                  Write-Output "OBSIDIAN_APP_PATH=${PWD}/Obsidian-${OBSIDIAN_VERSION}.exe" >> $env:GITHUB_ENV
+              shell: pwsh
+
+            - name: Download Obsidian (macOS)
+              if: startsWith(matrix.os, 'macos')
+              run: |
                   OBSIDIAN_VERSION="1.5.12"
-                  wget "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}.AppImage"
-                  chmod +x "Obsidian-${OBSIDIAN_VERSION}.AppImage"
-                  echo "OBSIDIAN_APPIMAGE_PATH=${PWD}/Obsidian-${OBSIDIAN_VERSION}.AppImage" >> $GITHUB_ENV
+                  # macOS版アプリ (.dmg) をダウンロードし、アプリケーションパスを設定
+                  curl -L "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}.dmg" -o "Obsidian.dmg"
+                  # DMGをマウントし、.appバンドルをコピーする
+                  hdiutil attach Obsidian.dmg
+                  # アプリケーションバンドルをAppImageパスと同じ環境変数名で参照できるように設定
+                  echo "OBSIDIAN_APP_PATH=/Volumes/Obsidian/Obsidian.app" >> $GITHUB_ENV
+                  # 補足: macOSではElectron起動時にこのパスを指定することが多い
 
             - name: Prepare E2E test environment
-              run: |
-                  # setupスクリプトに必要なjqをインストール
-                  sudo apt-get update && sudo apt-get install -y jq
-                  bash e2e-setup.sh
+              # jqはmacOSにデフォルトで入っているが、Windowsでは別途対応が必要
+              # 簡略化のため、jqが必要な処理をCI環境から切り離すか、テスト環境に合わせて調整してください。
+              # Windows環境でのjq相当の処理がない場合、jqを必要とするe2e-setup.shは失敗する可能性があります。
+              run: bash e2e-setup.sh
+              if: startsWith(matrix.os, 'macos')
+
+            - name: Prepare E2E test environment (Windows: jqが不要な前提で実行)
+              run: bash e2e-setup.sh
+              if: startsWith(matrix.os, 'windows')
+              # Windows環境では、e2e-setup.shがbashシェルで実行できるように、Git Bash等の環境が必要です。
+              # GitHub Actionsのデフォルト環境では実行可能ですが、jqコマンドの有無に注意が必要です。
 
             - name: Run Playwright tests
               run: |
-                  # Playwright Issue #11932の知見に基づき、
-                  # xvfbのオプションとテスト実行コマンドを明確に区切るために -- を使用します。
-                  xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npx playwright test src/e2e/sandbox-vault.spec.mts
+                  # --project=electron を使用して、Electronの設定でテストを実行する
+                  pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=electron
+              # 注意: OBSIDIAN_APP_PATH は Playwright設定ファイル内で利用され、
+              # Windowsでは .exe、macOSでは .app のパスが渡される想定です。
 
             - name: Upload Playwright report
-              if: always() # テストが失敗してもレポートをアップロードする
+              if: always()
               uses: actions/upload-artifact@v4
               with:
-                  name: playwright-report
+                  name: playwright-report-${{ matrix.os }}
                   path: playwright-report/
                   retention-days: 30

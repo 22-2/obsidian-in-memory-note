@@ -6,120 +6,209 @@
 
 set -e
 
-# --- Configuration ---
-VAULT_NAME="e2e-vault"
-PLUGIN_SOURCE_DIR="./"
-# --- End Configuration ---
+# =============================================================================
+# Configuration
+# =============================================================================
+readonly VAULT_NAME="e2e-vault"
+readonly PLUGIN_SOURCE_DIR="./"
 
-COLOR_GREEN='\033[0;32m'
-COLOR_YELLOW='\033[0;33m'
-COLOR_CYAN='\033[0;36m'
-COLOR_RED='\033[0;31m'
-COLOR_NC='\033[0m'
+# =============================================================================
+# Color Constants
+# =============================================================================
+readonly COLOR_GREEN='\033[0;32m'
+readonly COLOR_YELLOW='\033[0;33m'
+readonly COLOR_CYAN='\033[0;36m'
+readonly COLOR_RED='\033[0;31m'
+readonly COLOR_NC='\033[0m'
 
-# --- Prerequisite Check ---
-if ! command -v jq &> /dev/null; then
-    echo -e "${COLOR_RED}Error: 'jq' is not installed. Please install it to proceed.${COLOR_NC}"
+# =============================================================================
+# Utility Functions
+# =============================================================================
+
+# Print colored log messages
+log_info() {
+    echo -e "${COLOR_CYAN}$1${COLOR_NC}"
+}
+
+log_success() {
+    echo -e "${COLOR_GREEN}$1${COLOR_NC}"
+}
+
+log_warning() {
+    echo -e "${COLOR_YELLOW}$1${COLOR_NC}"
+}
+
+log_error() {
+    echo -e "${COLOR_RED}$1${COLOR_NC}" >&2
     exit 1
-fi
-if ! command -v pnpm &> /dev/null; then
-    echo -e "${COLOR_RED}Error: 'pnpm' is not installed. Please make sure it is available in the environment.${COLOR_NC}"
-    exit 1
-fi
+}
 
-# --- Derived Paths and Variables ---
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-PLUGIN_SOURCE_FULL_PATH="${SCRIPT_DIR}/${PLUGIN_SOURCE_DIR}"
-PLUGIN_MANIFEST_PATH="${PLUGIN_SOURCE_FULL_PATH}/manifest.json"
+# Check if file exists and log result
+check_file() {
+    local file_path="$1"
+    local file_name="$2"
 
-# --- 1. Read Plugin Manifest ---
-echo -e "${COLOR_CYAN}Reading plugin info from ${PLUGIN_MANIFEST_PATH}...${COLOR_NC}"
-if [ ! -f "$PLUGIN_MANIFEST_PATH" ]; then
-    echo -e "${COLOR_RED}Error: Plugin manifest not found at '${PLUGIN_MANIFEST_PATH}'.${COLOR_NC}"
-    exit 1
-fi
-PLUGIN_ID=$(jq -r '.id' "$PLUGIN_MANIFEST_PATH")
-if [ -z "$PLUGIN_ID" ] || [ "$PLUGIN_ID" == "null" ]; then
-    echo -e "${COLOR_RED}Error: Could not read 'id' from '${PLUGIN_MANIFEST_PATH}'.${COLOR_NC}"
-    exit 1
-fi
-echo "  - Plugin ID: ${PLUGIN_ID}"
+    echo "${file_name}: ${file_path}"
+    if [[ -f "$file_path" ]]; then
+        echo "  ✓ File exists"
+        return 0
+    else
+        echo "  ✗ File does not exist"
+        return 1
+    fi
+}
 
-# --- 2. Unpack Obsidian ASARs from repository ---
-echo -e "\n${COLOR_GREEN}Unpacking Obsidian ASAR archives from e2e-assets/...${COLOR_NC}"
+# =============================================================================
+# Validation Functions
+# =============================================================================
 
-OBSIDIAN_UNPACKED_PATH="${SCRIPT_DIR}/.obsidian-unpacked"
-APP_ASAR_PATH="${SCRIPT_DIR}/e2e-assets/app.asar"
-OBSIDIAN_ASAR_PATH="${SCRIPT_DIR}/e2e-assets/obsidian.asar"
+check_prerequisites() {
+    log_info "Checking prerequisites..."
 
-if [ ! -f "$APP_ASAR_PATH" ]; then
-    echo -e "${COLOR_RED}Error: app.asar not found at '${APP_ASAR_PATH}'. Make sure the file is present in the repository.${COLOR_NC}"
-    exit 1
-fi
+    if ! command -v jq &> /dev/null; then
+        log_error "Error: 'jq' is not installed. Please install it to proceed."
+    fi
 
-# Clean up previous unpack directory
-rm -rf "$OBSIDIAN_UNPACKED_PATH"
-mkdir -p "$OBSIDIAN_UNPACKED_PATH"
+    if ! command -v pnpm &> /dev/null; then
+        log_error "Error: 'pnpm' is not installed. Please make sure it is available in the environment."
+    fi
 
-# Manually extract app.asar to avoid various cross-platform issues.
-echo "Extracting ${APP_ASAR_PATH} to ${OBSIDIAN_UNPACKED_PATH}"
+    log_success "Prerequisites check passed."
+}
 
-# Generate a temporary file with the asar content list as JSON
-ASAR_CONTENT_JSON=$(mktemp)
-trap 'rm -f -- "$ASAR_CONTENT_JSON"' EXIT
-# pnpm exec asar list --is-pack "${APP_ASAR_PATH}" > "$ASAR_CONTENT_JSON"
-pnpm exec asar extract "${APP_ASAR_PATH}" "${OBSIDIAN_UNPACKED_PATH}"
+validate_plugin_manifest() {
+    local manifest_path="$1"
 
-# Create all directories first
-# jq -r '.[] | select(.type == "directory") | .path' "$ASAR_CONTENT_JSON" | sed 's/\\/\//g' | while IFS= read -r dirpath; do
-#     # Skip empty lines or root directory entries
-#     if [ -z "$dirpath" ] || [ "$dirpath" == "/" ]; then
-#         continue
-#     fi
-#     mkdir -p "${OBSIDIAN_UNPACKED_PATH}/${dirpath}"
-# done
+    log_info "Reading plugin info from ${manifest_path}..."
 
-# # Extract all files
-# jq -r '.[] | select(.type == "file") | .path' "$ASAR_CONTENT_JSON" | sed 's/\\/\//g' | while IFS= read -r filepath; do
-#     # Skip empty lines
-#     if [ -z "$filepath" ]; then
-#         continue
-#     fi
-#     dest_path="${OBSIDIAN_UNPACKED_PATH}/${filepath}"
-#     # Ensure the parent directory exists, just in case
-#     mkdir -p "$(dirname "$dest_path")"
-#     pnpm exec asar extract-file "${APP_ASAR_PATH}" "$filepath" > "$dest_path"
-# done
+    if [[ ! -f "$manifest_path" ]]; then
+        log_error "Error: Plugin manifest not found at '${manifest_path}'."
+    fi
 
-# Copy obsidian.asar if it exists
-if [ -f "$OBSIDIAN_ASAR_PATH" ]; then
-    echo "Copying ${OBSIDIAN_ASAR_PATH} to ${OBSIDIAN_UNPACKED_PATH}/"
-    cp "$OBSIDIAN_ASAR_PATH" "$OBSIDIAN_UNPACKED_PATH/"
-else
-    echo -e "${COLOR_YELLOW}Warning: obsidian.asar not found at '${OBSIDIAN_ASAR_PATH}'. Skipping.${COLOR_NC}"
-fi
+    local plugin_id
+    plugin_id=$(jq -r '.id' "$manifest_path")
 
-echo -e "${COLOR_GREEN}Done.${COLOR_NC}"
+    if [[ -z "$plugin_id" || "$plugin_id" == "null" ]]; then
+        log_error "Error: Could not read 'id' from '${manifest_path}'."
+    fi
 
-# --- 3. Resolve remaining paths & Create Vault ---
-VAULT_PATH="${SCRIPT_DIR}/${VAULT_NAME}"
-PLUGIN_BUILD_DIR="${PLUGIN_SOURCE_FULL_PATH}/dist"
-PLUGIN_LINK_PATH="${VAULT_PATH}/.obsidian/plugins/${PLUGIN_ID}"
+    echo "  - Plugin ID: ${plugin_id}"
+    echo "$plugin_id"
+}
 
-if [ ! -d "$VAULT_PATH" ]; then
-    echo "Creating test vault directory: $VAULT_PATH"
-    mkdir -p "$VAULT_PATH"
-fi
+# =============================================================================
+# Core Functions
+# =============================================================================
 
-# --- 4. Build Plugin ---
-echo -e "\n${COLOR_GREEN}Building plugin for E2E tests...${COLOR_NC}"
-(cd "$SCRIPT_DIR" && pnpm build:e2e)
-echo -e "${COLOR_GREEN}Done.${COLOR_NC}"
+setup_paths() {
+    readonly SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+    readonly PLUGIN_SOURCE_FULL_PATH="${SCRIPT_DIR}/${PLUGIN_SOURCE_DIR}"
+    readonly PLUGIN_MANIFEST_PATH="${PLUGIN_SOURCE_FULL_PATH}/manifest.json"
+    readonly OBSIDIAN_UNPACKED_PATH="${SCRIPT_DIR}/.obsidian-unpacked"
+    readonly APP_ASAR_PATH="${SCRIPT_DIR}/e2e-assets/app.asar"
+    readonly OBSIDIAN_ASAR_PATH="${SCRIPT_DIR}/e2e-assets/obsidian.asar"
+    readonly VAULT_PATH="${SCRIPT_DIR}/${VAULT_NAME}"
+}
 
-# --- 5. Link Built Plugin ---
-echo -e "\n${COLOR_GREEN}Linking built plugin to ${PLUGIN_LINK_PATH}...${COLOR_NC}"
-mkdir -p "$(dirname "$PLUGIN_LINK_PATH")"
-ln -sfn "$PLUGIN_BUILD_DIR" "$PLUGIN_LINK_PATH"
-echo -e "${COLOR_GREEN}Done.${COLOR_NC}"
+unpack_obsidian_assets() {
+    log_success "\nUnpacking Obsidian ASAR archives from e2e-assets/..."
 
-echo -e "\n${COLOR_GREEN}E2E setup process finished successfully.${COLOR_NC}"
+    # Debug: Check file existence
+    check_file "$OBSIDIAN_UNPACKED_PATH" "OBSIDIAN_UNPACKED_PATH"
+    check_file "$APP_ASAR_PATH" "APP_ASAR_PATH"
+    check_file "$OBSIDIAN_ASAR_PATH" "OBSIDIAN_ASAR_PATH"
+
+    # Validate required files
+    if [[ ! -f "$APP_ASAR_PATH" ]]; then
+        log_error "Error: app.asar not found at '${APP_ASAR_PATH}'. Make sure the file is present in the repository."
+    fi
+
+    # Clean up and create directory
+    log_info "Cleaning up previous unpack directory..."
+    rm -rf "$OBSIDIAN_UNPACKED_PATH"
+    mkdir -p "$OBSIDIAN_UNPACKED_PATH"
+
+    # Extract app.asar
+    log_info "Extracting ${APP_ASAR_PATH} to ${OBSIDIAN_UNPACKED_PATH}"
+    local temp_file
+    temp_file=$(mktemp)
+    trap 'rm -f -- "$temp_file"' EXIT
+
+    pnpm exec asar extract "${APP_ASAR_PATH}" "${OBSIDIAN_UNPACKED_PATH}"
+
+    # Copy obsidian.asar if it exists
+    if [[ -f "$OBSIDIAN_ASAR_PATH" ]]; then
+        log_info "Copying ${OBSIDIAN_ASAR_PATH} to ${OBSIDIAN_UNPACKED_PATH}/"
+        cp "$OBSIDIAN_ASAR_PATH" "$OBSIDIAN_UNPACKED_PATH/"
+    else
+        log_warning "Warning: obsidian.asar not found at '${OBSIDIAN_ASAR_PATH}'. Skipping."
+    fi
+
+    log_success "Asset unpacking completed."
+}
+
+create_vault() {
+    log_info "Setting up test vault..."
+
+    if [[ ! -d "$VAULT_PATH" ]]; then
+        log_info "Creating test vault directory: $VAULT_PATH"
+        mkdir -p "$VAULT_PATH"
+    else
+        log_info "Test vault directory already exists: $VAULT_PATH"
+    fi
+}
+
+build_plugin() {
+    log_success "\nBuilding plugin for E2E tests..."
+
+    if ! (cd "$SCRIPT_DIR" && pnpm build:e2e); then
+        log_error "Failed to build plugin."
+    fi
+
+    log_success "Plugin build completed."
+}
+
+link_plugin() {
+    local plugin_id="$1"
+    local plugin_build_dir="${PLUGIN_SOURCE_FULL_PATH}/dist"
+    local plugin_link_path="${VAULT_PATH}/.obsidian/plugins/${plugin_id}"
+
+    log_success "\nLinking built plugin to ${plugin_link_path}..."
+
+    mkdir -p "$(dirname "$plugin_link_path")"
+    ln -sfn "$plugin_build_dir" "$plugin_link_path"
+
+    log_success "Plugin linking completed."
+}
+
+# =============================================================================
+# Main Function
+# =============================================================================
+
+main() {
+    log_success "Starting E2E setup process..."
+
+    # Initialize paths
+    setup_paths
+
+    # Check prerequisites
+    check_prerequisites
+
+    # Read and validate plugin manifest
+    local plugin_id
+    plugin_id=$(validate_plugin_manifest "$PLUGIN_MANIFEST_PATH")
+
+    # Execute setup steps
+    unpack_obsidian_assets
+    create_vault
+    build_plugin
+    link_plugin "$plugin_id"
+
+    log_success "\nE2E setup process finished successfully."
+}
+
+# =============================================================================
+# Script Execution
+# =============================================================================
+
+main "$@"

@@ -10,9 +10,23 @@
 		"verbatimModuleSyntax": true,
 		"downlevelIteration": true,
 		"resolveJsonModule": true,
-		"lib": ["DOM", "ESNext"],
-		"types": ["node", "obsidian-typings", "vitest/globals"]
+		"lib": [
+			"DOM",
+			"ESNext"
+		],
+		"types": [
+			"node",
+			"obsidian-typings",
+			"vitest/globals"
+		]
 	},
-	"include": ["src/**/*", "src/*", "**/*.ts"],
-	"exclude": ["node_modules/*"]
+	"include": [
+		"src/**/*",
+		"src/*",
+		"**/*.ts",
+		"scripts/run-test-and-log.mts"
+	],
+	"exclude": [
+		"node_modules/*"
+	]
 }

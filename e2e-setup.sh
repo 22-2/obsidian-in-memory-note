@@ -176,7 +176,12 @@ link_plugin() {
     log_success "\nLinking built plugin to ${plugin_link_path}..."
 
     mkdir -p "$(dirname "$plugin_link_path")"
-    ln -sfn "$plugin_build_dir" "$plugin_link_path"
+
+    if [[ "$OS" == "Windows_NT" ]]; then
+		cmd <<< "mklink /D $(cygpath -w "$plugin_link_path") $(cygpath -w "$plugin_build_dir")"
+	else
+		ln -sfn "$plugin_build_dir" "$plugin_link_path"
+	fi
 
     log_success "Plugin linking completed."
 }

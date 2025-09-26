@@ -9,8 +9,9 @@ on:
 
 jobs:
     e2e-test:
-        # マトリックス戦略を使用して、WindowsとmacOSの両方でテストを実行
         strategy:
+            # 失敗しても他のジョブは継続するように設定
+            fail-fast: false
             matrix:
                 os: [windows-latest, macos-latest]
 
@@ -35,52 +36,40 @@ jobs:
             - name: Install dependencies
               run: pnpm install
 
-            # WindowsとmacOSでは、Linux固有の依存関係インストールは不要
-            - name: Install Playwright dependencies (Windows/macOS)
-              if: startsWith(matrix.os, 'windows') || startsWith(matrix.os, 'macos')
-              run: pnpm exec playwright install --with-deps
+            - name: Install Playwright Browsers
+              run: pnpm exec playwright install
 
             - name: Download Obsidian (Windows)
-              if: startsWith(matrix.os, 'windows')
+              if: runner.os == 'Windows'
               run: |
                   $OBSIDIAN_VERSION="1.5.12"
-                  # Windows版インストーラー (.exe) をダウンロード
-                  Invoke-WebRequest -Uri "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}.exe" -OutFile "Obsidian-${OBSIDIAN_VERSION}.exe"
-                  # PATHを環境変数に設定 (WindowsのCIではPath設定が異なる場合があるため)
-                  Write-Output "OBSIDIAN_APP_PATH=${PWD}/Obsidian-${OBSIDIAN_VERSION}.exe" >> $env:GITHUB_ENV
+                  Invoke-WebRequest -Uri "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}.exe" -OutFile "Obsidian.exe"
+                  # Playwright設定ファイルから参照される環境変数を設定
+                  echo "OBSIDIAN_APP_PATH=${PWD}/Obsidian.exe" >> $env:GITHUB_ENV
               shell: pwsh
 
             - name: Download Obsidian (macOS)
-              if: startsWith(matrix.os, 'macos')
+              if: runner.os == 'macOS'
               run: |
                   OBSIDIAN_VERSION="1.5.12"
-                  # macOS版アプリ (.dmg) をダウンロードし、アプリケーションパスを設定
-                  curl -L "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}.dmg" -o "Obsidian.dmg"
-                  # DMGをマウントし、.appバンドルをコピーする
+                  # macOS ARM64ランナー用にarm64版のDMGをダウンロード
+                  curl -L "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}-arm64.dmg" -o "Obsidian.dmg"
                   hdiutil attach Obsidian.dmg
-                  # アプリケーションバンドルをAppImageパスと同じ環境変数名で参照できるように設定
+                  # Playwright設定ファイルから参照される環境変数を設定
                   echo "OBSIDIAN_APP_PATH=/Volumes/Obsidian/Obsidian.app" >> $GITHUB_ENV
-                  # 補足: macOSではElectron起動時にこのパスを指定することが多い
+
+            - name: Install jq (Windows)
+              if: runner.os == 'Windows'
+              run: choco install jq
 
             - name: Prepare E2E test environment
-              # jqはmacOSにデフォルトで入っているが、Windowsでは別途対応が必要
-              # 簡略化のため、jqが必要な処理をCI環境から切り離すか、テスト環境に合わせて調整してください。
-              # Windows環境でのjq相当の処理がない場合、jqを必要とするe2e-setup.shは失敗する可能性があります。
               run: bash e2e-setup.sh
-              if: startsWith(matrix.os, 'macos')
-
-            - name: "Prepare E2E test environment (Windows: jqが不要な前提で実行)"
-              run: bash e2e-setup.sh
-              if: startsWith(matrix.os, 'windows')
-              # Windows環境では、e2e-setup.shがbashシェルで実行できるように、Git Bash等の環境が必要です。
-              # GitHub Actionsのデフォルト環境では実行可能ですが、jqコマンドの有無に注意が必要です。
 
             - name: Run Playwright tests
-              run: |
-                  # --project=electron を使用して、Electronの設定でテストを実行する
-                  pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=electron
-              # 注意: OBSIDIAN_APP_PATH は Playwright設定ファイル内で利用され、
-              # Windowsでは .exe、macOSでは .app のパスが渡される想定です。
+              run: pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=electron
+              env:
+                  # デバッグ用にpw:browserログを有効化
+                  DEBUG: "pw:browser"
 
             - name: Upload Playwright report
               if: always()

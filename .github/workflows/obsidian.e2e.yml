@@ -30,8 +30,14 @@ jobs:
             - name: Install dependencies
               run: pnpm install
 
-            - name: Install Playwright browsers and dependencies
-              run: pnpm playwright install --with-deps
+            - name: Disable man-db auto-update permanently and install Playwright dependencies
+              run: |
+                  echo "set man-db/auto-update false" | sudo debconf-communicate
+                  sudo dpkg-reconfigure man-db
+                  sudo apt-get update -q
+                  sudo apt-get install -y -q xvfb herbstluftwm dzen2 x11-xserver-utils
+                  sudo apt-mark hold man-db
+                  pnpm exec playwright install --with-deps
 
             - name: Download Obsidian
               run: |

@@ -1,25 +1,28 @@
-// E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\base.mts
+// E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\types.mts
 import type { App } from "obsidian";
-import {
-	type ElectronApplication,
-	type JSHandle,
-	type Page,
-} from "playwright";
-import manifest from "../../manifest.json" with { type: "json" };
+import type { ElectronApplication, JSHandle, Page } from "playwright";
 import type SandboxPlugin from "../main";
+import type { PLUGIN_ID } from "./config.mts";
 
-
-// --- Fixture Interfaces ---
 export interface BaseObsidianFixture {
 	electronApp: ElectronApplication;
 	window: Page;
 	appHandle: JSHandle<App>;
-	pluginId: (typeof manifest)["id"];
+	pluginId: typeof PLUGIN_ID;
 }
+
 export interface PluginInstalledFixture extends BaseObsidianFixture {
 	pluginHandle: JSHandle<SandboxPlugin>;
 }
 
-export interface SetupFixuture extends BaseObsidianFixture {
+export interface SetupFixture extends BaseObsidianFixture {
 	isRestorationStep: boolean;
+}
+
+/** commonSetupに渡すオプションの型 */
+export interface CommonSetupOptions {
+	/** trueの場合、UI操作でRestricted Modeを無効化する */
+	disableRestrictedMode?: boolean;
+	/** 指定した名前のVaultをテスト開始時に開く */
+	openVault?: string;
 }

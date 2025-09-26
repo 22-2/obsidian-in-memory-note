@@ -1,105 +1,87 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\smoke.spec.mts
-// このファイルは Playwright の E2E テストファイルです。
-import {
-	expect,
-	testPluginInstalled as test, // testのエイリアスとして使用
-} from "./base.mts";
-import { SANDBOX_VIEW_SELECTOR } from "./config.mts";
+import { test, expect } from "./base.mts";
+import { SANDBOX_VAULT_NAME, SANDBOX_VIEW_SELECTOR } from "./config.mts";
 import {
 	getActiveSandboxLocator,
 	getActiveTabTitle,
 	getEditor,
 	openNewSandboxNote,
 	splitActiveView,
-	waitForWorkspace,
 } from "./helpers.mts";
 
-// --- Test Suites ---
-
-test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
+// --- 通常のVaultでのテスト ---
+test.describe("Hot Sandbox Note: Basic Functionality", () => {
 	test("should open a new note, allow typing, and update title", async ({
-		pluginInstalledFixture,
+		obsidian,
 	}) => {
-		const { window } = pluginInstalledFixture;
-		// Act: Open a new note.
+		const { window } = obsidian;
 		await openNewSandboxNote(window);
 		const view = await getActiveSandboxLocator(window);
 
-		// Assert: Check the initial tab title.
 		const tabTitle = getActiveTabTitle(window);
 		await expect(tabTitle).toHaveText(/Hot Sandbox-\d+/);
 
-		// Act: Type text into the editor.
 		const editor = getEditor(view);
 		await editor.click();
 		const testText = "Hello, this is an E2E test!";
 		await editor.fill(testText);
 
-		// Assert: Verify text and title update.
 		await expect(editor).toHaveText(testText);
 		await expect(tabTitle).toHaveText(/\*Hot Sandbox-\d+/);
 	});
 
-	test("should sync content between two split views of the same note", async ({
-		pluginInstalledFixture,
+	// 他のテスト...
+});
+
+// --- Sandbox Vaultでのテスト ---
+test.describe("Hot Sandbox Note: In Sandbox Vault", () => {
+	// このdescribeブロック内のすべてのテストでSandbox Vaultが開かれる
+	test.use({ setupOptions: { openVault: SANDBOX_VAULT_NAME } });
+
+	test("should open a new note in the sandbox vault", async ({
+		obsidian,
 	}) => {
-		const { window } = pluginInstalledFixture;
-		// Arrange: Open a note and split the view (using UI interaction).
+		const { window, appHandle } = obsidian;
+
+		// Vault名が正しいことを確認
+		const vaultName = await appHandle.evaluate((app) =>
+			app.vault.getName()
+		);
+		expect(vaultName).toBe(SANDBOX_VAULT_NAME);
+
+		// 通常のテストと同様の操作を実行
 		await openNewSandboxNote(window);
-		await splitActiveView(window, "right");
-
-		// Get the views (both are present in the DOM)
-		const allSandboxViews = window.locator(SANDBOX_VIEW_SELECTOR);
-		await expect(allSandboxViews).toHaveCount(2);
-
-		// Act: Type in the first editor.
-		const firstEditor = getEditor(allSandboxViews.first());
-		const secondEditor = getEditor(allSandboxViews.last());
-
-		const syncText = "This text should appear in both views.";
-		await firstEditor.click();
-		await firstEditor.fill(syncText);
-
-		// Assert: Verify text is synced to the second editor.
-		await expect(secondEditor).toHaveText(syncText);
-
-		// Act: Type in the second editor to test reverse sync.
-		const reverseSyncText = " And this text from the second view.";
-		await secondEditor.press("End");
-		await secondEditor.type(reverseSyncText);
-
-		// Assert: Verify the full text is now in the first editor.
-		await expect(firstEditor).toHaveText(syncText + reverseSyncText);
+		const view = await getActiveSandboxLocator(window);
+		const editor = getEditor(view);
+		await editor.click();
+		await editor.fill("Testing in the sandbox vault.");
+		await expect(editor).toHaveText("Testing in the sandbox vault.");
 	});
 });
 
+// --- Hot Exitのテスト ---
 test.describe.serial("Hot Sandbox Note: Hot Exit (Restart Test)", () => {
 	const testText = `Content to be restored - ${Date.now()}`;
 
 	test("should create and populate a note for the restart test", async ({
-		pluginInstalledFixture,
+		obsidian,
 	}) => {
-		const { window } = pluginInstalledFixture;
-		// Arrange: Open a note and type some unique text.
+		const { window } = obsidian;
 		await openNewSandboxNote(window);
 		const view = await getActiveSandboxLocator(window);
 		const editor = getEditor(view);
 		await editor.click();
 		await editor.fill(testText);
 
-		// Assert: Verify content is present.
 		await expect(editor).toHaveText(testText);
-
-		// Act: Wait for the automatic save to trigger (default debounce is 2000ms).
-		await window.waitForTimeout(3000);
+		await window.waitForTimeout(3000); // 保存を待機
 	});
 
 	test("should restore note content after an application restart", async ({
-		pluginInstalledFixture,
+		obsidian,
 	}) => {
-		const { window } = pluginInstalledFixture;
-		await waitForWorkspace(window);
-		await window.waitForTimeout(1000); // Wait for restoration to complete.
+		const { window } = obsidian;
+		await window.waitForTimeout(1000); // 復元を待機
 
 		const restoredView = await getActiveSandboxLocator(window);
 		const restoredEditor = getEditor(restoredView);

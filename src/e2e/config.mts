@@ -1,53 +1,35 @@
-// e2e/e2e-config.ts
+// E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\config.mts
 import { existsSync } from "fs";
 import path from "path";
-import invariant from "tiny-invariant";
 import { fileURLToPath } from "url";
+import invariant from "tiny-invariant";
+import manifest from "../../manifest.json" with { type: "json" };
 
-// ES Module環境で __dirname を安全に取得
+// --- Project Structure ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// MonoRepoのルートにあるものとしてパスを定義
-// test-base.ts や global-setup.ts から相対的にルートを定義
 const ROOT_DIR = path.resolve(__dirname, "..", "..");
 
-export const PLUGIN_ID = "sandbox-note"; // 🚨 実際のプラグインID
+// --- Plugin Information ---
+export const PLUGIN_ID = manifest.id;
+
+// --- Vault & App Paths ---
 export const VAULT_NAME = "e2e-vault";
-
+export const SANDBOX_VAULT_NAME = "e2e-sandbox-vault"; // Sandbox Vaultの名前
 export const VAULT_PATH = path.join(ROOT_DIR, VAULT_NAME);
-export const UNPACKED_APP_PATH = path.join(
-	ROOT_DIR,
-	".obsidian-unpacked",
-	"main.js"
-);
+export const APP_MAIN_JS_PATH = path.join(ROOT_DIR, ".obsidian-unpacked", "main.js");
 
+// --- Pre-flight checks ---
 invariant(
-	existsSync(UNPACKED_APP_PATH),
-	`Obsidian app not found at: ${UNPACKED_APP_PATH}. Did you run 'pnpm build:e2e' and 'e2e-setup' script?`
+	existsSync(APP_MAIN_JS_PATH),
+	`Obsidian app not found at: ${APP_MAIN_JS_PATH}. Did you run 'pnpm build:e2e' and 'e2e-setup' script?`
 );
 invariant(
 	existsSync(VAULT_PATH),
 	`E2E vault not found at: ${VAULT_PATH}. Did you run 'e2e-setup' script?`
 );
 
-// Electron起動に必要なパス
-// npx electron /path/to/.obsidian-unpacked/main.js
-export const ELECTRON_PATH = "npx";
-export const ELECTRON_ARGS = [
-	UNPACKED_APP_PATH,
-	"open",
-	`obsidian://open?path=${encodeURIComponent(VAULT_PATH)}`,
-];
-// --- Configuration & Constants ---
-// const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const APP_PATH = path.resolve(
-	__dirname,
-	"../../.obsidian-unpacked/main.js"
-);
-// export const VAULT_PATH = path.resolve(__dirname, "../../e2e-vault");
-// 汎用セレクター (他のファイルからインポートされる)
-
+// --- UI Selectors ---
 export const SANDBOX_VIEW_SELECTOR =
 	'.workspace-leaf-content[data-type="hot-sandbox-note-view"]';
 export const ACTIVE_LEAF_SELECTOR = `.mod-active .workspace-leaf.mod-active`;

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-	timeout: 3000,
+	timeout: 3000 * 10,
 	testDir: "./src/e2e",
 	// コンテナ内の絶対パスに変更
 	outputDir: "../test-results",

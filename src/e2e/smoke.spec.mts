@@ -1,5 +1,4 @@
 // このファイルは Playwright の E2E テストファイルです。
-import test, { expect } from "@playwright/test";
 import {
 	getActiveSandboxLocator,
 	getActiveTabTitle,
@@ -7,13 +6,17 @@ import {
 	openNewSandboxNote,
 	splitActiveView,
 	waitForWorkspace,
-} from "./helpers";
-import { pluginHandle, SANDBOX_VIEW_SELECTOR, window } from "./test-base";
+} from "./helpers.mts";
+// import { pluginHandle, SANDBOX_VIEW_SELECTOR, window } from "./test-base";
+import { test, expect, SANDBOX_VIEW_SELECTOR } from "./test-base.mts";
 
 // --- Test Suites ---
 
 test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
-	test("should open a new note, allow typing, and update title with asterisk", async () => {
+	test("should open a new note, allow typing, and update title with asterisk", async ({
+		obsidianFixture,
+	}) => {
+		const { window } = obsidianFixture;
 		// Act: Open a new note.
 		await openNewSandboxNote(window);
 		const view = await getActiveSandboxLocator(window);
@@ -33,7 +36,10 @@ test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
 		await expect(tabTitle).toHaveText(/\Hot Sandbox-\d+/);
 	});
 
-	test("should sync content between two split views of the same note", async () => {
+	test("should sync content between two split views of the same note", async ({
+		obsidianFixture,
+	}) => {
+		const { window } = obsidianFixture;
 		// Arrange: Open a note and split the view (using UI interaction).
 		await openNewSandboxNote(window);
 		await splitActiveView(window, "right");
@@ -66,7 +72,10 @@ test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
 test.describe.serial("Hot Sandbox Note: Hot Exit (Restart Test)", () => {
 	const testText = `Content to be restored - ${Date.now()}`;
 
-	test("should create and populate a note for the restart test", async () => {
+	test("should create and populate a note for the restart test", async ({
+		obsidianFixture,
+	}) => {
+		const { window, pluginHandle } = obsidianFixture;
 		// Arrange: Open a note and type some unique text.
 		await openNewSandboxNote(window);
 		const view = await getActiveSandboxLocator(window);
@@ -84,7 +93,10 @@ test.describe.serial("Hot Sandbox Note: Hot Exit (Restart Test)", () => {
 	// Note: Since this is a serial block, Playwright ensures the app is closed after the previous test
 	// and restarted automatically via the subsequent test's beforeEach hook.
 
-	test("should restore note content after an application restart", async () => {
+	test("should restore note content after an application restart", async ({
+		obsidianFixture,
+	}) => {
+		const { window, pluginHandle } = obsidianFixture;
 		// Act: App has already been restarted by the preceding afterEach/beforeEach hooks.
 		await waitForWorkspace(window);
 

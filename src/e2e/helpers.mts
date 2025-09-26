@@ -7,7 +7,7 @@ import {
 	SANDBOX_VIEW_SELECTOR,
 	ROOT_WORKSPACE_SELECTOR,
 	vaultPath,
-} from "./test-base";
+} from "./test-base.mts";
 import path from "path";
 
 // --- Helper Functions (Updated to use pure selectors or require Page/appHandle) ---

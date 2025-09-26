@@ -2,7 +2,7 @@ import { expect } from "@playwright/test";
 import { test } from "./base.mts";
 import { SANDBOX_VAULT_NAME } from "./config.mts";
 
-test.describe("test", async () => {
+test.describe("Minimal test", async () => {
 	test.use({ setupOptions: { openSandboxVault: true } });
 	test("should open a new note in the sandbox vault", async ({
 		obsidian,

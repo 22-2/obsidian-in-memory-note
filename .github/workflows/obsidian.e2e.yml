@@ -63,6 +63,11 @@ jobs:
                   chmod +x e2e-setup.sh
                   ./e2e-setup.sh
 
+            - name: List project files # For debugging purposes
+              shell: bash
+              run: |
+                  npx @telosh/filetree --exclude
+
             - name: Run Playwright tests
               run: pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=chromium
               env:

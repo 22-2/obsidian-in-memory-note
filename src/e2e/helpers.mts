@@ -1,16 +1,23 @@
-import { copyFileSync } from "fs";
+// E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\helpers.mts
+import { copyFileSync, writeFileSync } from "fs"; // writeFileSyncを追加
 import type { App } from "obsidian";
-import type { Page, JSHandle, Locator } from "playwright";
+import path from "path";
+import type { JSHandle, Locator, Page } from "playwright";
 import { expect } from "playwright/test";
 import {
 	ACTIVE_LEAF_SELECTOR,
-	SANDBOX_VIEW_SELECTOR,
 	ROOT_WORKSPACE_SELECTOR,
-	vaultPath,
-} from "./test-base.mts";
-import path from "path";
+	SANDBOX_VIEW_SELECTOR,
+} from "./base.mts";
+import { PLUGIN_ID, VAULT_PATH } from "./config.mts"; // PLUGIN_IDをインポート
 
-// --- Helper Functions (Updated to use pure selectors or require Page/appHandle) ---
+// --- Constants ---
+const COMMUNITY_PLUGINS_PATH = path.join(
+	VAULT_PATH,
+	"/.obsidian/community-plugins.json"
+);
+
+// --- Helper Functions ---
 export async function waitForWorkspace(page: Page) {
 	// Wait for loading screen to disappear
 	await page.waitForSelector(".progress-bar", {
@@ -75,9 +82,50 @@ export async function splitActiveView(page: Page, direction: "right" | "down") {
 	// 3. 2つのsandboxビューが存在することを待機
 	await expect(page.locator(SANDBOX_VIEW_SELECTOR)).toHaveCount(2);
 }
+/**
+ * ワークスペース設定を初期状態 (空のワークスペース) に戻す
+ */
 export function initializeWorkspaceJSON() {
 	copyFileSync(
-		path.join(vaultPath, "/.obsidian/workspace.initial.json"),
-		path.join(vaultPath, "/.obsidian/workspace.json")
+		path.join(VAULT_PATH, "/.obsidian/workspace.initial.json"),
+		path.join(VAULT_PATH, "/.obsidian/workspace.json")
 	);
+}
+
+/**
+ * コミュニティプラグインの設定を書き換える。
+ * @param enabledPlugins 有効化するプラグインのIDリスト
+ */
+export function setCommunityPlugins(enabledPlugins: string[]) {
+	writeFileSync(
+		COMMUNITY_PLUGINS_PATH,
+		JSON.stringify(enabledPlugins, null, 2),
+		"utf-8"
+	);
+	console.log(
+		`[Plugin Config] Set enabled plugins: ${enabledPlugins.join(", ")}`
+	);
+}
+
+/**
+ * テスト対象プラグインを有効化する
+ */
+export function setPluginInstalled() {
+	setCommunityPlugins([PLUGIN_ID]);
+}
+
+/**
+ * コミュニティプラグインをすべて無効化する (Restricted Mode相当)
+ */
+export function setRestrictedMode() {
+	setCommunityPlugins([]);
+}
+
+/**
+ * コミュニティプラグインを許可するが、テスト対象プラグインは無効化する
+ */
+export function setPluginDisabled() {
+	// 実際には e2e-vault の設定に依存するため、ここでは空の配列を設定（ただし、他のテストで使われる可能性のあるプラグインは含めない）
+	// 他のプラグインがインストールされていない前提であれば RestrictedMode と同じ動作になるが、意図を明確にするために別関数とする
+	setCommunityPlugins([]);
 }

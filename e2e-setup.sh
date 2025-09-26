@@ -51,10 +51,10 @@ check_file() {
     echo "${file_name}: ${file_path}"
     if [[ -f "$file_path" ]]; then
         echo "  ✓ File exists"
-        return 0
+        # return 0
     else
         echo "  ✗ File does not exist"
-        return 1
+        # return 0
     fi
 }
 

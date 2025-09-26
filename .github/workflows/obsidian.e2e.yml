@@ -1,0 +1,63 @@
+name: Obsidian E2E Test
+
+on:
+    push:
+        branches: ["main", "multiple-sandbox"]
+    pull_request:
+        branches: ["main", "multiple-sandbox"]
+	workflow_dispatch:
+
+jobs:
+    e2e-test:
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v4
+
+            - name: Set up pnpm
+              uses: pnpm/action-setup@v3
+              with:
+                  version: 8 # ご利用のpnpmバージョンに合わせてください
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20" # ご利用のNode.jsバージョンに合わせてください
+                  cache: "pnpm"
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Install Playwright browsers and dependencies
+              run: pnpm playwright install --with-deps
+
+            - name: Download Obsidian
+              run: |
+                  # CIでの安定性のため、バージョンを固定することを推奨します
+                  OBSIDIAN_VERSION="1.5.12"
+                  wget "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}.AppImage"
+                  chmod +x "Obsidian-${OBSIDIAN_VERSION}.AppImage"
+                  echo "OBSIDIAN_APPIMAGE_PATH=${PWD}/Obsidian-${OBSIDIAN_VERSION}.AppImage" >> $GITHUB_ENV
+
+            - name: Prepare E2E test environment
+              run: |
+                  # setupスクリプトに必要なjqをインストール
+                  sudo apt-get update && sudo apt-get install -y jq
+                  bash e2e-setup.sh
+
+            - name: Run Playwright tests
+              run: |
+                  # Electronアプリをヘッドレスで実行するためにxvfbをインストール
+                  sudo apt-get update && sudo apt-get install -y xvfb
+                  # xvfb上で指定のテストファイルを実行
+                  xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" pnpm playwright test src/e2e/sandbox-vault.spec.mts
+
+            - name: Upload Playwright report
+              if: always() # テストが失敗してもレポートをアップロードする
+              uses: actions/upload-artifact@v4
+              with:
+                  name: playwright-report
+                  path: playwright-report/
+                  retention-days: 30

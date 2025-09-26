@@ -136,8 +136,8 @@ async function runTestAndLog() {
 			message: "クリックでログを開く。下のボタンでHTMLレポートを開く。",
 			// アクションボタンを定義 (activation 引数でクリック時のIDを指定)
 			button: [
-				{ text: "Open HTML Report", activation: "action:report" },
-				{ text: "Open Raw Log", activation: "action:log" },
+				{ text: "Open HTML Report", activation: "report" },
+				{ text: "Open Raw Log", activation: "log" },
 			],
 		});
 
@@ -145,9 +145,9 @@ async function runTestAndLog() {
 		toast.on("activated", (event: string, input: object) => {
 			console.log(`Toast activated with event: ${event}`);
 
-			if (event === "action:report") {
+			if (event === "report") {
 				openFile(HTML_REPORT_PATH); // HTMLレポート
-			} else if (event === "action:log" && failedLogPath) {
+			} else if (event === "log" && failedLogPath) {
 				openFile(failedLogPath); // 生ログ
 			} else {
 				// 通知本体のクリックや不明なアクションの場合のフォールバック

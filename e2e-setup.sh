@@ -45,8 +45,8 @@ if [ -z "$PLUGIN_ID" ] || [ "$PLUGIN_ID" == "null" ]; then
 fi
 echo "  - Plugin ID: ${PLUGIN_ID}"
 
-# --- 2. Download and Unpack Obsidian ASARs ---
-echo -e "\n${COLOR_GREEN}Downloading and unpacking Obsidian v${OBSIDIAN_VERSION} ASAR archives...${COLOR_NC}"
+# --- 2. Download and Unpack Obsidian ASAR ---
+echo -e "\n${COLOR_GREEN}Downloading and unpacking Obsidian v${OBSIDIAN_VERSION} ASAR archive...${COLOR_NC}"
 
 OBSIDIAN_UNPACKED_PATH="${SCRIPT_DIR}/.obsidian-unpacked"
 TEMP_DIR=$(mktemp -d)
@@ -55,15 +55,10 @@ TEMP_DIR=$(mktemp -d)
 trap 'rm -rf -- "$TEMP_DIR"' EXIT
 
 APP_ASAR_GZ_URL="https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/obsidian-${OBSIDIAN_VERSION}.asar.gz"
-OBSIDIAN_ASAR_URL="https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/obsidian.asar"
 
 # Download and extract app.asar
 echo "Downloading app.asar from ${APP_ASAR_GZ_URL}"
 curl -L "$APP_ASAR_GZ_URL" | gzip -d > "${TEMP_DIR}/app.asar"
-
-# Download obsidian.asar
-echo "Downloading obsidian.asar from ${OBSIDIAN_ASAR_URL}"
-curl -L -o "${OBSIDIAN_UNPACKED_PATH}/obsidian.asar" "$OBSIDIAN_ASAR_URL"
 
 # Manually extract app.asar to avoid absolute path issues on Windows
 echo "Extracting app.asar to ${OBSIDIAN_UNPACKED_PATH}"
@@ -91,10 +86,6 @@ npx @electron/asar list "${TEMP_DIR}/app.asar" | while IFS= read -r filepath; do
         npx @electron/asar extract-file "${TEMP_DIR}/app.asar" "$filepath_clean" > "$dest_path"
     fi
 done
-
-# Copy obsidian.asar to the unpacked directory
-echo "Copying obsidian.asar..."
-curl -L -o "${OBSIDIAN_UNPACKED_PATH}/obsidian.asar" "$OBSIDIAN_ASAR_URL"
 
 echo -e "${COLOR_GREEN}Done.${COLOR_NC}"
 

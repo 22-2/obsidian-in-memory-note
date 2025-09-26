@@ -1,38 +1,25 @@
 #!/usr/bin/env bash
 
 # e2e-setup.sh
-# This script prepares the Obsidian E2E testing environment for Unix-like systems, especially for CI.
+# This script prepares the Obsidian E2E testing environment.
+# Modified to be compatible with Windows, macOS, and Linux.
 
-# Exit immediately if a command exits with a non-zero status.
 set -e
 
 # --- Configuration ---
-# VAULT_NAME is used to create the test vault directory.
 VAULT_NAME="e2e-vault"
-# Relative path from the mono-repo root to the plugin source directory.
 PLUGIN_SOURCE_DIR="./"
 # --- End Configuration ---
 
-# --- Helper for colored output ---
 COLOR_GREEN='\033[0;32m'
 COLOR_YELLOW='\033[0;33m'
 COLOR_CYAN='\033[0;36m'
 COLOR_RED='\033[0;31m'
-COLOR_NC='\033[0m' # No Color
+COLOR_NC='\033[0m'
 
 # --- Prerequisite Check ---
 if ! command -v jq &> /dev/null; then
     echo -e "${COLOR_RED}Error: 'jq' is not installed. Please install it to proceed.${COLOR_NC}"
-    # On GitHub Actions, you can install it with: sudo apt-get install -y jq
-    exit 1
-fi
-if [[ -z "$OBSIDIAN_APPIMAGE_PATH" ]]; then
-    echo -e "${COLOR_RED}Error: OBSIDIAN_APPIMAGE_PATH environment variable is not set.${COLOR_NC}"
-    echo -e "${COLOR_YELLOW}Please set it to the path of the Obsidian AppImage file.${COLOR_NC}"
-    exit 1
-fi
-if [ ! -f "$OBSIDIAN_APPIMAGE_PATH" ]; then
-    echo -e "${COLOR_RED}Error: Obsidian AppImage not found at '$OBSIDIAN_APPIMAGE_PATH'.${COLOR_NC}"
     exit 1
 fi
 
@@ -44,68 +31,38 @@ PLUGIN_MANIFEST_PATH="${PLUGIN_SOURCE_FULL_PATH}/manifest.json"
 # --- 1. Read Plugin Manifest ---
 echo -e "${COLOR_CYAN}Reading plugin info from ${PLUGIN_MANIFEST_PATH}...${COLOR_NC}"
 if [ ! -f "$PLUGIN_MANIFEST_PATH" ]; then
-    echo -e "${COLOR_RED}Error: Plugin manifest not found at '${PLUGIN_MANIFEST_PATH}'. Please check the 'PLUGIN_SOURCE_DIR' configuration.${COLOR_NC}"
+    echo -e "${COLOR_RED}Error: Plugin manifest not found at '${PLUGIN_MANIFEST_PATH}'.${COLOR_NC}"
     exit 1
 fi
 PLUGIN_ID=$(jq -r '.id' "$PLUGIN_MANIFEST_PATH")
-PLUGIN_NAME=$(jq -r '.name' "$PLUGIN_MANIFEST_PATH")
-
 if [ -z "$PLUGIN_ID" ] || [ "$PLUGIN_ID" == "null" ]; then
     echo -e "${COLOR_RED}Error: Could not read 'id' from '${PLUGIN_MANIFEST_PATH}'.${COLOR_NC}"
     exit 1
 fi
 echo "  - Plugin ID: ${PLUGIN_ID}"
-echo "  - Plugin Name: ${PLUGIN_NAME}"
 
-# --- Resolve remaining paths using plugin info ---
+# --- Resolve remaining paths ---
 VAULT_PATH="${SCRIPT_DIR}/${VAULT_NAME}"
-OBSIDIAN_UNPACKED_PATH="${SCRIPT_DIR}/.obsidian-unpacked"
 PLUGIN_BUILD_DIR="${PLUGIN_SOURCE_FULL_PATH}/dist"
 PLUGIN_LINK_PATH="${VAULT_PATH}/.obsidian/plugins/${PLUGIN_ID}"
 
-# --- Path Validation ---
+# --- Create Vault Directory ---
 if [ ! -d "$VAULT_PATH" ]; then
     echo "Creating test vault directory: $VAULT_PATH"
     mkdir -p "$VAULT_PATH"
 fi
 
-# --- 2. Unpack Obsidian ---
-echo -e "\n${COLOR_GREEN}Unpacking Obsidian from AppImage...${COLOR_NC}"
-rm -rf "$OBSIDIAN_UNPACKED_PATH"
-rm -rf "squashfs-root" # Clean up previous extraction
-
-# Extract the AppImage
-echo "Extracting AppImage..."
-"$OBSIDIAN_APPIMAGE_PATH" --appimage-extract > /dev/null
-
-# Define paths to asar files
-ASAR_PATH="./squashfs-root/resources/app.asar"
-OBSIDIAN_ASAR_PATH="./squashfs-root/resources/obsidian.asar"
-
-if [ ! -f "$ASAR_PATH" ]; then
-    echo -e "${COLOR_RED}Error: app.asar not found at '${ASAR_PATH}'. The AppImage structure might have changed.${COLOR_NC}"
-    exit 1
-fi
-
-# Extract asar archives
-echo "Extracting asar archives..."
-npx @electron/asar extract "$ASAR_PATH" "$OBSIDIAN_UNPACKED_PATH"
-cp "$OBSIDIAN_ASAR_PATH" "$OBSIDIAN_UNPACKED_PATH/"
-echo -e "${COLOR_GREEN}Done.${COLOR_NC}"
-
-# Clean up extracted AppImage contents
-rm -rf "squashfs-root"
-
-# --- 3. Build Plugin ---
+# --- 2. Build Plugin ---
 echo -e "\n${COLOR_GREEN}Building plugin for E2E tests...${COLOR_NC}"
+# Assuming the build command is in the root package.json
 (cd "$SCRIPT_DIR" && pnpm build:e2e)
 echo -e "${COLOR_GREEN}Done.${COLOR_NC}"
 
-# --- 4. Link Built Plugin ---
+# --- 3. Link Built Plugin ---
 echo -e "\n${COLOR_GREEN}Linking built plugin to ${PLUGIN_LINK_PATH}...${COLOR_NC}"
 mkdir -p "$(dirname "$PLUGIN_LINK_PATH")"
 # Use absolute path for the target of the symbolic link for robustness
 ln -sfn "$PLUGIN_BUILD_DIR" "$PLUGIN_LINK_PATH"
 echo -e "${COLOR_GREEN}Done.${COLOR_NC}"
 
-echo -e "\n${COLOR_GREEN}E2E setup process finished successfully. You can now run your Playwright tests.${COLOR_NC}"
+echo -e "\n${COLOR_GREEN}E2E setup process finished successfully.${COLOR_NC}"

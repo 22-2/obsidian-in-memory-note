@@ -10,7 +10,6 @@ on:
 jobs:
     e2e-test:
         strategy:
-            # 失敗しても他のジョブは継続するように設定
             fail-fast: false
             matrix:
                 os: [windows-latest, macos-latest]
@@ -44,7 +43,6 @@ jobs:
               run: |
                   $OBSIDIAN_VERSION="1.9.12"
                   Invoke-WebRequest -Uri "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}.exe" -OutFile "Obsidian.exe"
-                  # Playwright設定ファイルから参照される環境変数を設定
                   echo "OBSIDIAN_APP_PATH=${PWD}/Obsidian.exe" >> $env:GITHUB_ENV
               shell: pwsh
 
@@ -55,20 +53,24 @@ jobs:
                   # macOS ARM64ランナー用にarm64版のDMGをダウンロード
                   curl -L "https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/Obsidian-${OBSIDIAN_VERSION}.dmg" -o "Obsidian.dmg"
                   hdiutil attach Obsidian.dmg
-                  # Playwright設定ファイルから参照される環境変数を設定
                   echo "OBSIDIAN_APP_PATH=/Volumes/Obsidian/Obsidian.app" >> $GITHUB_ENV
 
             - name: Install jq (Windows)
               if: runner.os == 'Windows'
-              run: choco install jq
+              # Git for Windowsにバンドルされているbashを使用するため、shellをbashに指定
+              shell: bash
+              run: |
+                  curl -L -o /usr/bin/jq.exe https://github.com/jqlang/jq/releases/latest/download/jq-win64.exe
 
             - name: Prepare E2E test environment
+              shell: bash
               run: bash e2e-setup.sh
 
             - name: Run Playwright tests
               run: pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=electron
               env:
-                  # デバッグ用にpw:browserログを有効化
+                  # この環境変数はPlaywrightの設定ファイル(playwright.config.ts)内で使用されることを想定
+                  OBSIDIAN_APP_PATH: ${{ env.OBSIDIAN_APP_PATH }}
                   DEBUG: "pw:browser"
 
             - name: Upload Playwright report

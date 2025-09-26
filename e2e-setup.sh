@@ -108,6 +108,8 @@ setup_paths() {
     readonly APP_ASAR_PATH="${SCRIPT_DIR}/e2e-assets/app.asar"
     readonly OBSIDIAN_ASAR_PATH="${SCRIPT_DIR}/e2e-assets/obsidian.asar"
     readonly VAULT_PATH="${SCRIPT_DIR}/${VAULT_NAME}"
+	readonly APP_ASAR_UNPACKED_ZIP_PATH="${SCRIPT_DIR}/e2e-assets/app.asar.unpacked.zip"
+	readonly APP_ASAR_UNPACKED_DIR_PATH="${SCRIPT_DIR}/e2e-assets/app.asar.unpacked"
 }
 
 unpack_obsidian_assets() {
@@ -127,6 +129,18 @@ unpack_obsidian_assets() {
     log_info "Cleaning up previous unpack directory..."
     rm -rf "$OBSIDIAN_UNPACKED_PATH"
     mkdir -p "$OBSIDIAN_UNPACKED_PATH"
+
+	# Unzip app.asar.unpacked.zip if it exists
+	if [[ -f "$APP_ASAR_UNPACKED_ZIP_PATH" ]]; then
+		log_info "Unzipping ${APP_ASAR_UNPACKED_ZIP_PATH}..."
+		# Clean up previous directory if it exists
+		rm -rf "$APP_ASAR_UNPACKED_DIR_PATH"
+		# Unzip to e2e-assets/app.asar.unpacked
+		unzip -q "$APP_ASAR_UNPACKED_ZIP_PATH" -d "$(dirname "$APP_ASAR_UNPACKED_ZIP_PATH")"
+		log_success "Unzip completed."
+	else
+		log_warning "Warning: ${APP_ASAR_UNPACKED_ZIP_PATH} not found. Skipping unzip."
+	fi
 
     # Extract app.asar
     log_info "Extracting ${APP_ASAR_PATH} to ${OBSIDIAN_UNPACKED_PATH}"

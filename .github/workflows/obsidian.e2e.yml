@@ -1,7 +1,7 @@
 name: Obsidian E2E Test
 
 on:
-	workflow_dispatch:
+    workflow_dispatch:
     push:
         branches: ["main", "multiple-sandbox"]
     pull_request:

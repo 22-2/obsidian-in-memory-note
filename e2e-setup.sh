@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 
 # e2e-setup.sh
-# This script prepares the Obsidian E2E testing environment.
-# Modified to be compatible with Windows, macOS, and Linux.
+# This script prepares the Obsidian E2E testing environment by unpacking a local asar file.
 
 set -e
 
 # --- Configuration ---
 VAULT_NAME="e2e-vault"
 PLUGIN_SOURCE_DIR="./"
+# このパスはリポジトリに配置した asar ファイルの場所に合わせて変更してください
+# 例: ルートに置いた場合 -> "obsidian.asar"
+# 例: e2e-assets/ ディレクトリに置いた場合 -> "e2e-assets/obsidian.asar"
+SOURCE_ASAR_FILE="e2e-assets/obsidian.asar"
 # --- End Configuration ---
 
 COLOR_GREEN='\033[0;32m'
@@ -31,6 +34,7 @@ fi
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 PLUGIN_SOURCE_FULL_PATH="${SCRIPT_DIR}/${PLUGIN_SOURCE_DIR}"
 PLUGIN_MANIFEST_PATH="${PLUGIN_SOURCE_FULL_PATH}/manifest.json"
+SOURCE_ASAR_PATH="${SCRIPT_DIR}/${SOURCE_ASAR_FILE}"
 
 # --- 1. Read Plugin Manifest ---
 echo -e "${COLOR_CYAN}Reading plugin info from ${PLUGIN_MANIFEST_PATH}...${COLOR_NC}"
@@ -39,51 +43,35 @@ if [ ! -f "$PLUGIN_MANIFEST_PATH" ]; then
     exit 1
 fi
 PLUGIN_ID=$(jq -r '.id' "$PLUGIN_MANIFEST_PATH")
-if [ -z "$PLUGIN_ID" ] || [ "$PLUGIN_ID" == "null" ]; then
-    echo -e "${COLOR_RED}Error: Could not read 'id' from '${PLUGIN_MANIFEST_PATH}'.${COLOR_NC}"
-    exit 1
-fi
 echo "  - Plugin ID: ${PLUGIN_ID}"
 
-# --- 2. Download and Unpack Obsidian ASAR ---
-echo -e "\n${COLOR_GREEN}Downloading and unpacking Obsidian v${OBSIDIAN_VERSION} ASAR archive...${COLOR_NC}"
+# --- 2. Unpack Local Obsidian ASAR ---
+echo -e "\n${COLOR_GREEN}Unpacking local Obsidian ASAR from ${SOURCE_ASAR_FILE}...${COLOR_NC}"
+
+if [ ! -f "$SOURCE_ASAR_PATH" ]; then
+    echo -e "${COLOR_RED}Error: Source ASAR file not found at '${SOURCE_ASAR_PATH}'. Please check the 'SOURCE_ASAR_FILE' configuration in this script.${COLOR_NC}"
+    exit 1
+fi
 
 OBSIDIAN_UNPACKED_PATH="${SCRIPT_DIR}/.obsidian-unpacked"
-TEMP_DIR=$(mktemp -d)
-
-# Cleanup temp dir on exit
-trap 'rm -rf -- "$TEMP_DIR"' EXIT
-
-APP_ASAR_GZ_URL="https://github.com/obsidianmd/obsidian-releases/releases/download/v${OBSIDIAN_VERSION}/obsidian-${OBSIDIAN_VERSION}.asar.gz"
-
-# Download and extract app.asar
-echo "Downloading app.asar from ${APP_ASAR_GZ_URL}"
-curl -L "$APP_ASAR_GZ_URL" | gzip -d > "${TEMP_DIR}/app.asar"
 
 # Manually extract app.asar to avoid absolute path issues on Windows
-echo "Extracting app.asar to ${OBSIDIAN_UNPACKED_PATH}"
+echo "Extracting asar to ${OBSIDIAN_UNPACKED_PATH}"
 rm -rf "$OBSIDIAN_UNPACKED_PATH"
 mkdir -p "$OBSIDIAN_UNPACKED_PATH"
 
 # List all files in the asar archive and extract them one by one
-# Use a while loop to handle filenames with spaces correctly
-npx @electron/asar list "${TEMP_DIR}/app.asar" | while IFS= read -r filepath; do
-    # On Windows, the path might start with a slash which we need to remove
+npx @electron/asar list "${SOURCE_ASAR_PATH}" | while IFS= read -r filepath; do
     filepath_clean="${filepath#/}"
-
-    # Skip empty lines
-    if [ -z "$filepath_clean" ]; then
-        continue
-    fi
+    if [ -z "$filepath_clean" ]; then continue; fi
 
     dest_path="${OBSIDIAN_UNPACKED_PATH}/${filepath_clean}"
 
-    # Check if it's a directory (ends with /) or a file
     if [[ "$filepath_clean" == */ ]]; then
         mkdir -p "$dest_path"
     else
         mkdir -p "$(dirname "$dest_path")"
-        npx @electron/asar extract-file "${TEMP_DIR}/app.asar" "$filepath_clean" > "$dest_path"
+        npx @electron/asar extract-file "${SOURCE_ASAR_PATH}" "$filepath_clean" > "$dest_path"
     fi
 done
 

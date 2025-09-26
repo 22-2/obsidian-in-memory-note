@@ -9,8 +9,12 @@ on:
 
 jobs:
     e2e-test:
-        # Windowsで実行します
-        runs-on: windows-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [windows-latest, macos-latest]
+
+        runs-on: ${{ matrix.os }}
         timeout-minutes: 15
 
         steps:
@@ -31,26 +35,28 @@ jobs:
             - name: Install dependencies
               run: pnpm install
 
-            - name: Install Playwright browsers and dependencies
+            - name: Install Playwright Browsers
               run: pnpm playwright install --with-deps
 
-            - name: Prepare E2E test environment
-              # Windowsでもbashを使って e2e-setup.sh を実行します
+            - name: Install jq (Windows)
+              if: runner.os == 'Windows'
               shell: bash
               run: |
-                  # OBSIDIAN_VERSION を環境変数として e2e-setup.sh に渡します
-                  export OBSIDIAN_VERSION="1.9.12"
-                  ./e2e-setup.sh
+                  curl -L -o /usr/bin/jq.exe https://github.com/jqlang/jq/releases/latest/download/jq-win64.exe
+
+            - name: Prepare E2E test environment
+              shell: bash
+              run: ./e2e-setup.sh
 
             - name: Run Playwright tests
-              # ここもbashで統一します
-              shell: bash
               run: pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=chromium
+              env:
+                  DEBUG: "pw:browser"
 
             - name: Upload Playwright report
               if: always()
               uses: actions/upload-artifact@v4
               with:
-                  name: playwright-report-windows
+                  name: playwright-report-${{ matrix.os }}
                   path: playwright-report/
                   retention-days: 30

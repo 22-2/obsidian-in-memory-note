@@ -61,27 +61,29 @@ fi
 rm -rf "$OBSIDIAN_UNPACKED_PATH"
 mkdir -p "$OBSIDIAN_UNPACKED_PATH"
 
-# Manually extract app.asar to avoid absolute path issues on Windows
+# Manually extract app.asar to avoid various cross-platform issues.
 echo "Extracting ${APP_ASAR_PATH} to ${OBSIDIAN_UNPACKED_PATH}"
 
-# List all files, normalize path separators to slashes, then extract one by one
-npx @electron/asar list "${APP_ASAR_PATH}" | sed 's/\\/\//g' | while IFS= read -r filepath; do
-    # On Windows, the path might start with a slash which we need to remove
-    filepath_clean="${filepath#/}"
+# Use `asar list --is-pack` to get structured JSON output.
+# Then, parse with `jq` to reliably identify files and directories.
+npx @electron/asar list --is-pack "${APP_ASAR_PATH}" | jq -c '.[]' | while IFS= read -r json_line; do
 
-    # Skip empty lines
-    if [ -z "$filepath_clean" ]; then
+    # Normalize path separators for consistency
+    filepath=$(echo "$json_line" | jq -r '.path' | sed 's/\\/\//g')
+    filetype=$(echo "$json_line" | jq -r '.type')
+
+    # Skip empty lines or root directory entries
+    if [ -z "$filepath" ] || [ "$filepath" == "/" ]; then
         continue
     fi
 
-    dest_path="${OBSIDIAN_UNPACKED_PATH}/${filepath_clean}"
+    dest_path="${OBSIDIAN_UNPACKED_PATH}/${filepath}"
 
-    # Check if it's a directory (ends with /) or a file
-    if [[ "$filepath_clean" == */ ]]; then
+    if [ "$filetype" == "directory" ]; then
         mkdir -p "$dest_path"
-    else
+    elif [ "$filetype" == "file" ]; then
         mkdir -p "$(dirname "$dest_path")"
-        npx @electron/asar extract-file "${APP_ASAR_PATH}" "$filepath_clean" > "$dest_path"
+        npx @electron/asar extract-file "${APP_ASAR_PATH}" "$filepath" > "$dest_path"
     fi
 done
 

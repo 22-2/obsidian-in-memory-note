@@ -42,7 +42,9 @@ jobs:
               if: runner.os == 'Windows'
               shell: bash
               run: |
-                  curl -L -o /usr/bin/jq.exe https://github.com/jqlang/jq/releases/latest/download/jq-win64.exe
+                  curl -L -o jq.exe https://github.com/jqlang/jq/releases/latest/download/jq-win64.exe
+                  echo "${{ github.workspace }}" >> $GITHUB_PATH
+                  mv jq.exe ${{ github.workspace }}/jq.exe
 
             - name: PWD # For debugging purposes
               shell: bash

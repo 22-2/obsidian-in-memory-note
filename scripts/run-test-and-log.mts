@@ -136,8 +136,8 @@ async function runTestAndLog() {
 			message: "クリックでログを開く。下のボタンでHTMLレポートを開く。",
 			// アクションボタンを定義 (activation 引数でクリック時のIDを指定)
 			button: [
-				{ text: "Open HTML Report", activation: "report" },
-				{ text: "Open Raw Log", activation: "log" },
+				{ text: "Open HTML Report", activation: "myapp:report" },
+				{ text: "Open Raw Log", activation: "myapp:log" },
 			],
 		});
 

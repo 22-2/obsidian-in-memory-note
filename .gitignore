@@ -37,8 +37,10 @@ repomix-output.md
 .todo
 
 test-results
-.obsidian
 .obsidian-unpacked
 *.md
 .aichat
 playwright-report
+e2e-vault/.obsidian/**/*
+!e2e-vault/.obsidian/workspace.initial.json
+!e2e-vault/.obsidian/workspace.json

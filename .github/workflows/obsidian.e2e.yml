@@ -69,7 +69,7 @@ jobs:
               run: bash e2e-setup.sh
               if: startsWith(matrix.os, 'macos')
 
-            - name: Prepare E2E test environment (Windows: jqが不要な前提で実行)
+            - name: "Prepare E2E test environment (Windows: jqが不要な前提で実行)"
               run: bash e2e-setup.sh
               if: startsWith(matrix.os, 'windows')
               # Windows環境では、e2e-setup.shがbashシェルで実行できるように、Git Bash等の環境が必要です。

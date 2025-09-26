@@ -67,7 +67,7 @@ jobs:
               run: bash e2e-setup.sh
 
             - name: Run Playwright tests
-              run: pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=electron
+              run: pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=chromium
               env:
                   # この環境変数はPlaywrightの設定ファイル(playwright.config.ts)内で使用されることを想定
                   OBSIDIAN_APP_PATH: ${{ env.OBSIDIAN_APP_PATH }}

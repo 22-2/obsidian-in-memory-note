@@ -8,12 +8,7 @@ import {
 	splitActiveView,
 	waitForWorkspace,
 } from "./helpers";
-import {
-	pluginHandle,
-	SANDBOX_VIEW_SELECTOR,
-	TIMEOUT,
-	window,
-} from "./test-base";
+import { pluginHandle, SANDBOX_VIEW_SELECTOR, window } from "./test-base";
 
 // --- Test Suites ---
 
@@ -56,7 +51,7 @@ test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
 		await firstEditor.fill(syncText);
 
 		// Assert: Verify text is synced to the second editor.
-		await expect(secondEditor).toHaveText(syncText, { timeout: TIMEOUT });
+		await expect(secondEditor).toHaveText(syncText);
 
 		// Act: Type in the second editor to test reverse sync.
 		const reverseSyncText = " And this text from the second view.";
@@ -64,9 +59,7 @@ test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
 		await secondEditor.fill(reverseSyncText);
 
 		// Assert: Verify the full text is now in the first editor.
-		await expect(firstEditor).toHaveText(syncText + reverseSyncText, {
-			timeout: TIMEOUT,
-		});
+		await expect(firstEditor).toHaveText(syncText + reverseSyncText);
 	});
 });
 

@@ -3,7 +3,6 @@ import type { App } from "obsidian";
 import type { Page, JSHandle, Locator } from "playwright";
 import { expect } from "playwright/test";
 import {
-	TIMEOUT,
 	ACTIVE_LEAF_SELECTOR,
 	SANDBOX_VIEW_SELECTOR,
 	ROOT_WORKSPACE_SELECTOR,
@@ -16,11 +15,8 @@ export async function waitForWorkspace(page: Page) {
 	// Wait for loading screen to disappear
 	await page.waitForSelector(".progress-bar", {
 		state: "detached",
-		timeout: TIMEOUT,
 	});
-	await expect(page.locator(".workspace")).toBeVisible({
-		timeout: TIMEOUT,
-	});
+	await expect(page.locator(".workspace")).toBeVisible();
 }
 export async function openNewSandboxNote(page: Page) {
 	await page.getByLabel("Open new hot sandbox note", { exact: true }).click();
@@ -44,7 +40,7 @@ export async function getActiveSandboxLocator(page: Page): Promise<Locator> {
 		.locator(ACTIVE_LEAF_SELECTOR)
 		.locator(SANDBOX_VIEW_SELECTOR);
 
-	await expect(activeSandboxView).toBeVisible({ timeout: TIMEOUT });
+	await expect(activeSandboxView).toBeVisible();
 	return activeSandboxView;
 }
 export function getEditor(viewLocator: Locator): Locator {
@@ -77,9 +73,7 @@ export async function splitActiveView(page: Page, direction: "right" | "down") {
 		.click();
 
 	// 3. 2つのsandboxビューが存在することを待機
-	await expect(page.locator(SANDBOX_VIEW_SELECTOR)).toHaveCount(2, {
-		timeout: TIMEOUT,
-	});
+	await expect(page.locator(SANDBOX_VIEW_SELECTOR)).toHaveCount(2);
 }
 export function initializeWorkspaceJSON() {
 	copyFileSync(

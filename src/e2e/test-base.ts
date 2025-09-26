@@ -17,7 +17,6 @@ import {
 	countTabs,
 } from "./helpers";
 
-export const TIMEOUT = 5000;
 export const SANDBOX_VIEW_SELECTOR =
 	'.workspace-leaf-content[data-type="hot-sandbox-note-view"]';
 export const ACTIVE_LEAF_SELECTOR = `.mod-active .workspace-leaf.mod-active`;
@@ -34,8 +33,8 @@ invariant(
 	existsSync(vaultPath),
 	`E2E vault not found at: ${vaultPath}. Did you run 'e2e-setup' script?`
 );
-console.log("appPath:", appPath);
-console.log("vaultPath:", vaultPath);
+console.log("✅️ appPath:", appPath);
+console.log("✅️ vaultPath:", vaultPath);
 // --- Global State (updated to use beforeEach/afterEach) ---
 let electronApp: ElectronApplication;
 export let window: Page;

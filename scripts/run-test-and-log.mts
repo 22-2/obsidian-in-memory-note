@@ -85,7 +85,12 @@ async function runTestAndLog() {
 		const logFilePath = path.join(LOG_DIR, `${commitHash}.log`);
 
 		const testCommand = "pnpm run test:e2e --reporter=list";
-		const output = execSync(testCommand, { encoding: "utf8" });
+		const output = execSync(testCommand, {
+			encoding: "utf8",
+			stdio: "pipe",
+			// shell: true,
+			env: process.env,
+		});
 
 		fs.writeFileSync(logFilePath, output);
 

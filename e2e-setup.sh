@@ -67,28 +67,29 @@ echo "Extracting ${APP_ASAR_PATH} to ${OBSIDIAN_UNPACKED_PATH}"
 # Generate a temporary file with the asar content list as JSON
 ASAR_CONTENT_JSON=$(mktemp)
 trap 'rm -f -- "$ASAR_CONTENT_JSON"' EXIT
-pnpm exec asar list --is-pack "${APP_ASAR_PATH}" > "$ASAR_CONTENT_JSON"
+# pnpm exec asar list --is-pack "${APP_ASAR_PATH}" > "$ASAR_CONTENT_JSON"
+pnpm exec asar extract "${APP_ASAR_PATH}" "${OBSIDIAN_UNPACKED_PATH}"
 
 # Create all directories first
-jq -r '.[] | select(.type == "directory") | .path' "$ASAR_CONTENT_JSON" | sed 's/\\/\//g' | while IFS= read -r dirpath; do
-    # Skip empty lines or root directory entries
-    if [ -z "$dirpath" ] || [ "$dirpath" == "/" ]; then
-        continue
-    fi
-    mkdir -p "${OBSIDIAN_UNPACKED_PATH}/${dirpath}"
-done
+# jq -r '.[] | select(.type == "directory") | .path' "$ASAR_CONTENT_JSON" | sed 's/\\/\//g' | while IFS= read -r dirpath; do
+#     # Skip empty lines or root directory entries
+#     if [ -z "$dirpath" ] || [ "$dirpath" == "/" ]; then
+#         continue
+#     fi
+#     mkdir -p "${OBSIDIAN_UNPACKED_PATH}/${dirpath}"
+# done
 
-# Extract all files
-jq -r '.[] | select(.type == "file") | .path' "$ASAR_CONTENT_JSON" | sed 's/\\/\//g' | while IFS= read -r filepath; do
-    # Skip empty lines
-    if [ -z "$filepath" ]; then
-        continue
-    fi
-    dest_path="${OBSIDIAN_UNPACKED_PATH}/${filepath}"
-    # Ensure the parent directory exists, just in case
-    mkdir -p "$(dirname "$dest_path")"
-    pnpm exec asar extract-file "${APP_ASAR_PATH}" "$filepath" > "$dest_path"
-done
+# # Extract all files
+# jq -r '.[] | select(.type == "file") | .path' "$ASAR_CONTENT_JSON" | sed 's/\\/\//g' | while IFS= read -r filepath; do
+#     # Skip empty lines
+#     if [ -z "$filepath" ]; then
+#         continue
+#     fi
+#     dest_path="${OBSIDIAN_UNPACKED_PATH}/${filepath}"
+#     # Ensure the parent directory exists, just in case
+#     mkdir -p "$(dirname "$dest_path")"
+#     pnpm exec asar extract-file "${APP_ASAR_PATH}" "$filepath" > "$dest_path"
+# done
 
 # Copy obsidian.asar if it exists
 if [ -f "$OBSIDIAN_ASAR_PATH" ]; then

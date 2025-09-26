@@ -53,6 +53,11 @@ jobs:
             - name: List project files # For debugging purposes
               shell: bash
               run: |
+                  pwd
+
+            - name: List project files # For debugging purposes
+              shell: bash
+              run: |
                   npx @telosh/filetree --exclude node_modules,.git
 
             - name: Run Playwright tests

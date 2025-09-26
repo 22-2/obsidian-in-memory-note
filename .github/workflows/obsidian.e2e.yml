@@ -66,7 +66,7 @@ jobs:
             - name: List project files # For debugging purposes
               shell: bash
               run: |
-                  npx @telosh/filetree --exclude
+                  npx @telosh/filetree --exclude node_modules,.git
 
             - name: Run Playwright tests
               run: pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=chromium

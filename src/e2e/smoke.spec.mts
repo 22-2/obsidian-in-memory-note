@@ -36,7 +36,7 @@ test.describe("Hot Sandbox Note: Basic Functionality", () => {
 // --- Sandbox Vaultでのテスト ---
 test.describe("Hot Sandbox Note: In Sandbox Vault", () => {
 	// このdescribeブロック内のすべてのテストでSandbox Vaultが開かれる
-	test.use({ setupOptions: { openVault: SANDBOX_VAULT_NAME } });
+	test.use({ setupOptions: { openSandboxVault: true } });
 
 	test("should open a new note in the sandbox vault", async ({
 		obsidian,

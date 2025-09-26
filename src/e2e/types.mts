@@ -24,5 +24,5 @@ export interface CommonSetupOptions {
 	/** trueの場合、UI操作でRestricted Modeを無効化する */
 	disableRestrictedMode?: boolean;
 	/** 指定した名前のVaultをテスト開始時に開く */
-	openVault?: string;
+	openSandboxVault?: boolean;
 }

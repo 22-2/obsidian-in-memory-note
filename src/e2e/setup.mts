@@ -1,18 +1,24 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\setup.mts
-import { copyFileSync, writeFileSync } from "fs";
+import { copyFileSync, rmSync, writeFileSync } from "fs";
 import path from "path";
 import type { App } from "obsidian";
-import type { ElectronApplication, TestInfo } from "playwright/test";
+import type { ElectronApplication, Page, TestInfo } from "playwright/test";
 import { _electron as electron } from "playwright/test";
 
-import { APP_MAIN_JS_PATH, PLUGIN_ID, VAULT_PATH } from "./config.mts";
+import {
+	APP_MAIN_JS_PATH,
+	PLUGIN_ID,
+	SANDBOX_VAULT_NAME,
+	VAULT_PATH,
+} from "./config.mts";
 import {
 	disableRestrictedModeAndEnablePlugins,
 	focusRootWorkspace,
-	openAnotherVault,
+	openSandboxVault,
 	waitForWorkspace,
 } from "./helpers.mts";
 import type { CommonSetupOptions, SetupFixture } from "./types.mts";
+import * as glob from "glob";
 
 const COMMUNITY_PLUGINS_PATH = path.join(
 	VAULT_PATH,
@@ -45,6 +51,16 @@ export function setPluginDisabled() {
 	setCommunityPlugins([]);
 }
 
+export async function clearSandboxVault(window: Page) {
+	const path = await window.evaluate(() =>
+		Object.values(
+			// @ts-expect-error
+			window.electron.ipcRenderer.sendSync("vault-list")
+		).find((v: any) => v.path.includes(SANDBOX_VAULT_NAME).path as string)
+	);
+	rmSync(path as string, { recursive: true, force: true });
+}
+
 export const commonSetup = async (
 	testInfo: TestInfo,
 	options: CommonSetupOptions = {}
@@ -68,10 +84,12 @@ export const commonSetup = async (
 	});
 
 	let window = await electronApp.firstWindow();
+
 	await waitForWorkspace(window);
 	await focusRootWorkspace(window);
 
 	if (options.disableRestrictedMode) {
+		await clearSandboxVault(window);
 		window = await disableRestrictedModeAndEnablePlugins(
 			electronApp,
 			window,
@@ -79,8 +97,8 @@ export const commonSetup = async (
 		);
 	}
 
-	if (options.openVault) {
-		window = await openAnotherVault(electronApp, window, options.openVault);
+	if (options.openSandboxVault) {
+		window = await openSandboxVault(electronApp, window);
 	}
 
 	const appHandle = await window.evaluateHandle(

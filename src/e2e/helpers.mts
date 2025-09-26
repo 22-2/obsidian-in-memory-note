@@ -5,8 +5,10 @@ import { expect } from "playwright/test";
 import {
 	ACTIVE_LEAF_SELECTOR,
 	ROOT_WORKSPACE_SELECTOR,
+	SANDBOX_VAULT_NAME,
 	SANDBOX_VIEW_SELECTOR,
 } from "./config.mts";
+import { OPEN_SANDBOX_VAULT } from "./obsidian-commands/run-command.mts";
 
 // --- 基本ヘルパー ---
 
@@ -97,16 +99,13 @@ export async function runCommand(page: Page, command: string) {
 /**
  * UI操作で別のVaultを開き、新しいウィンドウオブジェクトを返す
  */
-export async function openAnotherVault(
+export async function openSandboxVault(
 	electronApp: ElectronApplication,
-	page: Page,
-	vaultName: string
+	page: Page
 ): Promise<Page> {
-	console.log(`[Setup Step] Opening vault: ${vaultName}...`);
+	console.log(`[Setup Step] Opening vault: ${SANDBOX_VAULT_NAME}...`);
 	return performActionAndReload(electronApp, async () => {
-		await runCommand(page, "Open another vault");
-		const vaultSwitcher = await electronApp.waitForEvent("window");
-		await vaultSwitcher.getByText(vaultName, { exact: true }).click();
+		await runCommand(page, OPEN_SANDBOX_VAULT);
 	});
 }
 

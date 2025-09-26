@@ -15,10 +15,10 @@ import {
 	disableRestrictedModeAndEnablePlugins,
 	focusRootWorkspace,
 	openSandboxVault,
+	performActionAndReload,
 	waitForWorkspace,
 } from "./helpers.mts";
 import type { CommonSetupOptions, SetupFixture } from "./types.mts";
-import * as glob from "glob";
 
 const COMMUNITY_PLUGINS_PATH = path.join(
 	VAULT_PATH,
@@ -51,14 +51,37 @@ export function setPluginDisabled() {
 	setCommunityPlugins([]);
 }
 
-export async function clearSandboxVault(window: Page) {
-	const path = await window.evaluate(() =>
+export async function initializeSandboxVault(
+	electronApp: ElectronApplication,
+	window: Page
+) {
+	const path = await getSandboxVaultPath(window);
+	if (path) rmSync(path as string, { recursive: true, force: true });
+	await ensureSandboxVault(electronApp, window);
+}
+
+export function getSandboxVaultPath(window: Page) {
+	return window.evaluate(() =>
 		Object.values(
 			// @ts-expect-error
 			window.electron.ipcRenderer.sendSync("vault-list")
 		).find((v: any) => v.path.includes(SANDBOX_VAULT_NAME).path as string)
 	);
-	rmSync(path as string, { recursive: true, force: true });
+}
+
+export async function ensureSandboxVault(
+	electronApp: ElectronApplication,
+	window: Page
+) {
+	await performActionAndReload(
+		electronApp,
+		async () => {
+			openSandboxVault(electronApp, window);
+		},
+		{
+			closeOldWindows: false,
+		}
+	).then((win) => win.close());
 }
 
 export const commonSetup = async (
@@ -89,7 +112,7 @@ export const commonSetup = async (
 	await focusRootWorkspace(window);
 
 	if (options.disableRestrictedMode) {
-		await clearSandboxVault(window);
+		await initializeSandboxVault(electronApp, window);
 		window = await disableRestrictedModeAndEnablePlugins(
 			electronApp,
 			window,

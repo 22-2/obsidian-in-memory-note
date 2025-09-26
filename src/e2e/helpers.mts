@@ -29,17 +29,20 @@ export function focusRootWorkspace(page: Page) {
  */
 export async function performActionAndReload(
 	electronApp: ElectronApplication,
-	action: () => Promise<void>
+	action: () => Promise<void>,
+	opts: { closeOldWindows?: boolean } = {}
 ): Promise<Page> {
 	const [newWindow] = await Promise.all([
 		electronApp.waitForEvent("window"),
 		action(),
 	]);
 
-	// 新しいウィンドウ以外の古いウィンドウをすべて閉じる
-	for (const window of electronApp.windows()) {
-		if (window !== newWindow && !window.isClosed()) {
-			await window.close();
+	if (opts.closeOldWindows) {
+		// 新しいウィンドウ以外の古いウィンドウをすべて閉じる
+		for (const window of electronApp.windows()) {
+			if (window !== newWindow && !window.isClosed()) {
+				await window.close();
+			}
 		}
 	}
 
@@ -124,20 +127,26 @@ export async function disableRestrictedModeAndEnablePlugins(
 		.getByText("Community plugins")
 		.click();
 
+	let newPage = await performActionAndReload(electronApp, async () =>
+		page
+			.getByRole("button", {
+				name: "Turn on and reload",
+			})
+			.click()
+	);
+	await newPage.keyboard.press("Control+,");
+	await newPage
+		.locator(".vertical-tab-header-group-items")
+		.getByText("Community plugins")
+		.click();
+
 	const turnOnButton = page.getByRole("button", {
 		name: "Turn on community plugins",
 	});
-	let newPage = page;
-	if (await turnOnButton.isVisible()) {
-		newPage = await performActionAndReload(electronApp, () =>
-			turnOnButton.click()
-		);
-		await newPage.keyboard.press("Control+,");
-		await newPage
-			.locator(".vertical-tab-header-group-items")
-			.getByText("Community plugins")
-			.click();
-	}
+	turnOnButton.click();
+
+	await newPage.keyboard.press("Escape");
+	await newPage.keyboard.press("Control+,");
 
 	for (const pluginId of pluginsToEnable) {
 		console.log(`[Setup Step] Enabling plugin: ${pluginId}...`);

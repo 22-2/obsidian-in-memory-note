@@ -50,6 +50,13 @@ jobs:
                   chmod +x e2e-setup.sh
                   ./e2e-setup.sh
 
+            - name: List project files # For debugging purposes
+              shell: bash
+              run: |
+                  echo "--- Project file tree ---"
+                  ls -R | grep -v 'node_modules' | sed -e 's/[^-][^\/]*\//--/g' -e 's/^/ /'
+                  echo "--- End of file tree ---"
+
             - name: Run Playwright tests
               run: pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=chromium
               env:

@@ -333,3 +333,7 @@ export const ensureVault = async (
 // - reopenVaultWith
 // - reopenStarterPageWith
 // - openDefaultVaultFromStarter
+
+export function ensureLoadPage(page: Page) {
+	return page.waitForLoadState("domcontentloaded");
+}

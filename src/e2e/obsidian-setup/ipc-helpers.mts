@@ -1,6 +1,7 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\obsidian-setup\ipc-helpers.mts
 import type { Page } from "playwright";
 import type { ObsidianJSON } from "./types.mts";
+import { ensureLoadPage } from "./helpers.mts";
 
 // --- 汎用IPCラッパー ---
 
@@ -17,7 +18,7 @@ async function ipcSendSync<T>(
 	channel: string,
 	...args: unknown[]
 ): Promise<T> {
-	await page.waitForLoadState("domcontentloaded");
+	await ensureLoadPage(page);
 	console.log("page", page.url(), page.title());
 	console.log("channel", channel);
 	console.log("args", args);

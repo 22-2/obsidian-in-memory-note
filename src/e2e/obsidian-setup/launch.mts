@@ -12,16 +12,19 @@ import {
 import type { ObsidianStarterFixture, ObsidianVaultFixture } from "./types.mts";
 import {
 	disableRestrictedModeAndEnablePlugins,
+	ensureLoadPage,
 	ensureStarterPage,
 	ensureVaultOpen,
 	initializeWorkspaceJSON,
 } from "./helpers.mts";
 import {
 	focusRootWorkspace,
+	getElectronAppPath,
 	noopAsync,
 	waitForWorkspace,
 } from "../helpers.mts";
 import { delay } from "../obsidian-commands/run-command.mts";
+import { openVault } from "./ipc-helpers.mts";
 
 // --- Electronアプリ起動 ---
 
@@ -49,24 +52,14 @@ const setupVaultViaIpc = async (
 	vaultName: string
 ): Promise<Page> => {
 	// ユーザーデータディレクトリを取得
-	const userDataDir = await electronApp.evaluate(({ app }) =>
-		app.getPath("userData")
-	);
-
+	const userDataDir = await getElectronAppPath(firstWindow);
 	const vaultPath = path.join(userDataDir, vaultName);
+
+	console.log("vaultPath", vaultPath);
 
 	// IPCで保管庫を開く（存在しない場合は作成）
 	const vaultWindow = await reopenVaultWith(electronApp, () =>
-		firstWindow.evaluate(
-			({ path, create }) => {
-				return window.electron.ipcRenderer.sendSync(
-					"vault-open",
-					path,
-					create
-				);
-			},
-			{ path: vaultPath, create: true }
-		)
+		openVault(firstWindow, vaultPath, false)
 	);
 
 	// 古いウィンドウを閉じる
@@ -76,7 +69,7 @@ const setupVaultViaIpc = async (
 		}
 	}
 
-	await waitForWorkspace(vaultWindow);
+	await ensureLoadPage(vaultWindow);
 	await focusRootWorkspace(vaultWindow);
 
 	return vaultWindow;
@@ -288,7 +281,7 @@ export async function reopenVaultWith(
 	console.log("[Setup Action] Opening a vault...");
 	return performActionAndReload(electronApp, action, {
 		closeOldWindows: true,
-		waitFor: waitForWorkspace,
+		waitFor: ensureLoadPage,
 		focus: focusRootWorkspace,
 	});
 }

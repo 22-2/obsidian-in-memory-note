@@ -44,6 +44,9 @@ export async function openExternalUrl(page: Page, url: string) {
 
 // --- 基本ヘルパー ---
 
+/**
+ * @deprecated
+ */
 export async function waitForWorkspace(page: Page) {
 	await page.waitForSelector(".progress-bar", { state: "detached" });
 	await expect(page.locator(".workspace")).toBeVisible();

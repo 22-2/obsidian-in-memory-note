@@ -78,12 +78,7 @@ export async function getStarter(
 
 	return newWindow;
 }
-/**
- * IPCを使用して保管庫リストを取得
- */
 
-async function getVaultList(page: Page): Promise<ObsidianVaultEntry> {
-	return page.evaluate(() => {
-		return window.electron.ipcRenderer.sendSync("vault-list");
-	});
+export function getVaultPath(window: Page) {
+	return window.evaluate(() => app.vault.adapter.basePath);
 }

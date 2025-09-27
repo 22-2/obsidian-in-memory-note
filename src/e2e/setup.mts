@@ -103,8 +103,8 @@ export const commonSetup = async (
 			APP_MAIN_JS_PATH,
 			// "open",
 			// `obsidian://open?path=${encodeURIComponent(VAULT_PATH)}`,
-			// "--no-sandbox",
-			// "--disable-setuid-sandbox",
+			"--no-sandbox",
+			"--disable-setuid-sandbox",
 		],
 		env: {
 			...process.env,

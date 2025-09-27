@@ -34,6 +34,7 @@ export function setCommunityPlugins(enabledPlugins: string[]) {
 }
 
 export function setPluginInstalled() {
+	console.log(`[Plugin Config] Installing plugin: ${PLUGIN_ID}`);
 	setCommunityPlugins([PLUGIN_ID]);
 }
 
@@ -46,25 +47,33 @@ export function initializeWorkspaceJSON() {
 		path.join(VAULT_PATH, "/.obsidian/workspace.initial.json"),
 		path.join(VAULT_PATH, "/.obsidian/workspace.json")
 	);
+	console.log("copied workspace.initial.json to workspace.json");
 }
 
 export async function initializeObsidianJSON(electronApp: ElectronApplication) {
+	console.log("initialize obsidian.json");
 	const executablePath = await electronApp.evaluate(({ app }) => {
 		return app.getAppPath();
 	});
 	invariant(executablePath, "failed to get executable path");
+	console.log("executablePath", executablePath);
 
 	const initialJSONPath = path.join(VAULT_PATH, "/obsidian.initial.json");
 	const initialJSON = JSON.parse(
 		readFileSync(initialJSONPath, { encoding: "utf-8" })
 	);
 	initialJSON.vaults["test-valut"].path = VAULT_PATH;
+	console.log(initialJSON);
 	writeFileSync(
 		path.join(executablePath, "obsidian.json"),
 		JSON.stringify(initialJSON),
 		{
 			encoding: "utf-8",
 		}
+	);
+	console.log(
+		"write obsidian.json",
+		path.join(executablePath, "obsidian.json")
 	);
 }
 

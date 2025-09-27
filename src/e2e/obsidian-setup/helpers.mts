@@ -1,8 +1,13 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\obsidian-setup\helpers.mts
 import type { ElectronApplication, Page } from "playwright";
 
-import { waitForVaultLoaded } from "../helpers.mts";
+import { waitForLayoutReady } from "../helpers.mts";
 import { navigateToComminutyPlugins } from "./operations.mts";
+import { delay } from "../obsidian-commands/run-command.mts";
+import {
+	getCurrentVaultName as getVaultNameByPage,
+	getVaultPathByPage,
+} from "./getters.mts";
 
 // --- アプリ状態操作ヘルパー ---
 
@@ -51,7 +56,14 @@ export async function ensureLoadPage(window: Page) {
 		console.log("[Setup] Detected starter page, no vault to wait for.");
 		return;
 	}
-	console.log("[Setup] Detected vault page, waiting for vault to load...");
-	await waitForVaultLoaded(window);
+	await waitForLayoutReady(window);
+	await delay(500);
+	console.log(
+		`[Setup] Detected ${await getVaultNameByPage(
+			window
+		)} vault page in ${await getVaultPathByPage(
+			window
+		)}, waiting for vault to load...`
+	);
 	console.log("[Setup] Vault loaded.");
 }

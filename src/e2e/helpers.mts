@@ -1,5 +1,5 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\helpers.mts
-import type { App } from "obsidian";
+import type { App, WorkspaceLeaf } from "obsidian";
 import type { ElectronApplication, JSHandle, Locator, Page } from "playwright";
 import { type App as ElectronApp } from "electron";
 import { expect } from "playwright/test";
@@ -47,9 +47,16 @@ export async function openExternalUrl(page: Page, url: string) {
 /**
  * @deprecated
  */
-export async function waitForVaultLoaded(page: Page) {
+export async function waitForLayoutReady(page: Page) {
 	await page.waitForSelector(".progress-bar", { state: "detached" });
-	await expect(page.locator(".workspace")).toBeVisible();
+	await page.evaluate(
+		() =>
+			new Promise((r) => {
+				app.workspace.onLayoutReady(() => {
+					r(undefined);
+				});
+			})
+	);
 }
 
 export function focusRootWorkspace(page: Page) {

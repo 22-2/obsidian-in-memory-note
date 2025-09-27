@@ -63,26 +63,15 @@ export const test = baseTest.extend<NewFixtures & DeprecatedFixtures>({
 		async ({ vaultOptions }, use, testInfo) => {
 			console.log("[Fixture] Setting up: Vault Window");
 			const setup = await launchVaultWindow(testInfo, vaultOptions);
-
-			if (!setup.appHandle) {
-				throw new Error(
-					"appHandle is not available. Vault might not be open."
-				);
-			}
-			// const pluginHandle = await setup.appHandle.evaluateHandle(
-			// 	(app, pluginId) =>
-			// 		app.plugins.plugins[pluginId] as SandboxPlugin,
-			// 	PLUGIN_ID
-			// );
-
-			// `SetupFixture` を `ObsidianVaultFixture` に変換
-			const vaultFixture: ObsidianVaultFixture = {
-				...setup,
-				appHandle: setup.appHandle, // 型を non-nullable に
-				// pluginHandle: pluginHandle as JSHandle<SandboxPlugin>,
-			};
-
-			await use(vaultFixture);
+			console.log(
+				`
+/* ========================================================================== */
+//
+//  ${testInfo.title}
+//
+/* ========================================================================== */`.trim()
+			);
+			await use(setup);
 			await commonTeardown(setup.electronApp, testInfo);
 		},
 		{ scope: "test" },

@@ -1,5 +1,6 @@
 import type { ElectronApplication, Page } from "playwright";
 import { ensureLoadPage } from "./helpers.mts";
+import { delay } from "../obsidian-commands/run-command.mts";
 
 /**
  * UI操作でRestricted Modeを無効化し、指定のプラグインを有効にする
@@ -17,11 +18,11 @@ export async function disableRestrictedModeAndEnablePlugins(
 	console.log(
 		"[BUTTON-1]",
 		await currentWindow.evaluate(async () => {
+			app.setting.open();
 			app.setting.openTabById("community-plugins");
+			const button =
+				app.setting.activeTab.setting.contentEl.querySelector("button");
 			await new Promise((r) => setTimeout(r, 1000));
-			const button = app.setting.settingTabs
-				.find((tab) => tab.id.includes("com"))
-				.setting.contentEl.querySelector("button");
 			button.click();
 			return button.textContent;
 		})
@@ -33,25 +34,28 @@ export async function disableRestrictedModeAndEnablePlugins(
 	console.log(
 		"[BUTTON-2]",
 		await currentWindow.evaluate(async () => {
+			app.setting.open();
 			app.setting.openTabById("community-plugins");
+			const button =
+				app.setting.activeTab.setting.contentEl.querySelector("button");
 			await new Promise((r) => setTimeout(r, 1000));
-			const button = app.setting.settingTabs
-				.find((tab) => tab.id.includes("com"))
-				.setting.contentEl.querySelector("button");
 			button.click();
 			return button.textContent;
 		})
 	);
 	console.log("enable community plugins dialog should be open now.");
 	await ensureLoadPage(currentWindow);
-	await currentWindow.pause();
 
-	for (const pluginId of pluginsToEnable) {
-		await currentWindow.evaluate(
-			(pluginId) => app.plugins.enablePluginAndSave(pluginId),
-			pluginId
-		);
-	}
+	const enabledPlugins = await currentWindow.evaluate(
+		async (pluginsToEnable) => {
+			for (const pluginId of pluginsToEnable) {
+				await app.plugins.enablePluginAndSave(pluginId);
+			}
+			return Object.keys(app.plugins.plugins);
+		},
+		pluginsToEnable
+	);
+	console.log("enabled plugins", enabledPlugins);
 	return currentWindow;
 }
 

@@ -1,5 +1,13 @@
-import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	rmSync,
+	writeFileSync,
+} from "fs";
 import path from "path";
+import invariant from "tiny-invariant";
 import {
 	COMMUNITY_PLUGINS_DIR,
 	COMMUNITY_PLUGINS_FULL_PATH,
@@ -7,7 +15,6 @@ import {
 	PLUGIN_ID,
 	VAULT_PATH,
 } from "../config.mts";
-import invariant from "tiny-invariant";
 import { getElectronAppPath } from "../helpers.mts";
 import { getAppWindow } from "./getters.mts";
 
@@ -31,39 +38,57 @@ export async function clearObsidianJSON() {
 	}
 	await dummyWindow.close();
 }
+export async function copyCommunityPlugins(
+	pluginPaths: string[],
+	vaultPath: string
+) {
+	console.log(`Vault path: ${vaultPath}`);
+	const pluginBasePath = path.join(vaultPath, COMMUNITY_PLUGINS_DIR);
 
-export async function copyCommunityPlugins(pluginPaths: string[]) {
-	const { window: dummyWindow } = await getAppWindow();
-	const appPath = await getElectronAppPath(dummyWindow);
-	await dummyWindow.close();
-	console.log(`App path: ${appPath}`);
-	console.log(`Vault path: ${VAULT_PATH}`);
-	const pluginBasePath = path.join(appPath, COMMUNITY_PLUGINS_DIR);
 	for (const pluginPath of pluginPaths) {
 		invariant(
 			existsSync(pluginPath),
 			`Plugin file not found: ${pluginPath}`
 		);
 		console.log(`[Plugin Install] Installing plugin: ${pluginPath}`);
-		const pluginDirname = path.basename(pluginPath);
-		const destDir = path.dirname(path.join(pluginBasePath, pluginDirname));
+
+		const pluginFolderName = path.basename(pluginPath);
+		const destDir = path.join(pluginBasePath, pluginFolderName);
+		// これで destDir は `.../.obsidian/plugins/dist` になります
+
 		if (!existsSync(destDir)) {
 			mkdirSync(destDir, { recursive: true });
 			console.log(`[Plugin Install] Created directory: ${destDir}`);
 		}
-		copyFileSync(pluginPath, path.join(pluginBasePath, pluginDirname));
-		console.log(
-			`[Plugin Install] Copied plugin file to: ${path.join(
-				pluginBasePath,
-				pluginPath
-			)}`
-		);
+
+		for (const filename of readdirSync(pluginPath)) {
+			const fullFilePath = path.join(pluginPath, filename);
+			if (existsSync(fullFilePath)) {
+				// destDirが正しいので、コピー先も正しくなります
+				copyFileSync(fullFilePath, path.join(destDir, filename));
+				console.log(
+					`[Plugin Install] Copied file: ${fullFilePath} to ${path.join(
+						destDir,
+						filename
+					)}`
+				);
+			} else {
+				console.warn(
+					`[Plugin Install] File not found, skipping: ${fullFilePath}`
+				);
+			}
+		}
+
+		// path.joinに絶対パスを渡すと意図通りに動かないため、destDirを使います
+		console.log(`[Plugin Install] Copied plugin to: ${destDir}`);
 	}
+
 	writeCommunityPluginsJSON(
+		// 注意: ここはプラグインのIDを渡す必要があります
 		pluginPaths.map((p) => path.basename(p)),
-		path.join(appPath, COMMUNITY_PLUGINS_JSON_PATH)
+		path.join(vaultPath, COMMUNITY_PLUGINS_JSON_PATH)
 	);
-} // --- ファイルシステム操作ヘルパー ---
+}
 
 export function writeCommunityPluginsJSON(
 	enabledPlugins: string[],

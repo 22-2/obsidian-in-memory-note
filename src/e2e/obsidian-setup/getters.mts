@@ -79,6 +79,6 @@ export async function getStarter(
 	return newWindow;
 }
 
-export function getVaultPath(window: Page) {
+export function getVaultPathByPage(window: Page) {
 	return window.evaluate(() => app.vault.adapter.basePath);
 }

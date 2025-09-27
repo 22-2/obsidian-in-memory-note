@@ -1,7 +1,7 @@
-import { openSandboxVault } from "../../obsidian-setup/helpers.mts";
 import { SANDBOX_VAULT_NAME } from "../../config.mts";
 import {
 	getVaultList as getVaultListObj,
+	openSandboxVault,
 	openVault,
 } from "../../obsidian-setup/ipc-helpers.mts";
 import {

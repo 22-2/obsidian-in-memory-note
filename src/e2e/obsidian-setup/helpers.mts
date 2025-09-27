@@ -1,5 +1,5 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\obsidian-setup\helpers.mts
-import { copyFileSync, rmSync, writeFileSync } from "fs";
+import { copyFileSync, existsSync, rmSync, writeFileSync } from "fs";
 import path from "path";
 import type { ElectronApplication, Page } from "playwright";
 import { expect } from "playwright/test";
@@ -8,23 +8,17 @@ import {
 	COMMUNITY_PLUGINS_PATH,
 	PLUGIN_ID,
 	SANDBOX_VAULT_NAME,
-	TEST_VAULT_NAME,
 	VAULT_PATH,
 } from "../config.mts";
 import {
 	focusRootWorkspace,
-	noopAsync,
-	runCommand,
-	waitForWorkspace,
+	getAppInfo,
+	getElectronAppPath,
+	waitForVaultLoaded,
 } from "../helpers.mts";
-import { OPEN_SANDBOX_VAULT } from "../obsidian-commands/run-command.mts";
+import { openSandboxVault, openStarter, openVault } from "./ipc-helpers.mts";
+import { launchElectronApp, reopenVaultWith } from "./launch.mts";
 import type { ObsidianVaultEntry } from "./types.mts";
-import {
-	getSandboxPath,
-	openStarter,
-	openVault,
-	removeVault,
-} from "./ipc-helpers.mts";
 
 /**
  * IPCを使用して保管庫リストを取得
@@ -109,7 +103,7 @@ export async function getVault(
 	}
 
 	const newWindow = await waitForNewWindow(electronApp);
-	await waitForWorkspace(newWindow);
+	await ensureLoadPage(newWindow);
 	await focusRootWorkspace(newWindow);
 
 	return newWindow;
@@ -140,204 +134,126 @@ export async function getStarter(
  */
 export async function disableRestrictedModeAndEnablePlugins(
 	electronApp: ElectronApplication,
-	page: Page,
+	window: Page,
 	pluginsToEnable: string[]
 ): Promise<Page> {
 	console.log("[Setup Step] Disabling Restricted Mode...");
-	await page.keyboard.press("Control+,");
-	await page
+	let currentWindow = window;
+	// const newWindow = await reopenVaultWith(electronApp, async () => {
+	// });
+
+	console.log(
+		"[BUTTON-1]",
+		await currentWindow.evaluate(async () => {
+			app.setting.openTabById("community-plugins");
+			await new Promise((r) => setTimeout(r, 1000));
+			const button = app.setting.settingTabs
+				.find((tab) => tab.id.includes("com"))
+				.setting.contentEl.querySelector("button");
+			button.click();
+			return button.textContent;
+		})
+	);
+	console.log("disable Restricted Mode dialog should be open now.");
+	await ensureLoadPage(currentWindow);
+	await new Promise((r) => setTimeout(r, 1000));
+
+	console.log(
+		"[BUTTON-2]",
+		await currentWindow.evaluate(async () => {
+			app.setting.openTabById("community-plugins");
+			await new Promise((r) => setTimeout(r, 1000));
+			const button = app.setting.settingTabs
+				.find((tab) => tab.id.includes("com"))
+				.setting.contentEl.querySelector("button");
+			button.click();
+			return button.textContent;
+		})
+	);
+	console.log("enable community plugins dialog should be open now.");
+	await ensureLoadPage(currentWindow);
+	await currentWindow.pause();
+
+	for (const pluginId of pluginsToEnable) {
+		await currentWindow.evaluate(
+			(pluginId) => app.plugins.enablePluginAndSave(pluginId),
+			pluginId
+		);
+	}
+	return currentWindow;
+}
+export async function navigateToComminutyPlugins(window: Page) {
+	await window.keyboard.press("Control+,");
+	await window
 		.locator(".vertical-tab-header-group-items")
 		.getByText("Community plugins")
 		.click();
+}
 
-	// "Turn on community plugins" ボタンが表示されているか確認
-	const turnOnButton = page.getByRole("button", {
-		name: "Turn on community plugins",
-	});
-	if (await turnOnButton.isVisible()) {
-		// Restricted Modeを無効化（再起動が発生）
-		await turnOnButton.click();
-		let newPage = await waitForNewWindow(electronApp);
-		await waitForWorkspace(newPage);
-		await focusRootWorkspace(newPage);
-
-		// 設定画面を再度開く
-		await newPage.keyboard.press("Control+,");
-		await newPage
-			.locator(".vertical-tab-header-group-items")
-			.getByText("Community plugins")
-			.click();
-
-		// プラグインを有効化
-		for (const pluginId of pluginsToEnable) {
-			console.log(`[Setup Step] Enabling plugin: ${pluginId}...`);
-			const pluginRow = newPage.locator(".community-plugin-item", {
-				hasText: pluginId,
-			});
-			const toggle = pluginRow.locator(".checkbox-container");
-			if (!(await toggle.isChecked())) {
-				await toggle.click();
-			}
-		}
-
-		await newPage.keyboard.press("Escape");
-		return newPage;
-	} else {
-		// すでに無効化されている場合
-		console.log("[Setup Step] Restricted Mode is already disabled.");
-		for (const pluginId of pluginsToEnable) {
-			console.log(`[Setup Step] Enabling plugin: ${pluginId}...`);
-			const pluginRow = page.locator(".community-plugin-item", {
-				hasText: pluginId,
-			});
-			const toggle = pluginRow.locator(".checkbox-container");
-			if (!(await toggle.isChecked())) {
-				await toggle.click();
-			}
-		}
-		await page.keyboard.press("Escape");
-		return page;
-	}
+export async function checkIsRestrictedMode(window: Page) {
+	await navigateToComminutyPlugins(window);
 }
 
 // --- 状態保証ヘルパー ---
 
-export function checkIsStarter(window: Page): boolean {
+export function checkIsStarterSync(window: Page): boolean {
 	return window.url().includes("starter");
 }
 
-/**
- * アプリケーションがスターターページを表示している状態を保証する（IPC版）
- */
-export async function ensureStarterPage(
-	electronApp: ElectronApplication,
-	window: Page
-): Promise<Page> {
-	console.log("[Setup] Ensuring application is on the starter page.");
-
-	if (await checkIsStarter(window)) {
-		console.log("[Setup] Already on starter page.");
-		await window.waitForSelector(".mod-change-language", {
-			state: "visible",
-		});
-		return window;
-	}
-
-	console.log(
-		"[Setup] Vault is currently open. Returning to starter page..."
-	);
-	return getStarter(electronApp, window);
-}
-
-/**
- * デフォルトのテストVaultが開かれている状態を保証する（IPC版）
- */
-export async function ensureVaultOpen(
-	electronApp: ElectronApplication,
-	window: Page,
-	vaultName = TEST_VAULT_NAME
-): Promise<Page> {
-	console.log(`[Setup] Ensuring vault '${vaultName}' is open.`);
-
-	if (checkIsStarter(window)) {
-		console.log("[Setup] Currently on starter. Opening vault...");
-
-		// 保管庫リストから指定された保管庫を探す
-		const vaultList = await getVaultList(window);
-		const vaultEntry = Object.values(vaultList).find((v: any) =>
-			v.path.includes(vaultName)
-		);
-
-		if (!vaultEntry) {
-			throw new Error(`Vault "${vaultName}" not found in vault list`);
-		}
-
-		return getVault(electronApp, window, vaultEntry.path);
-	}
-
-	console.log(
-		"[Setup] Vault is already open. Checking if it's the correct one..."
-	);
-	await waitForWorkspace(window);
-	await focusRootWorkspace(window);
-
-	const currentVaultName = await window.evaluate(() =>
-		// @ts-expect-error
-		window.app.vault.getName()
-	);
-
-	if (currentVaultName === vaultName) {
-		console.log("[Setup] Correct vault is already open.");
-		return window;
-	}
-
-	// 違う保管庫が開いているので、正しいものを開く
-	const vaultList = await getVaultList(window);
-	const vaultEntry = Object.values(vaultList).find((v: any) =>
-		v.path.includes(vaultName)
-	);
-
-	if (!vaultEntry) {
-		throw new Error(`Vault "${vaultName}" not found in vault list`);
-	}
-
-	return getVault(electronApp, window, vaultEntry.path);
-}
-
-/**
- * IPCを使用してサンドボックス保管庫を開く
- */
-export async function openSandboxVault(page: Page): Promise<void> {
-	console.log(`[Setup Step] Opening sandbox vault: ${SANDBOX_VAULT_NAME}...`);
-	return page.evaluate((path) => {
-		return window.electron.ipcRenderer.sendSync("sandbox", path);
-	});
-}
-
-/**
- * サンドボックス保管庫を初期化（削除して再作成）
- */
-export async function initializeSandboxVault(
+export async function getSandboxWindow(
 	electronApp: ElectronApplication,
 	window: Page
 ) {
-	const vaultPath = await getSandboxPath(window);
-	if (vaultPath) {
-		console.log(`[Setup] Removing existing sandbox vault at: ${vaultPath}`);
-		// 保管庫リストから削除
-		await removeVault(window, vaultPath);
-		// ファイルシステムから削除
-		rmSync(vaultPath, { recursive: true, force: true });
+	if ((await getCurrentVaultName(window)) === SANDBOX_VAULT_NAME) {
+		return window;
 	}
-	// 新規作成して開く
-	return openSandboxVault(window);
+	return reopenVaultWith(electronApp, () => openSandboxVault(window));
 }
 
-// 後方互換性のためエクスポート（非推奨）
-export const initializeObsidianJSON = async () => {
-	console.warn(
-		"[DEPRECATED] initializeObsidianJSON is no longer needed with IPC approach"
-	);
-};
-
-export const ensureVault = async (
-	electronApp: ElectronApplication,
-	vaultWindow: Page,
-	vaultName: string
-) => {
-	return ensureVaultOpen(electronApp, vaultWindow, vaultName);
-};
-
-// 以下の関数は削除（IPC版で置き換え済み）
-// - performActionAndReload
-// - reopenVaultWith
-// - reopenStarterPageWith
-// - openDefaultVaultFromStarter
-
-export function ensureLoadPage(window: Page) {
-	return window.waitForLoadState("domcontentloaded");
+export async function ensureLoadPage(window: Page) {
+	console.log("[Setup] Ensuring page is fully loaded...");
+	await window.waitForLoadState("domcontentloaded");
+	console.log("[Setup] Page DOM content loaded.");
+	if (checkIsStarterSync(window)) {
+		console.log("[Setup] Detected starter page, no vault to wait for.");
+		return;
+	}
+	console.log("[Setup] Detected vault page, waiting for vault to load...");
+	await waitForVaultLoaded(window);
+	console.log("[Setup] Vault loaded.");
 }
 
 export function getCurrentVaultName(window: Page) {
-	return window.evaluate(() => app.vault.getName());
+	return window.evaluate(async () => {
+		if (typeof app === "undefined") {
+			console.trace("undefined");
+			console.log("title", await window.title);
+			console.log("url", window.location.href);
+			return;
+		}
+		return app.vault.getName();
+	});
+}
+
+export async function clearObsidianJSON() {
+	const { window: dummyWindow } = await getAppWindow();
+	const appPath = await getElectronAppPath(dummyWindow);
+	const indexPath = path.join(appPath, ".obsidian.json");
+	if (existsSync(indexPath)) {
+		console.log("Found .obsidian.json, removing...");
+		rmSync(indexPath);
+		console.log("Removed .obsidian.json");
+	} else {
+		console.log("No .obsidian.json found, nothing to remove.");
+	}
+	await dummyWindow.close();
+}
+
+export async function getAppWindow(
+	{ wait }: { wait: boolean } = { wait: true }
+) {
+	const electronApp = await launchElectronApp();
+	const window = await electronApp.firstWindow();
+	if (wait) await ensureLoadPage(window);
+	return { electronApp, window };
 }

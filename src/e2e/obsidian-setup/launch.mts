@@ -1,30 +1,32 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\obsidian-setup\launch.mts
-import type { ElectronApplication, Page, TestInfo } from "playwright/test";
-import { _electron as electron } from "playwright/test";
 import type { App } from "obsidian";
 import path from "path";
+import type { ElectronApplication, Page, TestInfo } from "playwright/test";
+import { _electron as electron } from "playwright/test";
 import {
 	APP_MAIN_JS_PATH,
 	PLUGIN_ID,
 	SANDBOX_VAULT_NAME,
 	TEST_VAULT_NAME,
 } from "../config.mts";
-import type { ObsidianStarterFixture, ObsidianVaultFixture } from "./types.mts";
-import {
-	disableRestrictedModeAndEnablePlugins,
-	ensureLoadPage,
-	ensureStarterPage,
-	ensureVaultOpen,
-	initializeWorkspaceJSON,
-} from "./helpers.mts";
 import {
 	focusRootWorkspace,
 	getElectronAppPath,
 	noopAsync,
-	waitForWorkspace,
+	waitForVaultLoaded,
 } from "../helpers.mts";
 import { delay } from "../obsidian-commands/run-command.mts";
+import {
+	clearObsidianJSON,
+	disableRestrictedModeAndEnablePlugins,
+	ensureLoadPage,
+	getAppWindow,
+	getSandboxWindow,
+	getStarter,
+	initializeWorkspaceJSON,
+} from "./helpers.mts";
 import { openVault } from "./ipc-helpers.mts";
+import type { ObsidianStarterFixture, ObsidianVaultFixture } from "./types.mts";
 
 // --- Electronアプリ起動 ---
 
@@ -46,7 +48,7 @@ export const launchElectronApp = async (): Promise<ElectronApplication> => {
 /**
  * IPCを使用して保管庫をセットアップ
  */
-const setupVaultViaIpc = async (
+const getOrCreateVault = async (
 	electronApp: ElectronApplication,
 	firstWindow: Page,
 	vaultName: string,
@@ -118,12 +120,12 @@ export const launchVaultWindow = async (
 
 	// 1. workspace.jsonを初期化
 	initializeWorkspaceJSON();
+	clearObsidianJSON();
 
 	await delay(1000);
 
 	// 2. Electronアプリを起動
-	const electronApp = await launchElectronApp();
-	const firstWindow = await electronApp.firstWindow();
+	const { electronApp, window: firstWindow } = await getAppWindow();
 
 	console.log(
 		`[Setup] Initial window URL: ${await firstWindow.evaluate(
@@ -132,12 +134,15 @@ export const launchVaultWindow = async (
 	);
 
 	// 3. IPCで保管庫を開く
-	const vaultWindow = await setupVaultViaIpc(
-		electronApp,
-		firstWindow,
-		vaultName,
-		createNewVault
-	);
+	const vaultWindow =
+		vaultName === SANDBOX_VAULT_NAME
+			? await getSandboxWindow(electronApp, firstWindow)
+			: await getOrCreateVault(
+					electronApp,
+					firstWindow,
+					vaultName,
+					createNewVault
+			  );
 
 	// 4. 必要に応じて制限モードを無効化
 	let finalWindow = vaultWindow;
@@ -192,8 +197,7 @@ export const launchStarterWindow = async (
 		)}`
 	);
 
-	// 3. スターターページを確実に表示
-	window = await ensureStarterPage(electronApp, window);
+	window = await getStarter(electronApp, window);
 
 	console.log(
 		`[Setup] Final window URL: ${await window.evaluate(() => document.URL)}`
@@ -250,12 +254,16 @@ export async function performActionAndReload(
 		focus?: (newWindow: Page) => Promise<void>;
 	} = {
 		closeOldWindows: true,
-		waitFor: waitForWorkspace,
+		waitFor: waitForVaultLoaded,
 		focus: focusRootWorkspace,
 	}
 ): Promise<Page> {
+	console.log("[Setup] Performing action to open new window...");
 	await beforeAction();
+	console.log("[Setup] Action performed.");
+	console.log("[Setup] Waiting for new window to open...");
 	const newWindow = await electronApp.waitForEvent("window");
+	console.log("[Setup] New window event detected.");
 
 	console.log(
 		`[Setup Step] New window opened: ${newWindow.url()} ${await newWindow.title()}`
@@ -270,8 +278,14 @@ export async function performActionAndReload(
 		}
 	}
 
+	if (opts.waitFor)
+		console.log("[Setup] Waiting for new window to be ready...");
 	opts.waitFor && (await opts.waitFor(newWindow));
+	if (opts.waitFor) console.log("[Setup] New window is ready.");
+
+	if (opts.focus) console.log("[Setup] Focusing new window...");
 	opts.focus && (await opts.focus(newWindow));
+	if (opts.focus) console.log("[Setup] New window focused.");
 	return newWindow;
 }
 

@@ -89,3 +89,11 @@ export async function removeVault(
 export async function getSandboxPath(page: Page): Promise<string> {
 	return ipcSendSync<string>(page, "get-sandbox-vault-path");
 }
+/**
+ * IPCを介して、サンドボックスVaultのパスを取得します。
+ * @param page - PlaywrightのPageオブジェクト
+ * @returns サンドボックスVaultのパス文字列
+ */
+export async function openSandboxVault(page: Page): Promise<string> {
+	return ipcSendSync(page, "sandbox");
+}

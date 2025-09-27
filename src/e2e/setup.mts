@@ -125,16 +125,23 @@ export const commonSetup = async (
 	if (isStarterPage) {
 		console.log(await window.evaluate(() => document.title));
 		console.log(await window.evaluate(() => document.body.innerHTML));
+		console.log("create vault");
 		await window.getByText("Create", { exact: true }).click();
+		console.log("clicked");
 		await window.locator("input").fill("test");
+		console.log("filed");
 		await window.getByText("Browse").click();
+		console.log("browse");
 		await window.waitForEvent("filechooser");
+		console.log("chooser");
 		await window.getByText("Select Folder").click();
+		console.log("select");
 		window = await performActionAndReload(
 			electronApp,
 			async () =>
 				await window.getByText("Create", { exact: true }).click()
 		);
+		console.log("restart");
 	}
 
 	await waitForWorkspace(window);

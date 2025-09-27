@@ -111,12 +111,16 @@ export const commonSetup = async (
 			NODE_ENV: "development",
 		},
 	});
+	console.log("launched electron app");
 
 	let window = await electronApp.firstWindow();
+	console.log("get window");
+	console.log(await window.evaluate(() => document.URL));
 
 	const isStarterPage = await window.evaluate(() =>
 		document.URL.includes("starter")
 	);
+	console.log("isStarterPage", isStarterPage);
 
 	if (isStarterPage) {
 		await window.getByText("Create").click();

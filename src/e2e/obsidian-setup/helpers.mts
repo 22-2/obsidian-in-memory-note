@@ -8,6 +8,7 @@ import { navigateToComminutyPlugins } from "./operations.mts";
 
 /**
  * IPCを使用して新しいウィンドウを待ち、古いウィンドウを閉じる
+ * @deprecated
  */
 export async function waitForNewWindow(
 	electronApp: ElectronApplication,
@@ -31,9 +32,10 @@ export async function waitForNewWindow(
 	return newWindow;
 }
 
-export async function checkIsRestrictedMode(window: Page) {
-	await navigateToComminutyPlugins(window);
-}
+// export async function checkIsRestrictedMode(window: Page) {
+// 	// await navigateToComminutyPlugins(window);
+// 	throw new Error("not implemented");
+// }
 
 // --- 状態保証ヘルパー ---
 

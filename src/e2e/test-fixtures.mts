@@ -1,6 +1,6 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\base.mts
 import { test as baseTest, expect } from "playwright/test";
-import { setPluginInstalled } from "./obsidian-setup/helpers.mts";
+import { setPluginInstalled } from "./obsidian-setup/initializers.mts";
 import {
 	commonTeardown,
 	launchStarterWindow,

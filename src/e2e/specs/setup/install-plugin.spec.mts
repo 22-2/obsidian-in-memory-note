@@ -1,7 +1,5 @@
-import {
-	ensureLoadPage,
-	getCurrentVaultName,
-} from "../../obsidian-setup/helpers.mts";
+import { ensureLoadPage } from "../../obsidian-setup/helpers.mts";
+import { getCurrentVaultName } from "src/e2e/obsidian-setup/getters.mts";
 import { test, expect } from "../../test-fixtures.mts";
 import { DIST_DIR, PLUGIN_ID, SANDBOX_VAULT_NAME } from "../../config.mts";
 import { delay } from "src/e2e/obsidian-commands/run-command.mts";

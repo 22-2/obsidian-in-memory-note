@@ -16,17 +16,13 @@ import {
 	waitForVaultLoaded,
 } from "../helpers.mts";
 import { delay } from "../obsidian-commands/run-command.mts";
-import {
-	clearObsidianJSON,
-	copyCommunityPlugins,
-	disableRestrictedModeAndEnablePlugins,
-	ensureLoadPage,
-	getAppWindow,
-	getSandboxWindow,
-	getStarter,
-	initializeWorkspaceJSON as initializeWorkspaceJSONSync,
-	setPluginInstalled,
-} from "./helpers.mts";
+import { ensureLoadPage } from "./helpers.mts";
+import { disableRestrictedModeAndEnablePlugins } from "./operations.mts";
+import { clearObsidianJSON, copyCommunityPlugins } from "./initializers.mts";
+import { clearWorkspaceJSONSync } from "./initializers.mts";
+import { getStarter } from "./getters.mts";
+import { getSandboxWindow } from "./getters.mts";
+import { getAppWindow } from "./getters.mts";
 import { openVault } from "./ipc-helpers.mts";
 import type { ObsidianStarterFixture, ObsidianVaultFixture } from "./types.mts";
 
@@ -122,7 +118,7 @@ export const launchVaultWindow = async (
 	console.log("[Setup Options]", { vaultName, doDisableRestrictedMode });
 
 	// 1. workspace.jsonを初期化
-	initializeWorkspaceJSONSync();
+	clearWorkspaceJSONSync();
 	await clearObsidianJSON();
 	if (options.pluginPaths) {
 		await copyCommunityPlugins(options.pluginPaths);
@@ -189,7 +185,7 @@ export const launchStarterWindow = async (
 	);
 
 	// 1. workspace.jsonを初期化
-	initializeWorkspaceJSONSync();
+	clearWorkspaceJSONSync();
 
 	await delay(1000);
 

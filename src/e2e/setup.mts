@@ -19,6 +19,7 @@ import {
 	waitForWorkspace,
 } from "./helpers.mts";
 import type { CommonSetupOptions, SetupFixture } from "./types.mts";
+import { delay } from "./obsidian-commands/run-command.mts";
 
 const COMMUNITY_PLUGINS_PATH = path.join(
 	VAULT_PATH,
@@ -125,18 +126,23 @@ export const commonSetup = async (
 	if (isStarterPage) {
 		console.log(await window.evaluate(() => document.title));
 		console.log(await window.evaluate(() => document.body.innerHTML));
+		await delay(1000);
 		console.log("create vault");
 		await window.getByText("Create", { exact: true }).click();
 		console.log("clicked");
+		await delay(100);
 		await window.locator("input").fill("test");
 		console.log("filed");
-		const chooserPromise = window.waitForEvent("filechooser");
-		await window.getByText("Browse").click();
+		await delay(100);
+		await window.getByText("Browse", { exact: true }).click();
 		console.log("browse");
-		const chooser = await chooserPromise;
+		await delay(500);
+		const chooser = await window.waitForEvent("filechooser");
 		console.log("chooser");
+		await delay(500);
 		chooser.setFiles(VAULT_PATH);
 		console.log("setFiles");
+		await delay(500);
 		await window.getByText("Select Folder").click();
 		console.log("select");
 		window = await performActionAndReload(

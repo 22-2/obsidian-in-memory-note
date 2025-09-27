@@ -10,13 +10,14 @@ import {
 import { navigateToComminutyPlugins } from "./operations.mts";
 import { delay } from "../obsidian-commands/run-command.mts";
 import {
+	getCurrentVaultName,
 	getSandboxWindow,
 	getCurrentVaultName as getVaultNameByPage,
 	getVaultPathByPage,
 } from "./getters.mts";
 import { rmSync } from "fs";
 import { SANDBOX_VAULT_NAME } from "../config.mts";
-import type path from "path";
+import path from "path";
 import { openVault } from "./ipc-helpers.mts";
 
 // --- アプリ状態操作ヘルパー ---

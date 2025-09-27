@@ -101,10 +101,10 @@ export const commonSetup = async (
 	const electronApp = await electron.launch({
 		args: [
 			APP_MAIN_JS_PATH,
-			"open",
-			`obsidian://open?path=${encodeURIComponent(VAULT_PATH)}`,
-			"--no-sandbox",
-			"--disable-setuid-sandbox",
+			// "open",
+			// `obsidian://open?path=${encodeURIComponent(VAULT_PATH)}`,
+			// "--no-sandbox",
+			// "--disable-setuid-sandbox",
 		],
 		env: {
 			...process.env,

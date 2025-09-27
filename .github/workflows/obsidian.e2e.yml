@@ -31,21 +31,62 @@ jobs:
             - name: Set up Node.js
               uses: actions/setup-node@v4
               with:
+                  # Node.js 23は最新版ですが、安定性を重視する場合はLTS版（例: "20"）を推奨します
                   node-version: "23"
                   cache: "pnpm"
 
             - name: Install dependencies
               run: pnpm install
 
+            # --- ▼▼▼ 高速化のための変更点 ここから ▼▼▼ ---
+
+            # Playwrightのブラウザをキャッシュして、ダウンロード時間を短縮します
+            - name: Cache Playwright browsers
+              uses: actions/cache@v4
+              id: playwright-cache
+              with:
+                  # OSごとに異なるPlaywrightのキャッシュパスを指定します
+                  path: |
+                      %LOCALAPPDATA%/ms-playwright  # Windows
+                      ~/Library/Caches/ms-playwright # macOS
+                  # pnpm-lock.yamlのハッシュをキーに含めることで、Playwrightのバージョンが変わったらキャッシュが更新されます
+                  key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('**/pnpm-lock.yaml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-playwright-chromium-
+
+            # --- ▲▲▲ 高速化のための変更点 ここまで ▲▲▲ ---
+
             - name: Install Playwright
+              # キャッシュがある場合、このステップはブラウザの存在を確認するだけなので、一瞬で終わるようになります
               run: pnpm playwright install chromium
 
-            - name: Install jq (Windows)
+            # --- ▼▼▼ 高速化のための変更点 ここから ▼▼▼ ---
+
+            # Windows用のjq実行ファイルをキャッシュします
+            - name: Cache jq (Windows)
+              if: runner.os == 'Windows'
+              uses: actions/cache@v4
+              id: jq-cache
+              with:
+                  path: jq.exe
+                  key: jq-win64-latest
+
+            # 元の "Install jq (Windows)" ステップを、キャッシュを利用するように変更しました
+            - name: Install and setup jq (Windows)
               if: runner.os == 'Windows'
               shell: bash
               run: |
-                  curl -L -o jq.exe https://github.com/jqlang/jq/releases/latest/download/jq-win64.exe
+                  # キャッシュからリストアされなかった場合（jq.exeが存在しない場合）のみダウンロードします
+                  if [[ ! -f "jq.exe" ]]; then
+                    echo "jq not found in cache. Downloading..."
+                    curl -L -o jq.exe https://github.com/jqlang/jq/releases/latest/download/jq-win64.exe
+                  else
+                    echo "jq found in cache."
+                  fi
+                  # jq.exeがあるカレントディレクトリをPATHに追加します
                   echo "${{ github.workspace }}" >> $GITHUB_PATH
+
+            # --- ▲▲▲ 高速化のための変更点 ここまで ▲▲▲ ---
 
             - name: PWD # For debugging purposes
               shell: bash

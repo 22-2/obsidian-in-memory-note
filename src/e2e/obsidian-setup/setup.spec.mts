@@ -11,7 +11,7 @@ import {
 
 test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
 	test("should open a new note, allow typing, and update title", async ({
-		obsidian,
+		vault: obsidian,
 	}) => {
 		const { window } = obsidian;
 		// Act: Open a new note.
@@ -34,7 +34,7 @@ test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
 	});
 
 	test("should sync content between two split views of the same note", async ({
-		obsidian,
+		vault: obsidian,
 	}) => {
 		const { window } = obsidian;
 		// Arrange: Open a note and split the view.
@@ -69,7 +69,7 @@ test.describe.serial("Hot Sandbox Note: Hot Exit (Restart Test)", () => {
 	const testText = `Content to be restored - ${Date.now()}`;
 
 	test("should create and populate a note for the restart test", async ({
-		obsidian,
+		vault: obsidian,
 	}) => {
 		const { window } = obsidian;
 		// Arrange: Open a note and type unique text.
@@ -87,7 +87,7 @@ test.describe.serial("Hot Sandbox Note: Hot Exit (Restart Test)", () => {
 	});
 
 	test("should restore note content after an application restart", async ({
-		obsidian,
+		vault: obsidian,
 	}) => {
 		const { window } = obsidian;
 		// Arrange: The application is restarted by the fixture.
@@ -107,7 +107,7 @@ test.describe.serial("Hot Sandbox Note: Hot Exit (Restart Test)", () => {
 // --- 通常のVaultでのテスト ---
 test.describe("Hot Sandbox Note: Basic Functionality", () => {
 	test("should open a new note, allow typing, and update title", async ({
-		obsidian,
+		vault: obsidian,
 	}) => {
 		const { window } = obsidian;
 		await openNewSandboxNote(window);
@@ -134,7 +134,7 @@ test.describe("Hot Sandbox Note: In Sandbox Vault", () => {
 	test.use({ setupOptions: { openSandboxVault: true } });
 
 	test("should open a new note in the sandbox vault", async ({
-		obsidian,
+		vault: obsidian,
 	}) => {
 		const { window, appHandle } = obsidian;
 
@@ -159,7 +159,7 @@ test.describe.serial("Hot Sandbox Note: Hot Exit (Restart Test)", () => {
 	const testText = `Content to be restored - ${Date.now()}`;
 
 	// test("should create and populate a note for the restart test", async ({
-	// 	obsidian,
+	// 	vault: obsidian,
 	// }) => {
 	// 	const { window } = obsidian;
 	// 	await openNewSandboxNote(window);
@@ -173,7 +173,7 @@ test.describe.serial("Hot Sandbox Note: Hot Exit (Restart Test)", () => {
 	// });
 
 	// test("should restore note content after an application restart", async ({
-	// 	obsidian,
+	// 	vault: obsidian,
 	// }) => {
 	// 	const { window } = obsidian;
 	// 	await window.waitForTimeout(1000); // 復元を待機

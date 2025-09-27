@@ -3,7 +3,12 @@ import type { ElectronApplication, TestInfo } from "playwright/test";
 import { _electron as electron } from "playwright/test";
 import type { App } from "obsidian";
 import { APP_MAIN_JS_PATH, PLUGIN_ID, SANDBOX_VAULT_NAME } from "../config.mts";
-import type { CommonSetupOptions, SetupFixture } from "../types.mts";
+import type {
+	CommonSetupOptions,
+	ObsidianStarterFixture,
+	ObsidianVaultFixture,
+	SetupFixture,
+} from "../types.mts";
 import {
 	disableRestrictedModeAndEnablePlugins,
 	ensureStarterPage,
@@ -13,17 +18,16 @@ import {
 } from "./setup-helpers.mts";
 import { focusRootWorkspace, waitForWorkspace } from "../helpers.mts";
 
-export const commonSetup = async (
-	testInfo: TestInfo,
-	options: CommonSetupOptions = {}
-): Promise<SetupFixture> => {
-	const isRestorationStep = testInfo.title.includes(
-		"restore note content after an application restart"
-	);
-	console.log(`\n--------------- Setup: ${testInfo.title} ---------------`);
-	console.log("[Setup Options]", options);
+// --- 共通ヘルパー関数 ---
 
-	// --- 1. ファイルシステムレベルのセットアップ ---
+/**
+ * テスト実行前に、Obsidianの設定ファイル（obsidian.json, workspace.json）を初期化します。
+ * @param isRestorationStep 復元ステップのテストかどうか
+ * @returns Electronアプリケーションの起動オプション
+ */
+const initializeFileSystemAndGetAppOptions = async (
+	isRestorationStep: boolean
+) => {
 	if (!isRestorationStep) {
 		initializeWorkspaceJSON();
 	}
@@ -40,7 +44,57 @@ export const commonSetup = async (
 	await initializeObsidianJSON(dummyApp);
 	await dummyApp.close();
 
-	// --- 2. アプリケーションの起動 ---
+	return appOptions;
+};
+
+// --- 新しいセットアップ関数 ---
+
+export interface LaunchVaultWindowOptions {
+	/**
+	 * サンドボックスボールトを開くかどうかを指定します。
+	 * trueの場合、`SANDBOX_VAULT_NAME`で定義されたボールトを開きます。
+	 * falseの場合、最後に開かれたボールト（またはデフォルト）を開きます。
+	 * @default true
+	 */
+	openSandboxVault?: boolean;
+	/**
+	 * 制限モード（セーフモード）を無効にし、テスト対象のプラグインを有効にするかどうかを指定します。
+	 * @default true
+	 */
+	doDisableRestrictedMode?: boolean;
+}
+
+/**
+ * Obsidianを起動し、指定されたボールトを開いた状態でセットアップします。
+ * この関数は、プラグインの機能テストなど、ボールトが開いていることを前提とするテストに使用します。
+ * @param testInfo Playwrightのテスト情報オブジェクト
+ * @param options セットアップのオプション
+ * @returns セットアップされた環境のフィクスチャ
+ */
+export const launchVaultWindow = async (
+	testInfo: TestInfo,
+	options: LaunchVaultWindowOptions = {}
+): Promise<ObsidianVaultFixture> => {
+	// オプションにデフォルト値を設定
+	const {
+		openSandboxVault = true,
+		doDisableRestrictedMode: disableRestrictedMode = true,
+	} = options;
+
+	const isRestorationStep = testInfo.title.includes(
+		"restore note content after an application restart"
+	);
+	console.log(
+		`\n--------------- Setup (Vault): ${testInfo.title} ---------------`
+	);
+	console.log("[Setup Options]", { openSandboxVault, disableRestrictedMode });
+
+	// 1. ファイルシステムを初期化し、アプリ起動オプションを取得
+	const appOptions = await initializeFileSystemAndGetAppOptions(
+		isRestorationStep
+	);
+
+	// 2. アプリケーションを起動
 	const electronApp = await electron.launch(appOptions);
 	let window = await electronApp.firstWindow();
 	console.log(
@@ -49,39 +103,21 @@ export const commonSetup = async (
 		)}`
 	);
 
-	const isStarter = window.url().includes("starter");
-
-	if (isStarter) {
-		await window.waitForSelector(".mod-change-language");
-	}
-
-	if (options.startOnStarterPage) {
-		console.log("[Setup] Ensuring state: Starter Page");
-		return {
-			electronApp,
-			window: isStarter
-				? window
-				: await ensureStarterPage(electronApp, window),
-			appHandle: null,
-			pluginId: PLUGIN_ID,
-			isRestorationStep,
-		};
-	}
+	// 3. ボールトが開いた状態を保証
 	console.log("[Setup] Ensuring state: Vault Open");
 	window = await ensureVaultOpen(
 		electronApp,
 		window,
-		options.openSandboxVault ? SANDBOX_VAULT_NAME : undefined
+		openSandboxVault ? SANDBOX_VAULT_NAME : undefined
 	);
 
-	if (options.disableRestrictedMode) {
+	// 4. ボールト内の設定
+	if (disableRestrictedMode) {
 		await disableRestrictedModeAndEnablePlugins(electronApp, window, [
 			PLUGIN_ID,
 		]);
-	} else if (options.openSandboxVault) {
 	} else {
-		// オプション指定なしの場合、起動時の初期状態をそのまま利用
-		console.log("[Setup] Using initial state on launch");
+		// 制限モードを無効にしない場合でも、ワークスペースの準備は待つ
 		await waitForWorkspace(window);
 		await focusRootWorkspace(window);
 	}
@@ -90,9 +126,9 @@ export const commonSetup = async (
 		`[Setup] Final window URL: ${await window.evaluate(() => document.URL)}`
 	);
 
-	// --- 4. 共通の後処理 ---
+	// 5. Appオブジェクトのハンドルを取得
 	const appHandle = await window.evaluateHandle(
-		// @ts-expect-error app is available
+		// @ts-expect-error app is available on the window
 		() => window.app as App
 	);
 
@@ -101,8 +137,89 @@ export const commonSetup = async (
 		window,
 		appHandle,
 		pluginId: PLUGIN_ID,
-		isRestorationStep,
 	};
+};
+
+/**
+ * Obsidianを起動し、スターターページ（ボールト選択画面）を表示した状態でセットアップします。
+ * ボールトの作成や選択などのUIテストに使用します。
+ * @param testInfo Playwrightのテスト情報オブジェクト
+ * @returns セットアップされた環境のフィクスチャ（appHandleは常にnull）
+ */
+export const launchStarterWindow = async (
+	testInfo: TestInfo
+): Promise<ObsidianStarterFixture> => {
+	const isRestorationStep = testInfo.title.includes(
+		"restore note content after an application restart"
+	);
+	console.log(
+		`\n--------------- Setup (Starter): ${testInfo.title} ---------------`
+	);
+
+	// 1. ファイルシステムを初期化し、アプリ起動オプションを取得
+	const appOptions = await initializeFileSystemAndGetAppOptions(
+		isRestorationStep
+	);
+
+	// 2. アプリケーションを起動
+	const electronApp = await electron.launch(appOptions);
+	let window = await electronApp.firstWindow();
+	console.log(
+		`[Setup] Initial window URL: ${await window.evaluate(
+			() => document.URL
+		)}`
+	);
+
+	// 3. スターターページが表示される状態を保証
+	console.log("[Setup] Ensuring state: Starter Page");
+	window = await ensureStarterPage(electronApp, window);
+
+	// スターターページの要素が表示されるのを待つ
+	await window.waitForSelector(".mod-change-language");
+
+	console.log(
+		`[Setup] Final window URL: ${await window.evaluate(() => document.URL)}`
+	);
+
+	return {
+		electronApp,
+		window,
+	};
+};
+
+/**
+ * @deprecated この関数は `launchVaultWindow` と `launchStarterWindow` に分割されました。
+ * テストの目的に応じて、いずれかの新しい関数を使用してください。
+ *
+ * - ボールトを開いた状態でテストを開始する場合: `launchVaultWindow(testInfo, options)`
+ * - スターターページからテストを開始する場合: `launchStarterWindow(testInfo)`
+ */
+export const commonSetup = async (
+	testInfo: TestInfo,
+	options: CommonSetupOptions = {}
+): Promise<SetupFixture> => {
+	// ログに非推奨であることを明記
+	console.warn(
+		`[DEPRECATION] 'commonSetup' is deprecated. Use 'launchVaultWindow' or 'launchStarterWindow' instead.`
+	);
+	console.log(
+		`\n--------------- Setup (DEPRECATED): ${testInfo.title} ---------------`
+	);
+
+	// オプションに基づいて新しい関数に処理を委譲
+	if (options.startOnStarterPage) {
+		// @ts-expect-error
+		return launchStarterWindow(testInfo);
+	}
+
+	// CommonSetupOptions を LaunchVaultWindowOptions に変換
+	// 元の関数の挙動（オプション未指定時はfalse）を維持するため、undefinedをfalseに変換
+	const vaultOptions: LaunchVaultWindowOptions = {
+		openSandboxVault: options.openSandboxVault ?? false,
+		doDisableRestrictedMode: options.disableRestrictedMode ?? false,
+	};
+	// @ts-expect-error
+	return launchVaultWindow(testInfo, vaultOptions);
 };
 
 export const commonTeardown = async (

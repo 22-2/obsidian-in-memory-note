@@ -139,11 +139,13 @@ export const commonSetup = async (
 		);
 
 		// ★★★ クリックとイベント待機を同時に実行する ★★★
-		const [chooser] = await Promise.all([
+		const [, chooser] = await Promise.all([
+			console.log("test1"),
 			// action
 			window.waitForEvent("filechooser"),
 			// trigger
 			window.getByText("Browse", { exact: true }).click(),
+			console.log("test2"),
 		]);
 
 		console.log("File chooser event received!"); // ここまで来れば成功

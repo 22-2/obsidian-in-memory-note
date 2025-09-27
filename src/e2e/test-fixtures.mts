@@ -1,24 +1,21 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\base.mts
-import { test as baseTest, expect, type JSHandle } from "playwright/test";
-import type SandboxPlugin from "../main";
-import { PLUGIN_ID } from "./config.mts";
-import type {
-	// 新しい型
-	ObsidianStarterFixture,
-	ObsidianVaultFixture,
-	LaunchVaultWindowOptions,
-	// 非推奨の型
-	CommonSetupOptions,
-	PluginInstalledFixture,
-} from "./obsidian-setup/types.mts";
+import { test as baseTest, expect } from "playwright/test";
 import { setPluginInstalled } from "./obsidian-setup/helpers.mts";
 import {
-	commonSetup,
 	commonTeardown,
 	launchStarterWindow,
 	launchVaultWindow,
 	type LaunchStarterWindowOptions,
 } from "./obsidian-setup/launch.mts";
+import type {
+	// 非推奨の型
+	CommonSetupOptions,
+	LaunchVaultWindowOptions,
+	// 新しい型
+	ObsidianStarterFixture,
+	ObsidianVaultFixture,
+	PluginInstalledFixture,
+} from "./obsidian-setup/types.mts";
 
 // --- フィクスチャの型定義 ---
 

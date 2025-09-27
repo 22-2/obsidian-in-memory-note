@@ -1,15 +1,28 @@
 import { expect } from "@playwright/test";
 import { SANDBOX_VAULT_NAME } from "../../config.mts";
 import { test } from "../../test-fixtures.mts";
+import {
+	getCurrentVaultName,
+	openSandboxVault,
+} from "../../obsidian-setup/helpers.mts";
+import { reopenVaultWith } from "../../obsidian-setup/launch.mts";
+
+const newVaultName = "new-vault" + Math.random().toString(36).substring(7);
 
 test.use({
 	vaultOptions: {
 		doDisableRestrictedMode: false,
+		createNewVault: true,
+		vaultName: newVaultName,
 	},
 });
-test("should open in the sandbox vault", async ({ vault }) => {
-	const vaultName = await vault.appHandle!.evaluate((app) =>
-		app.vault.getName()
+test("should open in the new vault", async ({ vault }) => {
+	expect(await getCurrentVaultName(vault.window)).toBe(newVaultName);
+});
+
+test("should open sandbox vault", async ({ starter }) => {
+	const window = await reopenVaultWith(starter.electronApp, () =>
+		openSandboxVault(starter.window)
 	);
-	expect(vaultName).toBe(SANDBOX_VAULT_NAME);
+	expect(await getCurrentVaultName(window)).toBe(SANDBOX_VAULT_NAME);
 });

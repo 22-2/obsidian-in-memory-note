@@ -49,7 +49,8 @@ export const launchElectronApp = async (): Promise<ElectronApplication> => {
 const setupVaultViaIpc = async (
 	electronApp: ElectronApplication,
 	firstWindow: Page,
-	vaultName: string
+	vaultName: string,
+	create = false
 ): Promise<Page> => {
 	// ユーザーデータディレクトリを取得
 	const userDataDir = await getElectronAppPath(firstWindow);
@@ -59,7 +60,7 @@ const setupVaultViaIpc = async (
 
 	// IPCで保管庫を開く（存在しない場合は作成）
 	const vaultWindow = await reopenVaultWith(electronApp, () =>
-		openVault(firstWindow, vaultPath, false)
+		openVault(firstWindow, vaultPath, create)
 	);
 
 	// 古いウィンドウを閉じる
@@ -88,6 +89,8 @@ export interface LaunchVaultWindowOptions {
 	 * @default true
 	 */
 	doDisableRestrictedMode?: boolean;
+
+	createNewVault?: boolean;
 }
 
 export interface LaunchStarterWindowOptions {
@@ -102,8 +105,11 @@ export const launchVaultWindow = async (
 	options: LaunchVaultWindowOptions = {}
 ): Promise<ObsidianVaultFixture> => {
 	// オプションのデフォルト値
-	const { vaultName = SANDBOX_VAULT_NAME, doDisableRestrictedMode = true } =
-		options;
+	const {
+		vaultName = SANDBOX_VAULT_NAME,
+		doDisableRestrictedMode = true,
+		createNewVault,
+	} = options;
 
 	console.log(
 		`\n--------------- Setup (Vault): ${testInfo.title} ---------------`
@@ -129,7 +135,8 @@ export const launchVaultWindow = async (
 	const vaultWindow = await setupVaultViaIpc(
 		electronApp,
 		firstWindow,
-		vaultName
+		vaultName,
+		createNewVault
 	);
 
 	// 4. 必要に応じて制限モードを無効化

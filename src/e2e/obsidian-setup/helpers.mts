@@ -334,6 +334,10 @@ export const ensureVault = async (
 // - reopenStarterPageWith
 // - openDefaultVaultFromStarter
 
-export function ensureLoadPage(page: Page) {
-	return page.waitForLoadState("domcontentloaded");
+export function ensureLoadPage(window: Page) {
+	return window.waitForLoadState("domcontentloaded");
+}
+
+export function getCurrentVaultName(window: Page) {
+	return window.evaluate(() => app.vault.getName());
 }

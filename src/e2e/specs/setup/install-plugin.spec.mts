@@ -3,12 +3,13 @@ import {
 	getCurrentVaultName,
 } from "../../obsidian-setup/helpers.mts";
 import { test, expect } from "../../test-fixtures.mts";
-import { PLUGIN_ID, SANDBOX_VAULT_NAME } from "../../config.mts";
+import { DIST_DIR, PLUGIN_ID, SANDBOX_VAULT_NAME } from "../../config.mts";
 import { delay } from "src/e2e/obsidian-commands/run-command.mts";
 
 test.use({
 	vaultOptions: {
 		doDisableRestrictedMode: true,
+		pluginPaths: [DIST_DIR],
 	},
 });
 

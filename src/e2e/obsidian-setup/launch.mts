@@ -18,12 +18,14 @@ import {
 import { delay } from "../obsidian-commands/run-command.mts";
 import {
 	clearObsidianJSON,
+	copyCommunityPlugins,
 	disableRestrictedModeAndEnablePlugins,
 	ensureLoadPage,
 	getAppWindow,
 	getSandboxWindow,
 	getStarter,
-	initializeWorkspaceJSON,
+	initializeWorkspaceJSON as initializeWorkspaceJSONSync,
+	setPluginInstalled,
 } from "./helpers.mts";
 import { openVault } from "./ipc-helpers.mts";
 import type { ObsidianStarterFixture, ObsidianVaultFixture } from "./types.mts";
@@ -93,6 +95,7 @@ export interface LaunchVaultWindowOptions {
 	doDisableRestrictedMode?: boolean;
 
 	createNewVault?: boolean;
+	pluginPaths?: string[];
 }
 
 export interface LaunchStarterWindowOptions {
@@ -119,8 +122,11 @@ export const launchVaultWindow = async (
 	console.log("[Setup Options]", { vaultName, doDisableRestrictedMode });
 
 	// 1. workspace.jsonを初期化
-	initializeWorkspaceJSON();
-	clearObsidianJSON();
+	initializeWorkspaceJSONSync();
+	await clearObsidianJSON();
+	if (options.pluginPaths) {
+		await copyCommunityPlugins(options.pluginPaths);
+	}
 
 	await delay(1000);
 
@@ -183,7 +189,7 @@ export const launchStarterWindow = async (
 	);
 
 	// 1. workspace.jsonを初期化
-	initializeWorkspaceJSON();
+	initializeWorkspaceJSONSync();
 
 	await delay(1000);
 

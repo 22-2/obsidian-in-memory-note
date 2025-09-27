@@ -9,6 +9,7 @@ import manifest from "../../manifest.json" with { type: "json" };
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, "..", "..");
+export const DIST_DIR = path.join(ROOT_DIR, "dist");
 
 // --- Plugin Information ---
 export const PLUGIN_ID = manifest.id;
@@ -34,7 +35,14 @@ export const SANDBOX_VIEW_SELECTOR =
 	'.workspace-leaf-content[data-type="hot-sandbox-note-view"]';
 export const ACTIVE_LEAF_SELECTOR = `.mod-active .workspace-leaf.mod-active`;
 export const ROOT_WORKSPACE_SELECTOR = ".workspace-split.mod-vertical.mod-root";
-export const COMMUNITY_PLUGINS_PATH = path.join(
+
+export const COMMUNITY_PLUGINS_DIR = ".obsidian/plugins";
+export const COMMUNITY_PLUGINS_JSON_PATH = ".obsidian/community-plugins.json";
+
+/**
+ * @deprecated
+  */
+export const COMMUNITY_PLUGINS_FULL_PATH = path.join(
 	VAULT_PATH,
-	"/.obsidian/community-plugins.json"
+	COMMUNITY_PLUGINS_JSON_PATH,
 );

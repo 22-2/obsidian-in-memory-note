@@ -62,7 +62,6 @@ export const test = baseTest.extend<NewFixtures & DeprecatedFixtures>({
 	vault: [
 		async ({ vaultOptions }, use, testInfo) => {
 			console.log("[Fixture] Setting up: Vault Window");
-			setPluginInstalled();
 			const setup = await launchVaultWindow(testInfo, vaultOptions);
 
 			if (!setup.appHandle) {

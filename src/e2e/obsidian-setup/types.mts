@@ -4,7 +4,6 @@ import type { ElectronApplication, JSHandle, Page } from "playwright";
 import type SandboxPlugin from "../../main";
 import type { PLUGIN_ID } from "../config.mts";
 // setup.mtsからオプションの型をインポート
-import type { LaunchVaultWindowOptions } from "./launch.mts";
 
 /* ========================================================================== */
 //
@@ -91,3 +90,20 @@ export interface VaultInfo {
 	ts: number;
 	open?: boolean;
 }
+export interface LaunchVaultWindowOptions {
+	/**
+	 * 開く保管庫名
+	 * @default SANDBOX_VAULT_NAME
+	 */
+	vaultName?: string;
+	/**
+	 * 制限モード（セーフモード）を無効にし、テスト対象のプラグインを有効にするかどうか
+	 * @default true
+	 */
+	doDisableRestrictedMode?: boolean;
+
+	createNewVault?: boolean;
+	pluginPaths?: string[];
+}
+
+export interface LaunchStarterWindowOptions {}

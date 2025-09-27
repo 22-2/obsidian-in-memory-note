@@ -1,6 +1,7 @@
 import type { ElectronApplication, Page } from "playwright";
 import { ensureLoadPage, waitForNewWindow } from "./helpers.mts";
-import { launchElectronApp, reopenVaultWith } from "./launch.mts";
+import { launchElectronApp } from "./launch.mts";
+import { reopenVaultWith } from "./helpers.mts";
 import { SANDBOX_VAULT_NAME } from "../config.mts";
 import { openSandboxVault, openStarter, openVault } from "./ipc-helpers.mts";
 import { expect } from "playwright/test";

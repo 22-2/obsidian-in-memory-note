@@ -7,7 +7,7 @@ import {
 import {
 	checkIsStarter,
 	reopenVaultWith,
-} from "../../obsidian-setup/launch.mts";
+} from "src/e2e/obsidian-setup/helpers.mts";
 import { expect, test } from "../../test-fixtures.mts";
 import path from "path";
 import { getElectronAppPath } from "../../helpers.mts";

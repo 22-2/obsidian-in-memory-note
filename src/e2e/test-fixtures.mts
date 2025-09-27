@@ -5,8 +5,8 @@ import {
 	commonTeardown,
 	launchStarterWindow,
 	launchVaultWindow,
-	type LaunchStarterWindowOptions,
 } from "./obsidian-setup/launch.mts";
+import { type LaunchStarterWindowOptions } from "./obsidian-setup/types.mts";
 import type {
 	// 非推奨の型
 	CommonSetupOptions,

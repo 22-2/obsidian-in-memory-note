@@ -2,7 +2,7 @@ import { expect } from "@playwright/test";
 import { SANDBOX_VAULT_NAME } from "../../config.mts";
 import { test } from "../../test-fixtures.mts";
 import { getCurrentVaultName } from "../../obsidian-setup/getters.mts";
-import { reopenVaultWith } from "../../obsidian-setup/launch.mts";
+import { reopenVaultWith } from "src/e2e/obsidian-setup/helpers.mts";
 import { openSandboxVault } from "../../obsidian-setup/ipc-helpers.mts";
 
 const newVaultName = "new-vault" + Math.random().toString(36).substring(7);

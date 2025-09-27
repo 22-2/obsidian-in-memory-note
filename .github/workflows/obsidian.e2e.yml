@@ -110,7 +110,7 @@ jobs:
                   npx @telosh/filetree --exclude node_modules,.git
 
             - name: Run Playwright tests
-              run: pnpm run test:e2e:sandbox
+              run: pnpm run test:e2e:install
               env:
                   DEBUG: "pw:browser"
 

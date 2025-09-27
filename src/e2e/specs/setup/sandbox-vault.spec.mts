@@ -4,7 +4,6 @@ import { test } from "../../test-fixtures.mts";
 
 test.use({
 	vaultOptions: {
-		openSandboxVault: true,
 		doDisableRestrictedMode: false,
 	},
 });

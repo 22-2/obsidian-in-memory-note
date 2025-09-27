@@ -1,37 +1,34 @@
-// E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\setup.mts
-import type { ElectronApplication, TestInfo } from "playwright/test";
+// E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\obsidian-setup\launch.mts
+import type { ElectronApplication, Page, TestInfo } from "playwright/test";
 import { _electron as electron } from "playwright/test";
 import type { App } from "obsidian";
-import { APP_MAIN_JS_PATH, PLUGIN_ID, SANDBOX_VAULT_NAME } from "../config.mts";
-import type {
-	CommonSetupOptions,
-	ObsidianStarterFixture,
-	ObsidianVaultFixture,
-	SetupFixture,
-} from "./types.mts";
+import path from "path";
+import {
+	APP_MAIN_JS_PATH,
+	PLUGIN_ID,
+	SANDBOX_VAULT_NAME,
+	TEST_VAULT_NAME,
+} from "../config.mts";
+import type { ObsidianStarterFixture, ObsidianVaultFixture } from "./types.mts";
 import {
 	disableRestrictedModeAndEnablePlugins,
 	ensureStarterPage,
 	ensureVaultOpen,
-	initializeObsidianJSON,
 	initializeWorkspaceJSON,
 } from "./helpers.mts";
-import { focusRootWorkspace, waitForWorkspace } from "../helpers.mts";
+import {
+	focusRootWorkspace,
+	noopAsync,
+	waitForWorkspace,
+} from "../helpers.mts";
+import { delay } from "../obsidian-commands/run-command.mts";
 
-// --- 共通ヘルパー関数 ---
+// --- Electronアプリ起動 ---
 
 /**
- * テスト実行前に、Obsidianの設定ファイル（obsidian.json, workspace.json）を初期化します。
- * @param isRestorationStep 復元ステップのテストかどうか
- * @returns Electronアプリケーションの起動オプション
+ * Electronアプリを起動する（シンプル版）
  */
-const initializeFileSystemAndGetAppOptions = async (
-	isRestorationStep: boolean
-) => {
-	if (!isRestorationStep) {
-		initializeWorkspaceJSON();
-	}
-
+export const launchElectronApp = async (): Promise<ElectronApplication> => {
 	const appOptions = {
 		args: [APP_MAIN_JS_PATH, "--no-sandbox", "--disable-setuid-sandbox"],
 		env: {
@@ -39,143 +36,164 @@ const initializeFileSystemAndGetAppOptions = async (
 			NODE_ENV: "development",
 		},
 	};
-	// obsidian.jsonを初期化するために一時的なアプリインスタンスを使用
-	const dummyApp = await electron.launch(appOptions);
-	await initializeObsidianJSON(dummyApp);
-	await dummyApp.close();
 
-	return appOptions;
+	return electron.launch(appOptions);
+};
+
+/**
+ * IPCを使用して保管庫をセットアップ
+ */
+const setupVaultViaIpc = async (
+	electronApp: ElectronApplication,
+	firstWindow: Page,
+	vaultName: string
+): Promise<Page> => {
+	// ユーザーデータディレクトリを取得
+	const userDataDir = await electronApp.evaluate(({ app }) =>
+		app.getPath("userData")
+	);
+
+	const vaultPath = path.join(userDataDir, vaultName);
+
+	// IPCで保管庫を開く（存在しない場合は作成）
+	const vaultWindow = await reopenVaultWith(electronApp, () =>
+		firstWindow.evaluate(
+			({ path, create }) => {
+				return window.electron.ipcRenderer.sendSync(
+					"vault-open",
+					path,
+					create
+				);
+			},
+			{ path: vaultPath, create: true }
+		)
+	);
+
+	// 古いウィンドウを閉じる
+	for (const window of electronApp.windows()) {
+		if (window !== vaultWindow && !window.isClosed()) {
+			await window.close();
+		}
+	}
+
+	await waitForWorkspace(vaultWindow);
+	await focusRootWorkspace(vaultWindow);
+
+	return vaultWindow;
 };
 
 // --- 新しいセットアップ関数 ---
 
 export interface LaunchVaultWindowOptions {
 	/**
-	 * サンドボックスボールトを開くかどうかを指定します。
-	 * trueの場合、`SANDBOX_VAULT_NAME`で定義されたボールトを開きます。
-	 * falseの場合、最後に開かれたボールト（またはデフォルト）を開きます。
-	 * @default true
+	 * 開く保管庫名
+	 * @default SANDBOX_VAULT_NAME
 	 */
-	openSandboxVault?: boolean;
+	vaultName?: string;
 	/**
-	 * 制限モード（セーフモード）を無効にし、テスト対象のプラグインを有効にするかどうかを指定します。
+	 * 制限モード（セーフモード）を無効にし、テスト対象のプラグインを有効にするかどうか
 	 * @default true
 	 */
 	doDisableRestrictedMode?: boolean;
 }
 
+export interface LaunchStarterWindowOptions {
+	// 将来の拡張用
+}
+
 /**
- * Obsidianを起動し、指定されたボールトを開いた状態でセットアップします。
- * この関数は、プラグインの機能テストなど、ボールトが開いていることを前提とするテストに使用します。
- * @param testInfo Playwrightのテスト情報オブジェクト
- * @param options セットアップのオプション
- * @returns セットアップされた環境のフィクスチャ
+ * Obsidianを起動し、指定された保管庫を開いた状態でセットアップ（IPC簡素化版）
  */
 export const launchVaultWindow = async (
 	testInfo: TestInfo,
 	options: LaunchVaultWindowOptions = {}
 ): Promise<ObsidianVaultFixture> => {
-	// オプションにデフォルト値を設定
-	const {
-		openSandboxVault = true,
-		doDisableRestrictedMode: disableRestrictedMode = true,
-	} = options;
+	// オプションのデフォルト値
+	const { vaultName = SANDBOX_VAULT_NAME, doDisableRestrictedMode = true } =
+		options;
 
-	const isRestorationStep = testInfo.title.includes(
-		"restore note content after an application restart"
-	);
 	console.log(
 		`\n--------------- Setup (Vault): ${testInfo.title} ---------------`
 	);
-	console.log("[Setup Options]", { openSandboxVault, disableRestrictedMode });
+	console.log("[Setup Options]", { vaultName, doDisableRestrictedMode });
 
-	// 1. ファイルシステムを初期化し、アプリ起動オプションを取得
-	const appOptions = await initializeFileSystemAndGetAppOptions(
-		isRestorationStep
-	);
+	// 1. workspace.jsonを初期化
+	initializeWorkspaceJSON();
 
-	// 2. アプリケーションを起動
-	const electronApp = await electron.launch(appOptions);
-	let window = await electronApp.firstWindow();
+	await delay(1000);
+
+	// 2. Electronアプリを起動
+	const electronApp = await launchElectronApp();
+	const firstWindow = await electronApp.firstWindow();
+
 	console.log(
-		`[Setup] Initial window URL: ${await window.evaluate(
+		`[Setup] Initial window URL: ${await firstWindow.evaluate(
 			() => document.URL
 		)}`
 	);
 
-	// 3. ボールトが開いた状態を保証
-	console.log("[Setup] Ensuring state: Vault Open");
-	window = await ensureVaultOpen(
+	// 3. IPCで保管庫を開く
+	const vaultWindow = await setupVaultViaIpc(
 		electronApp,
-		window,
-		openSandboxVault ? SANDBOX_VAULT_NAME : undefined
+		firstWindow,
+		vaultName
 	);
 
-	// 4. ボールト内の設定
-	if (disableRestrictedMode) {
-		await disableRestrictedModeAndEnablePlugins(electronApp, window, [
-			PLUGIN_ID,
-		]);
-	} else {
-		// 制限モードを無効にしない場合でも、ワークスペースの準備は待つ
-		await waitForWorkspace(window);
-		await focusRootWorkspace(window);
+	// 4. 必要に応じて制限モードを無効化
+	let finalWindow = vaultWindow;
+	if (doDisableRestrictedMode) {
+		finalWindow = await disableRestrictedModeAndEnablePlugins(
+			electronApp,
+			vaultWindow,
+			[PLUGIN_ID]
+		);
 	}
 
 	console.log(
-		`[Setup] Final window URL: ${await window.evaluate(() => document.URL)}`
+		`[Setup] Final window URL: ${await finalWindow.evaluate(
+			() => document.URL
+		)}`
 	);
 
 	// 5. Appオブジェクトのハンドルを取得
-	const appHandle = await window.evaluateHandle(
-		// @ts-expect-error app is available on the window
-		() => window.app as App
-	);
+	const appHandle = await finalWindow.evaluateHandle(() => window.app as App);
 
 	return {
 		electronApp,
-		window,
+		window: finalWindow,
 		appHandle,
 		pluginId: PLUGIN_ID,
 	};
 };
 
 /**
- * Obsidianを起動し、スターターページ（ボールト選択画面）を表示した状態でセットアップします。
- * ボールトの作成や選択などのUIテストに使用します。
- * @param testInfo Playwrightのテスト情報オブジェクト
- * @returns セットアップされた環境のフィクスチャ（appHandleは常にnull）
+ * Obsidianを起動し、スターターページを表示（IPC簡素化版）
  */
 export const launchStarterWindow = async (
-	testInfo: TestInfo
+	testInfo: TestInfo,
+	options: LaunchStarterWindowOptions = {}
 ): Promise<ObsidianStarterFixture> => {
-	const isRestorationStep = testInfo.title.includes(
-		"restore note content after an application restart"
-	);
 	console.log(
 		`\n--------------- Setup (Starter): ${testInfo.title} ---------------`
 	);
 
-	// 1. ファイルシステムを初期化し、アプリ起動オプションを取得
-	const appOptions = await initializeFileSystemAndGetAppOptions(
-		isRestorationStep
-	);
+	// 1. workspace.jsonを初期化
+	initializeWorkspaceJSON();
 
-	// 2. アプリケーションを起動
-	const electronApp = await electron.launch(appOptions);
+	await delay(1000);
+
+	// 2. Electronアプリを起動
+	const electronApp = await launchElectronApp();
 	let window = await electronApp.firstWindow();
+
 	console.log(
 		`[Setup] Initial window URL: ${await window.evaluate(
 			() => document.URL
 		)}`
 	);
 
-	// 3. スターターページが表示される状態を保証
-	console.log("[Setup] Ensuring state: Starter Page");
+	// 3. スターターページを確実に表示
 	window = await ensureStarterPage(electronApp, window);
-
-	// スターターページの要素が表示されるのを待つ
-	await window.waitForSelector(".mod-change-language");
 
 	console.log(
 		`[Setup] Final window URL: ${await window.evaluate(() => document.URL)}`
@@ -188,40 +206,8 @@ export const launchStarterWindow = async (
 };
 
 /**
- * @deprecated この関数は `launchVaultWindow` と `launchStarterWindow` に分割されました。
- * テストの目的に応じて、いずれかの新しい関数を使用してください。
- *
- * - ボールトを開いた状態でテストを開始する場合: `launchVaultWindow(testInfo, options)`
- * - スターターページからテストを開始する場合: `launchStarterWindow(testInfo)`
+ * テスト後のクリーンアップ
  */
-export const commonSetup = async (
-	testInfo: TestInfo,
-	options: CommonSetupOptions = {}
-): Promise<SetupFixture> => {
-	// ログに非推奨であることを明記
-	console.warn(
-		`[DEPRECATION] 'commonSetup' is deprecated. Use 'launchVaultWindow' or 'launchStarterWindow' instead.`
-	);
-	console.log(
-		`\n--------------- Setup (DEPRECATED): ${testInfo.title} ---------------`
-	);
-
-	// オプションに基づいて新しい関数に処理を委譲
-	if (options.startOnStarterPage) {
-		// @ts-expect-error
-		return launchStarterWindow(testInfo);
-	}
-
-	// CommonSetupOptions を LaunchVaultWindowOptions に変換
-	// 元の関数の挙動（オプション未指定時はfalse）を維持するため、undefinedをfalseに変換
-	const vaultOptions: LaunchVaultWindowOptions = {
-		openSandboxVault: options.openSandboxVault ?? false,
-		doDisableRestrictedMode: options.disableRestrictedMode ?? false,
-	};
-	// @ts-expect-error
-	return launchVaultWindow(testInfo, vaultOptions);
-};
-
 export const commonTeardown = async (
 	electronApp: ElectronApplication,
 	testInfo: TestInfo
@@ -229,3 +215,108 @@ export const commonTeardown = async (
 	await electronApp?.close();
 	console.log(`--------------- Teardown: ${testInfo.title} ---------------`);
 };
+
+// --- 後方互換性のため残す（非推奨） ---
+
+/**
+ * @deprecated launchVaultWindow または launchStarterWindow を使用してください
+ */
+export const commonSetup = async (
+	testInfo: TestInfo,
+	options: any = {}
+): Promise<any> => {
+	console.warn(
+		`[DEPRECATION] 'commonSetup' is deprecated. Use 'launchVaultWindow' or 'launchStarterWindow' instead.`
+	);
+
+	if (options.startOnStarterPage) {
+		return launchStarterWindow(testInfo);
+	}
+
+	return launchVaultWindow(testInfo, {
+		vaultName: options.openSandboxVault
+			? SANDBOX_VAULT_NAME
+			: TEST_VAULT_NAME,
+		doDisableRestrictedMode: options.disableRestrictedMode ?? false,
+	});
+};
+
+export async function performActionAndReload(
+	electronApp: ElectronApplication,
+	beforeAction: () => Promise<void>,
+	opts: {
+		closeOldWindows?: boolean;
+		waitFor?: (newWindow: Page) => Promise<void>;
+		focus?: (newWindow: Page) => Promise<void>;
+	} = {
+		closeOldWindows: true,
+		waitFor: waitForWorkspace,
+		focus: focusRootWorkspace,
+	}
+): Promise<Page> {
+	await beforeAction();
+	const newWindow = await electronApp.waitForEvent("window");
+
+	console.log(
+		`[Setup Step] New window opened: ${newWindow.url()} ${await newWindow.title()}`
+	);
+
+	if (opts.closeOldWindows) {
+		console.log("[Setup Step] Closing old windows...");
+		for (const window of electronApp.windows()) {
+			if (window !== newWindow && !window.isClosed()) {
+				await window.close();
+			}
+		}
+	}
+
+	opts.waitFor && (await opts.waitFor(newWindow));
+	opts.focus && (await opts.focus(newWindow));
+	return newWindow;
+}
+
+/**
+ * ✨【NEW】アクションを実行し、新しいVaultウィンドウが開かれて準備完了になるのを待つ
+ * @param electronApp - ElectronApplicationのインスタンス
+ * @param action - Vaultを開くトリガーとなるアクション
+ * @returns 新しいVaultのPageオブジェクト
+ */
+export async function reopenVaultWith(
+	electronApp: ElectronApplication,
+	action: () => Promise<any>
+): Promise<Page> {
+	console.log("[Setup Action] Opening a vault...");
+	return performActionAndReload(electronApp, action, {
+		closeOldWindows: true,
+		waitFor: waitForWorkspace,
+		focus: focusRootWorkspace,
+	});
+}
+
+/**
+ * ✨【NEW】アクションを実行し、スターターページが開かれるのを待つ
+ * @param electronApp - ElectronApplicationのインスタンス
+ * @param action - スターターページを開くトリガーとなるアクション
+ * @returns 新しいスターターページのPageオブジェクト
+ */
+export async function reopenStarterPageWith(
+	electronApp: ElectronApplication,
+	action: () => Promise<void>
+): Promise<Page> {
+	console.log("[Setup Action] Opening the starter page...");
+	return performActionAndReload(electronApp, action, {
+		closeOldWindows: true,
+		// スターターページにはワークスペースがないため、専用の待機処理を行う
+		waitFor: async (win) => {
+			await win.waitForSelector(".mod-change-language", {
+				state: "visible",
+			});
+		},
+		// スターターページでは特定の要素へのフォーカスは不要
+		focus: noopAsync,
+	});
+}
+
+export function checkIsStarter(window: Page): boolean {
+	return window.url().includes("starter");
+}

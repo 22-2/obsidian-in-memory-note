@@ -14,9 +14,9 @@ const ROOT_DIR = path.resolve(__dirname, "..", "..");
 export const PLUGIN_ID = manifest.id;
 
 // --- Vault & App Paths ---
-export const VAULT_NAME = "e2e-vault";
+export const TEST_VAULT_NAME = "e2e-vault";
 export const SANDBOX_VAULT_NAME = "Obsidian Sandbox"; // Sandbox Vaultの名前
-export const VAULT_PATH = path.join(ROOT_DIR, VAULT_NAME);
+export const VAULT_PATH = path.join(ROOT_DIR, TEST_VAULT_NAME);
 export const APP_MAIN_JS_PATH = path.join(ROOT_DIR, ".obsidian-unpacked", "main.js");
 
 // --- Pre-flight checks ---

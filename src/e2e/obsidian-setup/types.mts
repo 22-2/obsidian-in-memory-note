@@ -35,6 +35,16 @@ export interface ObsidianVaultFixture extends ElectronAppFixture {
 // launchVaultWindowのオプション型を再エクスポート
 export type { LaunchVaultWindowOptions };
 
+export interface ObsidianJSON {
+	vault: {
+		[id: string]: ObsidianVaultEntry;
+	};
+}
+
+export interface ObsidianVaultEntry {
+	path: string;
+}
+
 /* ========================================================================== */
 //
 //  非推奨の型定義
@@ -72,4 +82,12 @@ export interface CommonSetupOptions {
 	/** 指定した名前のVaultをテスト開始時に開く */
 	openSandboxVault?: boolean;
 	startOnStarterPage?: boolean;
+}
+// --- 型定義 ---
+/** `vault-list` IPCイベントが返すVault情報の型 */
+
+export interface VaultInfo {
+	path: string;
+	ts: number;
+	open?: boolean;
 }

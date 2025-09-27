@@ -17,6 +17,7 @@ import {
 	commonTeardown,
 	launchStarterWindow,
 	launchVaultWindow,
+	type LaunchStarterWindowOptions,
 } from "./obsidian-setup/launch.mts";
 
 // --- フィクスチャの型定義 ---
@@ -24,6 +25,9 @@ import {
 type NewFixtures = {
 	/** スターターページ（ボールト選択画面）のフィクスチャ */
 	starter: ObsidianStarterFixture;
+
+	starterOptions: LaunchStarterWindowOptions;
+
 	/** ボールトを開いた状態のフィクスチャ */
 	vault: ObsidianVaultFixture;
 	/** `vault`フィクスチャの起動オプション */
@@ -45,12 +49,13 @@ export const test = baseTest.extend<NewFixtures & DeprecatedFixtures>({
 	/* ======================================================================== */
 
 	vaultOptions: [{}, { option: true }],
+	starterOptions: [{}, { option: true }],
 
 	starter: [
-		async ({}, use, testInfo) => {
-			console.log("[Fixture] Setting up: Starter Window");
+		async ({ starterOptions }, use, testInfo) => {
+			console.log("[Fixture] Setting up: Starter Window", starterOptions);
 			setPluginInstalled(); // ボールト作成後にプラグインが有効になるよう事前準備
-			const setup = await launchStarterWindow(testInfo);
+			const setup = await launchStarterWindow(testInfo, starterOptions);
 			await use(setup);
 			await commonTeardown(setup.electronApp, testInfo);
 		},
@@ -92,36 +97,6 @@ export const test = baseTest.extend<NewFixtures & DeprecatedFixtures>({
 	/* ======================================================================== */
 
 	setupOptions: [{}, { option: true }],
-
-	obsidian: [
-		async ({ setupOptions }, use, testInfo) => {
-			console.warn(
-				"[DEPRECATION] The 'obsidian' fixture is deprecated. Please use 'starter' or 'vault' instead."
-			);
-			setPluginInstalled();
-			const setup = await commonSetup(testInfo, setupOptions);
-
-			let pluginHandle: JSHandle<SandboxPlugin> | null = null;
-			if (setup.appHandle) {
-				pluginHandle = await setup.appHandle.evaluateHandle(
-					(app, pluginId) =>
-						app.plugins.plugins[pluginId] as SandboxPlugin,
-					PLUGIN_ID
-				);
-			}
-
-			const fixture: PluginInstalledFixture = {
-				...setup,
-				// pluginHandleはnullになりうるためキャストが必要
-				pluginHandle: pluginHandle as JSHandle<SandboxPlugin>,
-			};
-
-			await use(fixture);
-
-			await commonTeardown(setup.electronApp, testInfo);
-		},
-		{ scope: "test" },
-	],
 });
 
 /* ========================================================================== */

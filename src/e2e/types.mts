@@ -7,7 +7,7 @@ import type { PLUGIN_ID } from "./config.mts";
 export interface BaseObsidianFixture {
 	electronApp: ElectronApplication;
 	window: Page;
-	appHandle: JSHandle<App>;
+	appHandle: JSHandle<App> | null;
 	pluginId: typeof PLUGIN_ID;
 }
 

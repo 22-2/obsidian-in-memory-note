@@ -3,12 +3,12 @@ import { test as baseTest, expect } from "playwright/test";
 import type SandboxPlugin from "../main";
 import { PLUGIN_ID } from "./config.mts";
 import { commonSetup, commonTeardown } from "./setup.mts";
-import { setPluginDisabled, setPluginInstalled } from "./helpers.mts";
 import type {
 	BaseObsidianFixture,
 	CommonSetupOptions,
 	PluginInstalledFixture,
 } from "./types.mts";
+import { setPluginInstalled } from "./setup-helpers.mts";
 
 type TestFixtures = {
 	obsidian: PluginInstalledFixture;

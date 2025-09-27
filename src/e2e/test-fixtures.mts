@@ -10,14 +10,14 @@ import type {
 	// 非推奨の型
 	CommonSetupOptions,
 	PluginInstalledFixture,
-} from "./types.mts";
-import { setPluginInstalled } from "./obsidian-setup/setup-helpers.mts";
+} from "./obsidian-setup/types.mts";
+import { setPluginInstalled } from "./obsidian-setup/helpers.mts";
 import {
 	commonSetup,
 	commonTeardown,
 	launchStarterWindow,
 	launchVaultWindow,
-} from "./obsidian-setup/setup.mts";
+} from "./obsidian-setup/launch.mts";
 
 // --- フィクスチャの型定義 ---
 

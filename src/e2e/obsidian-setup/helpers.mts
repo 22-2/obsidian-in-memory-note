@@ -1,27 +1,24 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\setup-helpers.mts
-import type { ElectronApplication, Page } from "playwright";
-import { expect } from "playwright/test";
 import { copyFileSync, readFileSync, rmSync, writeFileSync } from "fs";
 import path from "path";
+import type { ElectronApplication, Page } from "playwright";
+import { expect } from "playwright/test";
 import invariant from "tiny-invariant";
 
 import {
-	ACTIVE_LEAF_SELECTOR,
 	COMMUNITY_PLUGINS_PATH,
 	PLUGIN_ID,
-	ROOT_WORKSPACE_SELECTOR,
 	SANDBOX_VAULT_NAME,
-	SANDBOX_VIEW_SELECTOR,
 	VAULT_NAME,
 	VAULT_PATH,
 } from "../config.mts";
-import { OPEN_SANDBOX_VAULT } from "../obsidian-commands/run-command.mts";
 import {
 	focusRootWorkspace,
 	noopAsync,
 	runCommand,
 	waitForWorkspace,
 } from "../helpers.mts";
+import { OPEN_SANDBOX_VAULT } from "../obsidian-commands/run-command.mts";
 
 // --- ファイルシステム操作ヘルパー ---
 

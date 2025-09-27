@@ -8,14 +8,14 @@ import type {
 	ObsidianStarterFixture,
 	ObsidianVaultFixture,
 	SetupFixture,
-} from "../types.mts";
+} from "./types.mts";
 import {
 	disableRestrictedModeAndEnablePlugins,
 	ensureStarterPage,
 	ensureVaultOpen,
 	initializeObsidianJSON,
 	initializeWorkspaceJSON,
-} from "./setup-helpers.mts";
+} from "./helpers.mts";
 import { focusRootWorkspace, waitForWorkspace } from "../helpers.mts";
 
 // --- 共通ヘルパー関数 ---

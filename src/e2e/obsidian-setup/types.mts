@@ -1,10 +1,10 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\types.mts
 import type { App } from "obsidian";
 import type { ElectronApplication, JSHandle, Page } from "playwright";
-import type SandboxPlugin from "../main";
-import type { PLUGIN_ID } from "./config.mts";
+import type SandboxPlugin from "../../main";
+import type { PLUGIN_ID } from "../config.mts";
 // setup.mtsからオプションの型をインポート
-import type { LaunchVaultWindowOptions } from "./obsidian-setup/setup.mts";
+import type { LaunchVaultWindowOptions } from "./launch.mts";
 
 /* ========================================================================== */
 //

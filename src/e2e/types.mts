@@ -25,4 +25,5 @@ export interface CommonSetupOptions {
 	disableRestrictedMode?: boolean;
 	/** 指定した名前のVaultをテスト開始時に開く */
 	openSandboxVault?: boolean;
+	startOnStarterPage?: boolean;
 }

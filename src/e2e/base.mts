@@ -2,32 +2,13 @@
 import { test as baseTest, expect } from "playwright/test";
 import type SandboxPlugin from "../main";
 import { PLUGIN_ID } from "./config.mts";
-import {
-	commonSetup,
-	commonTeardown,
-	setPluginDisabled,
-	setPluginInstalled,
-} from "./setup.mts";
+import { commonSetup, commonTeardown } from "./setup.mts";
+import { setPluginDisabled, setPluginInstalled } from "./helpers.mts";
 import type {
 	BaseObsidianFixture,
 	CommonSetupOptions,
 	PluginInstalledFixture,
 } from "./types.mts";
-
-export const testWithPluginDisabled = baseTest.extend<{
-	obsidian: BaseObsidianFixture;
-}>({
-	obsidian: [
-		async ({}, use, testInfo) => {
-			console.log("[Test Layer] Running with: Plugin Disabled");
-			setPluginDisabled();
-			const setup = await commonSetup(testInfo);
-			await use({ ...setup });
-			await commonTeardown(setup.electronApp, testInfo);
-		},
-		{ scope: "test" },
-	],
-});
 
 type TestFixtures = {
 	obsidian: PluginInstalledFixture;
@@ -46,7 +27,7 @@ export const test = baseTest.extend<TestFixtures>({
 				await commonSetup(testInfo, setupOptions);
 
 			const pluginHandle = await appHandle.evaluateHandle(
-				(app, id) => app.plugins.getPlugin(id) as SandboxPlugin,
+				(app, id) => app?.plugins?.getPlugin?.(id) as SandboxPlugin,
 				PLUGIN_ID
 			);
 
@@ -65,6 +46,16 @@ export const test = baseTest.extend<TestFixtures>({
 		},
 		{ scope: "test" },
 	],
+});
+
+// Vault Open Fixure: 最初の状態に関わらず、確実にSandbox Vaultが開いている状態
+export const testWithVaultOpen = test.extend<TestFixtures>({
+	setupOptions: { openSandboxVault: true, startOnStarterPage: false },
+});
+
+// Starter Page Fixure: 最初の状態に関わらず、確実にStarter Pageが開いている状態
+export const testWithStarterPage = test.extend<TestFixtures>({
+	setupOptions: { openSandboxVault: false, startOnStarterPage: true },
 });
 
 export { expect };

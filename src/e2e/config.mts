@@ -34,3 +34,7 @@ export const SANDBOX_VIEW_SELECTOR =
 	'.workspace-leaf-content[data-type="hot-sandbox-note-view"]';
 export const ACTIVE_LEAF_SELECTOR = `.mod-active .workspace-leaf.mod-active`;
 export const ROOT_WORKSPACE_SELECTOR = ".workspace-split.mod-vertical.mod-root";
+export const COMMUNITY_PLUGINS_PATH = path.join(
+	VAULT_PATH,
+	"/.obsidian/community-plugins.json"
+);

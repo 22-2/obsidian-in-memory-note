@@ -123,6 +123,8 @@ export const commonSetup = async (
 	console.log("isStarterPage", isStarterPage);
 
 	if (isStarterPage) {
+		console.log(await window.evaluate(() => document.title));
+		console.log(await window.evaluate(() => document.body.innerHTML));
 		await window.getByText("Create", { exact: true }).click();
 		await window.locator("input").fill("test");
 		await window.getByText("Browse").click();

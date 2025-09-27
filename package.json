@@ -13,6 +13,7 @@
 		"test": "vitest",
 		"version:full": "pnpm dlx tsx version-bump.ext.mts all",
 		"test:e2e": "playwright test",
+		"test:e2e:minimal": "pnpm playwright test src/e2e/specs/setup/sandbox-vault.spec.mts --project=chromium",
 		"test:e2e:report": "playwright show-report",
 		"test:e2e:ui": "playwright test --ui",
 		"test:e2e:debug": "cross-env DEBUG=pw:api playwright test",

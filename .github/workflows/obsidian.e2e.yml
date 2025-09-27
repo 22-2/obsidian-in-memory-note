@@ -69,7 +69,7 @@ jobs:
                   npx @telosh/filetree --exclude node_modules,.git
 
             - name: Run Playwright tests
-              run: pnpm playwright test src/e2e/sandbox-vault.spec.mts --project=chromium
+              run: pnpm run test:e2e:minimal
               env:
                   DEBUG: "pw:browser"
 

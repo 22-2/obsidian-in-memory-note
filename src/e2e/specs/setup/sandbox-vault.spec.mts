@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
-import { testWithVaultOpen, test } from "../../test-fixtures.mts";
 import { SANDBOX_VAULT_NAME } from "../../config.mts";
+import { test } from "../../test-fixtures.mts";
 
 test.use({
 	vaultOptions: {

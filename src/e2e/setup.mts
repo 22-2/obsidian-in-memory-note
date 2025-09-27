@@ -114,6 +114,22 @@ export const commonSetup = async (
 
 	let window = await electronApp.firstWindow();
 
+	const isStarterPage = await window.evaluate(() =>
+		document.URL.includes("starter")
+	);
+
+	if (isStarterPage) {
+		await window.getByText("Create").click();
+		await window.locator("input").fill("test");
+		await window.getByText("Browse").click();
+		await window.waitForEvent("filechooser");
+		await window.getByText("Select Folder").click();
+		window = await performActionAndReload(
+			electronApp,
+			async () => await window.getByText("Create").click()
+		);
+	}
+
 	await waitForWorkspace(window);
 	await focusRootWorkspace(window);
 

@@ -134,10 +134,20 @@ export const commonSetup = async (
 		await window.locator("input").fill("test");
 		console.log("filed");
 		await delay(100);
-		const chooserPromise = window.waitForEvent("filechooser");
-		await window.getByText("Browse", { exact: true }).click();
+		console.log(
+			"Waiting for file chooser and clicking Browse button simultaneously..."
+		);
+
+		// ★★★ クリックとイベント待機を同時に実行する ★★★
+		const [chooser] = await Promise.all([
+			// action
+			window.waitForEvent("filechooser"),
+			// trigger
+			window.getByText("Browse", { exact: true }).click(),
+		]);
+
+		console.log("File chooser event received!"); // ここまで来れば成功
 		console.log("browse");
-		const chooser = await chooserPromise;
 		await delay(500);
 		console.log("chooser");
 		await delay(500);

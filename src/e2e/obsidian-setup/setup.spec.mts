@@ -1,13 +1,13 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\e2e\smoke.spec.mts
-import { test, expect } from "./base.mts";
-import { SANDBOX_VAULT_NAME, SANDBOX_VIEW_SELECTOR } from "./config.mts";
+import { test, expect } from "../base.mts";
+import { SANDBOX_VAULT_NAME, SANDBOX_VIEW_SELECTOR } from "../config.mts";
 import {
 	getActiveSandboxLocator,
 	getActiveTabTitle,
 	getEditor,
 	openNewSandboxNote,
 	splitActiveView,
-} from "./helpers.mts";
+} from "../helpers.mts";
 
 test.describe("Hot Sandbox Note: Basic Functionality (UI-centric)", () => {
 	test("should open a new note, allow typing, and update title", async ({

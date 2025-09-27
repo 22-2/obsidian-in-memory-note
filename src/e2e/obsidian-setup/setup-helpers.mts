@@ -14,14 +14,14 @@ import {
 	SANDBOX_VIEW_SELECTOR,
 	VAULT_NAME,
 	VAULT_PATH,
-} from "./config.mts";
-import { OPEN_SANDBOX_VAULT } from "./obsidian-commands/run-command.mts";
+} from "../config.mts";
+import { OPEN_SANDBOX_VAULT } from "../obsidian-commands/run-command.mts";
 import {
 	focusRootWorkspace,
 	noopAsync,
 	runCommand,
 	waitForWorkspace,
-} from "./helpers.mts";
+} from "../helpers.mts";
 
 // --- ファイルシステム操作ヘルパー ---
 

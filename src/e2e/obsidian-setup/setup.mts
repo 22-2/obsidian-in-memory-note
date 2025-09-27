@@ -2,8 +2,8 @@
 import type { ElectronApplication, TestInfo } from "playwright/test";
 import { _electron as electron } from "playwright/test";
 import type { App } from "obsidian";
-import { APP_MAIN_JS_PATH, PLUGIN_ID, SANDBOX_VAULT_NAME } from "./config.mts";
-import type { CommonSetupOptions, SetupFixture } from "./types.mts";
+import { APP_MAIN_JS_PATH, PLUGIN_ID, SANDBOX_VAULT_NAME } from "../config.mts";
+import type { CommonSetupOptions, SetupFixture } from "../types.mts";
 import {
 	disableRestrictedModeAndEnablePlugins,
 	ensureStarterPage,
@@ -11,7 +11,7 @@ import {
 	initializeObsidianJSON,
 	initializeWorkspaceJSON,
 } from "./setup-helpers.mts";
-import { focusRootWorkspace, waitForWorkspace } from "./helpers.mts";
+import { focusRootWorkspace, waitForWorkspace } from "../helpers.mts";
 
 export const commonSetup = async (
 	testInfo: TestInfo,

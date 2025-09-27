@@ -123,14 +123,15 @@ export const commonSetup = async (
 	console.log("isStarterPage", isStarterPage);
 
 	if (isStarterPage) {
-		await window.getByText("Create").click();
+		await window.getByRole("button", { name: "Create" }).click();
 		await window.locator("input").fill("test");
 		await window.getByText("Browse").click();
 		await window.waitForEvent("filechooser");
 		await window.getByText("Select Folder").click();
 		window = await performActionAndReload(
 			electronApp,
-			async () => await window.getByText("Create").click()
+			async () =>
+				await window.getByRole("button", { name: "Create" }).click()
 		);
 	}
 

@@ -108,6 +108,51 @@ export async function performActionAndReload(
 }
 
 /**
+ * ✨【NEW】アクションを実行し、新しいVaultウィンドウが開かれて準備完了になるのを待つ
+ * @param electronApp - ElectronApplicationのインスタンス
+ * @param action - Vaultを開くトリガーとなるアクション
+ * @returns 新しいVaultのPageオブジェクト
+ */
+export async function reopenVaultWith(
+	electronApp: ElectronApplication,
+	action: () => Promise<void>
+): Promise<Page> {
+	console.log("[Setup Action] Opening a vault...");
+	return performActionAndReload(electronApp, action, {
+		closeOldWindows: true,
+		waitFor: waitForWorkspace,
+		focus: focusRootWorkspace,
+	});
+}
+
+/**
+ * ✨【NEW】アクションを実行し、スターターページが開かれるのを待つ
+ * @param electronApp - ElectronApplicationのインスタンス
+ * @param action - スターターページを開くトリガーとなるアクション
+ * @returns 新しいスターターページのPageオブジェクト
+ */
+export async function reopenStarterPageWith(
+	electronApp: ElectronApplication,
+	action: () => Promise<void>
+): Promise<Page> {
+	console.log("[Setup Action] Opening the starter page...");
+	return performActionAndReload(electronApp, action, {
+		closeOldWindows: true,
+		// スターターページにはワークスペースがないため、専用の待機処理を行う
+		waitFor: async (win) => {
+			await expect(
+				win.getByText("Create", { exact: true })
+			).toBeVisible();
+			await win.waitForSelector(".mod-change-language", {
+				state: "visible",
+			});
+		},
+		// スターターページでは特定の要素へのフォーカスは不要
+		focus: noopAsync,
+	});
+}
+
+/**
  * UI操作でRestricted Modeを無効化し、指定のプラグインを有効にする
  */
 export async function disableRestrictedModeAndEnablePlugins(
@@ -127,8 +172,9 @@ export async function disableRestrictedModeAndEnablePlugins(
 		name: "Turn on community plugins",
 	});
 	if (await turnOnButton.isVisible()) {
-		// Restricted Modeを無効化（再起動が発生する）
-		let newPage = await performActionAndReload(electronApp, async () =>
+		// Restricted Modeを無効化（再起動が発生し、Vaultが開かれる）
+		// 🔄【REFACTORED】performActionAndReloadをopenVaultに置き換え
+		let newPage = await reopenVaultWith(electronApp, () =>
 			turnOnButton.click()
 		);
 
@@ -182,7 +228,8 @@ async function openDefaultVaultFromStarter(
 	starterPage: Page
 ): Promise<Page> {
 	console.log(`[Setup Step] Opening default vault: ${VAULT_NAME}...`);
-	return performActionAndReload(electronApp, () =>
+	// 🔄【REFACTORED】performActionAndReloadをopenVaultに置き換え
+	return reopenVaultWith(electronApp, () =>
 		starterPage.getByText(VAULT_NAME, { exact: true }).click()
 	);
 }
@@ -211,25 +258,10 @@ export async function ensureStarterPage(
 	await focusRootWorkspace(window);
 	await window.locator(".workspace-drawer-vault-switcher").click();
 
-	const newWindow = await performActionAndReload(
-		electronApp,
-		async () => {
-			await window.getByText("Manage vaults...", { exact: true }).click();
-		},
-		{
-			focus: async () => {}, // No-op
-			waitFor: async (win) => {
-				await expect(
-					win.getByText("Create", { exact: true })
-				).toBeVisible();
-			},
-		}
+	// 🔄【REFACTORED】performActionAndReloadをopenStarterPageに置き換え
+	const newWindow = await reopenStarterPageWith(electronApp, () =>
+		window.getByText("Manage vaults...", { exact: true }).click()
 	);
-
-	await newWindow.waitForSelector(".mod-change-language", {
-		state: "visible",
-		timeout: 5000,
-	});
 
 	console.log("[Setup] Successfully returned to starter page.");
 	return newWindow;
@@ -243,6 +275,7 @@ export async function ensureVaultOpen(
 	window: Page,
 	vaultName = VAULT_NAME
 ): Promise<Page> {
+	// ... (この関数内のロジックは変更なし)
 	console.log(`[Setup] Ensuring default vault '${vaultName}' is open.`);
 
 	if (checkIsStarter(window)) {
@@ -269,43 +302,29 @@ export async function ensureVaultOpen(
 		return window;
 	}
 
-	return ensureSelectedVault(electronApp, window, vaultName);
+	return ensureVault(electronApp, window, vaultName);
 }
 
-export const ensureSelectedVault = async (
+export const ensureVault = async (
 	electronApp: ElectronApplication,
 	vaultWindow: Page,
 	vaultName: string
 ) => {
 	await vaultWindow.locator(".workspace-drawer-vault-switcher").click();
 
-	const starterPage = await performActionAndReload(
-		electronApp,
-		async () => {
-			await vaultWindow
-				.getByText("Manage vaults...", { exact: true })
-				.click();
-		},
-		{
-			focus: noopAsync,
-			waitFor: async (win) => {
-				await expect(
-					win.getByText("Create", { exact: true })
-				).toBeVisible();
-			},
-		}
+	const starterPage = await reopenStarterPageWith(electronApp, () =>
+		vaultWindow.getByText("Manage vaults...", { exact: true }).click()
 	);
+
 	if (!checkIsStarter(starterPage)) {
 		throw new Error("failed to return to starter page");
 	}
-	const newVaultWindow = await performActionAndReload(
-		electronApp,
-		async () => {
-			await starterPage.getByText(vaultName, { exact: true }).click();
-		}
+
+	// 🔄【REFACTORED】performActionAndReloadをopenVaultに置き換え
+	const newVaultWindow = await reopenVaultWith(electronApp, () =>
+		starterPage.getByText(vaultName, { exact: true }).click()
 	);
-	await waitForWorkspace(newVaultWindow);
-	await focusRootWorkspace(newVaultWindow);
+
 	return newVaultWindow;
 };
 
@@ -331,7 +350,7 @@ export async function openSandboxVault(
 	page: Page
 ): Promise<Page> {
 	console.log(`[Setup Step] Opening vault: ${SANDBOX_VAULT_NAME}...`);
-	return performActionAndReload(electronApp, async () => {
+	return reopenVaultWith(electronApp, async () => {
 		await runCommand(page, OPEN_SANDBOX_VAULT);
 	});
 }

@@ -134,10 +134,11 @@ export const commonSetup = async (
 		await window.locator("input").fill("test");
 		console.log("filed");
 		await delay(100);
+		const chooserPromise = window.waitForEvent("filechooser");
 		await window.getByText("Browse", { exact: true }).click();
 		console.log("browse");
+		const chooser = await chooserPromise;
 		await delay(500);
-		const chooser = await window.waitForEvent("filechooser");
 		console.log("chooser");
 		await delay(500);
 		chooser.setFiles(VAULT_PATH);

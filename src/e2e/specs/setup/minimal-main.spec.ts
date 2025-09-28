@@ -11,7 +11,7 @@ const ACTIVE_SANDBOX_VIEW_SELECTOR = `.workspace-leaf.mod-active > .workspace-le
 const ACTIVE_LEAF_SELECTOR = ".workspace-leaf.mod-active";
 const ACTIVE_EDITOR_SELECTOR = `${ACTIVE_LEAF_SELECTOR} .cm-content`;
 const ACTIVE_TITLE_SELECTOR = `${ACTIVE_LEAF_SELECTOR} > .workspace-leaf-content > .view-header .view-header-title`;
-const ACTIVE_SANDBOX_TITLE_SELECTOR = `${ACTIVE_SANDBOX_VIEW_SELECTOR} > .view-header .view-actions`;
+const ACTIVE_SANDBOX_TITLE_SELECTOR = `${ACTIVE_SANDBOX_VIEW_SELECTOR} > .view-header`;
 
 // --- Test Configuration ---
 // For this test suite, we use a sandbox Vault with the plugin enabled.
@@ -90,12 +90,18 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await createNewSandboxNote(page, initialContent);
 
 		// 2. Split the screen vertically
-		await page
-			.locator(`${ACTIVE_SANDBOX_TITLE_SELECTOR} .view-actions`)
-			.click();
+		// await page
+		// 	.locator(
+		// 		".workspace-leaf.mod-active > div > div > .view-actions button:not(.mod-bookmark)"
+		// 	)
+		// 	.click();
+		await page.evaluate(() =>
+			// @ts-expect-error
+			app.workspace.activeLeaf.view.moreOptionsButtonEl.click()
+		);
 		await page
 			.locator(`.menu`)
-			.getByText("Split down", { exact: true })
+			.getByText("Split right", { exact: true })
 			.click();
 		await expect(
 			page.locator(

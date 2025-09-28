@@ -8,13 +8,12 @@ import type { Manager } from "./managers/Manager";
 import { ObsidianEventManager } from "./managers/ObsidianEventManager";
 import { StateManager } from "./managers/StateManager";
 import { ViewFactory } from "./managers/ViewFactory";
-import { type SandboxNotePluginData, SandboxNoteSettingTab } from "./settings";
-import { DEFAULT_PLUGIN_DATA, HOT_SANDBOX_NOTE_ICON } from "./utils/constants";
+import { SandboxNoteSettingTab } from "./settings";
+import { HOT_SANDBOX_NOTE_ICON, DEBUG_MODE } from "./utils/constants";
 import { EventEmitter } from "./utils/EventEmitter";
 import "./utils/setup-logger";
 import { overwriteLogLevel } from "./utils/setup-logger";
 import { HotSandboxNoteView } from "./views/HotSandboxNoteView";
-import { AbstractNoteView } from "./views/internal/AbstractNoteView";
 import { convertToFileAndClear } from "./views/internal/utils";
 
 const logger = log.getLogger("SandboxNotePlugin");
@@ -33,7 +32,10 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Initialize plugin on load. */
 	async onload() {
-		overwriteLogLevel();
+		if (!DEBUG_MODE) {
+			overwriteLogLevel();
+		}
+
 		this.initializeManagers();
 
 		// Load all data via StateManager

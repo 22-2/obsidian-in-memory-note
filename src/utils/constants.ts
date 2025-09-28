@@ -1,13 +1,13 @@
 import { type SandboxNotePluginData, type PluginSettings } from "../settings";
 import log from "loglevel";
 
-const ENABLE_LOGGER =
+export const DEBUG_MODE =
 	typeof process !== "undefined" && process.env.NODE_ENV === "development";
 
-log.debug("ENABLE_LOGGER", ENABLE_LOGGER);
+log.debug("ENABLE_LOGGER", DEBUG_MODE);
 
 export const DEFAULT_SETTINGS: PluginSettings = {
-	enableLogger: ENABLE_LOGGER,
+	enableLogger: DEBUG_MODE,
 	enableAutoSave: true,
 	autoSaveDebounceMs: 3000,
 	enableCtrlS: false,

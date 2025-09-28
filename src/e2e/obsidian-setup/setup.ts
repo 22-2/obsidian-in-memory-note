@@ -85,7 +85,6 @@ export class ObsidianTestSetup {
 
 	async cleanup(): Promise<void> {
 		if (this.electronApp) {
-			await VaultManager.clearData(this.electronApp);
 			await this.electronApp.close();
 		}
 		logger.debug("[ObsidianTestSetup] cleaned All");

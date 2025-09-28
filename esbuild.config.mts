@@ -92,6 +92,27 @@ const prod = mode === "production";
 const e2e = mode === "e2e";
 const e2eDev = mode === "e2e-dev";
 
+const copyOpts = {
+	opts: [
+		{
+			src: ["./styles.css", "./manifest.json", "./main.js"],
+			dest: "./dist",
+		},
+	],
+};
+
+if (process.env.OBSIDIAN_SANDBOX_PATH)
+	copyOpts.opts.push({
+		src: ["./dist/styles.css", "./dist/manifest.json", "./dist/main.js"],
+		dest:
+			path.join(
+				process.env.OBSIDIAN_SANDBOX_PATH!,
+				".obsidian",
+				"plugins",
+				manifest.id
+			) || "",
+	});
+
 const context = await esbuild.context({
 	banner: {
 		js: banner,
@@ -117,37 +138,7 @@ const context = await esbuild.context({
 				.replace(/[\\/:*?"<>|\s.]/g, "-")
 		),
 	},
-	plugins:
-		e2eDev || e2e
-			? [
-					copyPlugin({
-						opts: [
-							{
-								src: [
-									"./styles.css",
-									"./manifest.json",
-									"./main.js",
-								],
-								dest: "./dist",
-							},
-							{
-								src: [
-									"./dist/styles.css",
-									"./dist/manifest.json",
-									"./dist/main.js",
-								],
-								dest:
-									path.join(
-										process.env.OBSIDIAN_SANDBOX_PATH!,
-										".obsidian",
-										"plugins",
-										manifest.id
-									) || "",
-							},
-						],
-					}),
-			  ]
-			: [],
+	plugins: e2eDev || e2e ? [copyPlugin(copyOpts)] : [],
 	entryPoints: ["src/main.ts"],
 	bundle: true,
 	external: [

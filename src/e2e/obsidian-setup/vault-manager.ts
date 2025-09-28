@@ -12,6 +12,7 @@ import { SANDBOX_VAULT_NAME } from "../config";
 import { IPCBridge } from "./ipc-bridge";
 import { PageManager } from "./page-manager";
 import { PluginManager } from "./plugin-manager";
+import type { BrowserWindow, WebContents } from "electron";
 
 export interface VaultOptions {
 	name?: string;
@@ -133,6 +134,14 @@ export class VaultManager {
 		const windows = electronApp.windows();
 		if (windows.length > 0) {
 			await windows[0].evaluate(() => window.localStorage.clear());
+			await windows[0].evaluate(async () => {
+				const webContents =
+					// @ts-expect-error
+					window.electron.remote.BrowserWindow.getFocusedWindow()
+						.webContents as WebContents;
+				webContents.session.flushStorageData();
+				await webContents.session.clearStorageData();
+			});
 			logger.debug("localStorage cleared.");
 		}
 	}

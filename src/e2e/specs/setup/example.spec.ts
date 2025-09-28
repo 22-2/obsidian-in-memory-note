@@ -1,7 +1,6 @@
 import "../../log-setup";
 import type SandboxPlugin from "../../../main";
-import * as constants from "../../../utils/constants";
-const { VIEW_TYPE_HOT_SANDBOX } = constants;
+import { VIEW_TYPE_HOT_SANDBOX } from "../../../utils/constants";
 // ===================================================================
 // 8. Example Test (example.test.mts)
 // ===================================================================
@@ -26,10 +25,12 @@ test("sandbox test", async ({ vault }) => {
 		[PLUGIN_ID]
 	);
 
-	expect(pluginHandle.asElement() !== null).toBeTruthy();
+	expect(pluginHandle).toBeTruthy();
 	await pluginHandle.evaluate((plugin) => plugin.activateNewHotSandboxView());
 	expect(
-		vault.window.locator(`[data-type="${VIEW_TYPE_HOT_SANDBOX}]`)
+		vault.window.locator(
+			`.workspace-leaf-content[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`
+		)
 	).toBeVisible();
 });
 

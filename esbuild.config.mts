@@ -98,6 +98,24 @@ const context = await esbuild.context({
 	},
 	define: {
 		"process.env.NODE_ENV": prod ? '"production"' : '"development"',
+		"process.env.BUILT_AT": JSON.stringify(
+			new Intl.DateTimeFormat("ja-JP", {
+				year: "numeric",
+				month: "2-digit",
+				day: "2-digit",
+				weekday: "long",
+
+				hour: "2-digit",
+				minute: "2-digit",
+				second: "2-digit",
+				fractionalSecondDigits: 2,
+
+				timeZone: "Asia/Tokyo",
+				timeZoneName: "long",
+			})
+				.format(new Date())
+				.replace(/[\\/:*?"<>|\s.]/g, "-")
+		),
 	},
 	plugins:
 		e2eDev || e2e
@@ -105,7 +123,11 @@ const context = await esbuild.context({
 					copyPlugin({
 						opts: [
 							{
-								src: ["./styles.css", "./manifest.json"],
+								src: [
+									"./styles.css",
+									"./manifest.json",
+									"./main.js",
+								],
 								dest: "./dist",
 							},
 							{
@@ -150,7 +172,7 @@ const context = await esbuild.context({
 	minify: prod,
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
-	outfile: e2eDev || e2e ? "dist/main.js" : "main.js",
+	outfile: "main.js",
 });
 
 if (prod || e2e) {

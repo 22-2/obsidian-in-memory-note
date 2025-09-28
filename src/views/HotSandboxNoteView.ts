@@ -47,7 +47,11 @@ export class HotSandboxNoteView extends AbstractNoteView {
 
 	get hasUnsavedChanges(): boolean {
 		if (!this.masterNoteId) return false;
-		return this.getContent() !== "";
+		const currentContent = this.getContent();
+		const savedContent = this.stateManager.getHotNoteContent(
+			this.masterNoteId
+		);
+		return currentContent !== savedContent;
 	}
 
 	save(): void {

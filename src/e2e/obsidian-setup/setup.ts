@@ -25,12 +25,14 @@ export class ObsidianTestSetup {
 
 	async launch(): Promise<void> {
 		this.electronApp = await electron.launch(LAUNCH_OPTIONS);
+		const win = await this.electronApp.waitForEvent("window");
+		this.pageManager = new PageManager(this.electronApp);
+		logger.debug("page manager");
+		await this.pageManager.waitForStarterReady(win);
+		logger.debug("starter ready");
 		await VaultManager.clearData(this.electronApp);
 		const initialWindow = await this.electronApp.firstWindow();
 		await initialWindow.reload({ waitUntil: "domcontentloaded" });
-
-		this.pageManager = new PageManager(this.electronApp);
-		logger.debug("page manager");
 
 		const currentPage = await this.pageManager.ensureSingleWindow();
 
@@ -84,7 +86,7 @@ export class ObsidianTestSetup {
 	async cleanup(): Promise<void> {
 		if (this.electronApp) {
 			await VaultManager.clearData(this.electronApp);
-			await this.electronApp.evaluate(({ app }) => app.quit());
+			await this.electronApp.close();
 		}
 		logger.debug("[ObsidianTestSetup] cleaned All");
 	}

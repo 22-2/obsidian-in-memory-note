@@ -13,6 +13,8 @@ import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
 import type { StateManager } from "src/managers/StateManager";
 
+const logger = log.getLogger("HotSandboxNoteView");
+
 export class HotSandboxNoteView extends AbstractNoteView {
 	constructor(
 		leaf: WorkspaceLeaf,
@@ -28,9 +30,15 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	getBaseTitle(): string {
-		const groupCount =
-			this.funcs.indexOfMasterId(this.masterNoteId ?? "") + 1;
-		return `Hot Sandbox-${groupCount}`;
+		let groupCount = this.funcs.indexOfMasterId(this.masterNoteId ?? "");
+		logger.debug("groupCount", groupCount);
+		if (groupCount === -1) {
+			groupCount = 0;
+			logger.debug("initial 1 added", groupCount);
+		}
+		const displayNumber = groupCount + 1;
+		logger.debug("displayNumber", displayNumber);
+		return `Hot Sandbox-${displayNumber}`;
 	}
 
 	getIcon(): string {

@@ -119,7 +119,10 @@ export class VaultManager {
 		return newPage;
 	}
 
-	static async clearData(electronApp: ElectronApplication): Promise<void> {
+	static async clearData(
+		electronApp: ElectronApplication,
+		page?: Page
+	): Promise<void> {
 		const userDataDir = await electronApp.evaluate(({ app }) =>
 			app.getPath("userData")
 		);
@@ -131,18 +134,23 @@ export class VaultManager {
 			rmSync(path, { force: true, recursive: true });
 		});
 
-		const windows = electronApp.windows();
-		if (windows.length > 0) {
-			await windows[0].evaluate(() => window.localStorage.clear());
-			await windows[0].evaluate(async () => {
+		const [win] = [page ?? electronApp.windows()[0]];
+		if (win) {
+			logger.log(chalk.magenta("clearing..."));
+			await win.evaluate(async () => {
 				const webContents =
 					// @ts-expect-error
 					window.electron.remote.BrowserWindow.getFocusedWindow()
 						.webContents as WebContents;
 				webContents.session.flushStorageData();
-				await webContents.session.clearStorageData();
+				await webContents.session.clearStorageData({
+					storages: ["indexdb", "localstorage", "websql"],
+				});
+				await webContents.session.clearCache();
 			});
-			logger.debug("localStorage cleared.");
+			logger.log(chalk.magenta("localStorage cleared."));
+		} else {
+			logger.log(chalk.red("window not found"));
 		}
 	}
 

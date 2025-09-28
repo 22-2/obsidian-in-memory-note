@@ -17,6 +17,8 @@ import { HotSandboxNoteView } from "./views/HotSandboxNoteView";
 import { AbstractNoteView } from "./views/internal/AbstractNoteView";
 import { convertToFileAndClear } from "./views/internal/utils";
 
+const logger = log.getLogger("SandboxNotePlugin");
+
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
 	// Managers
@@ -51,7 +53,7 @@ export default class SandboxNotePlugin extends Plugin {
 		this.setupSettingsTab();
 		this.setupCommandsAndRibbons();
 
-		log.debug("Sandbox Note plugin loaded");
+		logger.debug("Sandbox Note plugin loaded");
 	}
 
 	public getActiveView() {
@@ -146,7 +148,7 @@ export default class SandboxNotePlugin extends Plugin {
 			manager.unload();
 		}
 		this.databaseManager.close();
-		log.debug("Sandbox Note plugin unloaded");
+		logger.debug("Sandbox Note plugin unloaded");
 	}
 
 	async activateNewHotSandboxView() {
@@ -164,6 +166,6 @@ export default class SandboxNotePlugin extends Plugin {
 		} else {
 			log.setLevel("warn");
 		}
-		log.debug("Logger initialized");
+		logger.debug("Logger initialized");
 	}
 }

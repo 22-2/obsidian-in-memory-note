@@ -45,14 +45,17 @@ async function createNewSandboxNote(page: Page, content?: string) {
  * @returns The editor content string
  */
 async function getActiveEditorContent(page: Page): Promise<string> {
-	return await page.evaluate(() => {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const activeView = (window as any).app.workspace.activeLeaf.view;
-		if (activeView.getViewType() === VIEW_TYPE_HOT_SANDBOX) {
-			return activeView.editor.getValue();
-		}
-		return "";
-	});
+	return await page.evaluate(
+		(VIEW_TYPE_HOT_SANDBOX) => {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const activeView = (window as any).app.workspace.activeLeaf.view;
+			if (activeView.getViewType() === VIEW_TYPE_HOT_SANDBOX) {
+				return activeView.editor.getValue();
+			}
+			return "";
+		},
+		[VIEW_TYPE_HOT_SANDBOX]
+	);
 }
 
 // --- Test Suite ---

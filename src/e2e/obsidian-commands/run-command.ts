@@ -1,3 +1,4 @@
+import log from "loglevel";
 import type { Page } from "playwright";
 import invariant from "tiny-invariant";
 
@@ -16,6 +17,8 @@ export const CMD_UNDO_CLOSE_TAB = "Undo close tab";
 export const CMD_GO_TO_PREVIOUS_TAB = "Go to previous tab";
 export const CMD_GO_TO_NEXT_TAB = "Go to next tab";
 export const OPEN_SANDBOX_VAULT = "Open sandbox vault";
+
+const logger = log.getLogger("run-commands");
 
 export const PROMPT_INPUT = ".prompt-input";
 export const runCommand = async (

@@ -15,6 +15,7 @@
 		"version:full": "pnpm dlx tsx version-bump.ext.mts all",
 		"test:e2e": "playwright test",
 		"test:e2e:example": "pnpm playwright test src/e2e/specs/setup/example.spec.ts --project=chromium",
+		"test:e2e:main-minimal": "pnpm playwright test src/e2e/specs/setup/main-minimal.spec.ts --project=chromium",
 		"test:e2e:report": "playwright show-report",
 		"test:e2e:ui": "playwright test --ui",
 		"test:e2e:debug": "cross-env DEBUG=pw:api playwright test",

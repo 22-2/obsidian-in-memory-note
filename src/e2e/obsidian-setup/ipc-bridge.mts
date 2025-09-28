@@ -1,0 +1,72 @@
+// ===================================================================
+// ipc-bridge.mts - IPCの簡素化と統合
+// ===================================================================
+
+import type { Page } from "playwright";
+import type { PageManager } from "./page-manager.mts";
+
+export class IPCBridge {
+	constructor(private pageManager: PageManager) {}
+
+	private async send<T>(channel: string, ...args: unknown[]): Promise<T> {
+		await this.ensurePageLoaded();
+		return (await this.pageManager.ensureSingleWindow()).evaluate(
+			([ch, ...restArgs]) => {
+				return (window as any).electron.ipcRenderer.sendSync(
+					ch,
+					...restArgs
+				);
+			},
+			[channel, ...args]
+		);
+	}
+
+	private async ensurePageLoaded(): Promise<void> {
+		const page = await this.pageManager.ensureSingleWindow();
+		await page.waitForLoadState("domcontentloaded");
+
+		// スターターページでない場合はappオブジェクトを待つ
+		const isStarter = page.url().includes("starter");
+		if (!isStarter) {
+			await page.waitForFunction(
+				async () => {
+					if (typeof (window as any).app !== "undefined") {
+						return await new Promise<void>((resolve) => {
+							return app.workspace.onLayoutReady(() =>
+								resolve(undefined)
+							);
+						});
+					}
+				},
+				{ timeout: 10000 }
+			);
+		}
+	}
+
+	async openVault(
+		vaultPath: string,
+		createNew = false
+	): Promise<true | string> {
+		return this.send<true | string>("vault-open", vaultPath, createNew);
+	}
+
+	async openSandbox(): Promise<string> {
+		return this.send<string>("sandbox");
+	}
+
+	async getSandboxPath(): Promise<string> {
+		return this.send<string>("get-sandbox-vault-path");
+	}
+
+	async openStarter(): Promise<void> {
+		await this.send("starter");
+	}
+
+	async getVaultList(): Promise<{ vault: Record<string, { path: string }> }> {
+		return this.send("vault-list");
+	}
+
+	async removeVault(vaultPath: string): Promise<void> {
+		await this.send("vault-remove", vaultPath);
+	}
+}

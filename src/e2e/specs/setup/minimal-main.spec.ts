@@ -12,7 +12,8 @@ import { VIEW_TYPE_HOT_SANDBOX } from "../../../utils/constants";
 const ACTIVE_SANDBOX_VIEW_SELECTOR = `.workspace-leaf.mod-active > .workspace-leaf-content[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`;
 const ACTIVE_LEAF_SELECTOR = ".workspace-leaf.mod-active";
 const ACTIVE_EDITOR_SELECTOR = `${ACTIVE_LEAF_SELECTOR} .cm-content`;
-const ACTIVE_TITLE_SELECTOR = `${ACTIVE_LEAF_SELECTOR} > .workspace-leaf-content > .view-header .view-header-title`;
+// const ACTIVE_TITLE_SELECTOR = `${ACTIVE_LEAF_SELECTOR} > .workspace-leaf-content > .view-header .view-header-title`;
+const ACTIVE_TITLE_SELECTOR = `.workspace-tab-header[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`;
 const ACTIVE_SANDBOX_TITLE_SELECTOR = `${ACTIVE_SANDBOX_VIEW_SELECTOR} > .view-header`;
 
 // --- Test Configuration ---
@@ -81,6 +82,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			testContent
 		);
 
+		// await page.pause();
 		// 4.Verify that "*" appears in the tab title *after* content is added.
 		await expect(page.locator(ACTIVE_TITLE_SELECTOR)).toHaveText(
 			"*Hot Sandbox-1"

@@ -75,7 +75,6 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		// 2. Verify the input text exists in the editor
 		expect(await getActiveEditorContent(page)).toBe(testContent);
 
-		await page.pause();
 		// 3. Verify that "*" appears in the tab title because the content is not empty (unsaved state)
 		await expect(page.locator(ACTIVE_TITLE_SELECTOR)).toHaveText(
 			"*Hot Sandbox-1"

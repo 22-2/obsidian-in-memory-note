@@ -3,7 +3,7 @@
 // ===================================================================
 
 import type { Page } from "playwright";
-import type { PageManager } from "./page-manager.mts";
+import type { PageManager } from "./page-manager";
 
 export class IPCBridge {
 	constructor(private pageManager: PageManager) {}

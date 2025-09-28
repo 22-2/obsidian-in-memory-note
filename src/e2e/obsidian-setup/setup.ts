@@ -4,10 +4,10 @@
 
 import { _electron as electron } from "playwright/test";
 import type { ElectronApplication, Page } from "playwright";
-import { VaultManager, type VaultOptions } from "./vault-manager.mts";
-import { PageManager } from "./page-manager.mts";
+import { VaultManager, type VaultOptions } from "./vault-manager";
+import { PageManager } from "./page-manager";
 import log from "loglevel";
-import { LAUNCH_OPTIONS } from "../config.mts";
+import { LAUNCH_OPTIONS } from "../config";
 
 export interface TestContext {
 	electronApp: ElectronApplication;

@@ -1,4 +1,4 @@
-import "../../log-setup.mts";
+import "../../log-setup";
 import type SandboxPlugin from "../../../main";
 import * as constants from "../../../utils/constants";
 const { VIEW_TYPE_HOT_SANDBOX } = constants;
@@ -6,8 +6,8 @@ const { VIEW_TYPE_HOT_SANDBOX } = constants;
 // 8. Example Test (example.test.mts)
 // ===================================================================
 
-import { DIST_DIR, PLUGIN_ID, SANDBOX_VAULT_NAME } from "../../config.mts";
-import { expect, test } from "../../test-fixtures.mts";
+import { DIST_DIR, PLUGIN_ID, SANDBOX_VAULT_NAME } from "../../config";
+import { expect, test } from "../../test-fixtures";
 import log from "loglevel";
 
 const logger = log.getLogger("example.spec");

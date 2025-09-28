@@ -8,10 +8,10 @@ import { existsSync, readFileSync, rmSync } from "fs";
 import log from "loglevel";
 import path from "path";
 import type { ElectronApplication, Page } from "playwright";
-import { SANDBOX_VAULT_NAME } from "../config.mts";
-import { IPCBridge } from "./ipc-bridge.mts";
-import { PageManager } from "./page-manager.mts";
-import { PluginManager } from "./plugin-manager.mts";
+import { SANDBOX_VAULT_NAME } from "../config";
+import { IPCBridge } from "./ipc-bridge";
+import { PageManager } from "./page-manager";
+import { PluginManager } from "./plugin-manager";
 
 export interface VaultOptions {
 	name?: string;

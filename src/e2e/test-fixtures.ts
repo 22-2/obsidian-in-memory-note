@@ -2,11 +2,8 @@
 // test-fixtures.mts - Playwrightテストフィクスチャ
 // ===================================================================
 
-import {
-	ObsidianTestSetup,
-	type TestContext,
-} from "./obsidian-setup/setup.mts";
-import type { VaultOptions } from "./obsidian-setup/vault-manager.mts";
+import { ObsidianTestSetup, type TestContext } from "./obsidian-setup/setup";
+import type { VaultOptions } from "./obsidian-setup/vault-manager";
 import { test as base } from "@playwright/test";
 import log from "loglevel";
 

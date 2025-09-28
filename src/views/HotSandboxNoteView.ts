@@ -28,7 +28,8 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	getBaseTitle(): string {
-		const groupCount = this.funcs.indexOfMasterId(this.masterNoteId ?? "");
+		const groupCount =
+			this.funcs.indexOfMasterId(this.masterNoteId ?? "") + 1;
 		return `Hot Sandbox-${groupCount}`;
 	}
 

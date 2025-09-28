@@ -12,6 +12,7 @@ import log from "loglevel";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
 import type { StateManager } from "src/managers/StateManager";
+import { issue1Logger } from "../special-loggers";
 
 const logger = log.getLogger("HotSandboxNoteView");
 
@@ -31,13 +32,13 @@ export class HotSandboxNoteView extends AbstractNoteView {
 
 	getBaseTitle(): string {
 		let groupCount = this.funcs.indexOfMasterId(this.masterNoteId ?? "");
-		logger.debug("groupCount", groupCount);
+		// logger.debug("groupCount", groupCount);
 		if (groupCount === -1) {
 			groupCount = 0;
-			logger.debug("initial 1 added", groupCount);
+			// logger.debug("initial 1 added", groupCount);
 		}
 		const displayNumber = groupCount + 1;
-		logger.debug("displayNumber", displayNumber);
+		// logger.debug("displayNumber", displayNumber);
 		return `Hot Sandbox-${displayNumber}`;
 	}
 
@@ -63,16 +64,6 @@ export class HotSandboxNoteView extends AbstractNoteView {
 
 	getContent(): string {
 		return this.editor?.getValue() ?? "";
-	}
-
-	async onOpen() {
-		this.emitter.emit("view-opened", { view: this });
-		await super.onOpen();
-	}
-
-	async onClose() {
-		this.emitter.emit("view-closed", { view: this });
-		await super.onClose();
 	}
 
 	updateActionButtons() {

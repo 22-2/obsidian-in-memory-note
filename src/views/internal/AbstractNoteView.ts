@@ -1,7 +1,6 @@
 // src/views/internal/AbstractNoteView.ts
 import {
 	ItemView,
-	MarkdownView,
 	Menu,
 	Scope,
 	type ViewStateResult,
@@ -10,15 +9,15 @@ import {
 
 import log from "loglevel";
 import { nanoid } from "nanoid";
-import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
-import type SandboxNotePlugin from "src/main";
-import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
-import { EditorWrapper } from "./EditorWrapper";
-import { convertToFileAndClear } from "./utils";
-import type { StateManager } from "src/managers/StateManager";
-import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
+import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
+import type { StateManager } from "src/managers/StateManager";
+import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
+import type { EventEmitter } from "src/utils/EventEmitter";
+import { issue1Logger, issue2Logger } from "../../special-loggers";
+import { EditorWrapper } from "./EditorWrapper";
 import type { AbstractNoteViewState, ObsidianViewState } from "./types";
+import { convertToFileAndClear } from "./utils";
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
@@ -68,23 +67,38 @@ export abstract class AbstractNoteView extends ItemView {
 			},
 		};
 
-		state.state.content = this.editor.getValue();
+		state.state.content = (this.editor && this.editor.getValue()) ?? "";
+		state.state.masterNoteId = this.masterNoteId ?? "";
 		state.source = this.isSourceMode;
 		return state;
 	}
 
 	public override async onOpen() {
+		issue2Logger.debug("AbstractNoteView.onOpen");
 		try {
+			if (!this.masterNoteId) {
+				issue2Logger.debug(
+					"masterNoteId not set, creating a new one in onOpen."
+				);
+				this.masterNoteId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
+				this.emitter.emit("register-new-hot-note", {
+					masterNoteId: this.masterNoteId,
+				});
+			}
+			issue2Logger.debug("masterNoteId", this.masterNoteId);
+
 			await this.wrapper.initialize(this.contentEl, this.initialState);
 			this.initialState = null;
 			this.setupEventHandlers();
 			this.emitter.emit("connect-editor-plugin", { view: this });
+			this.emitter.emit("view-opened", { view: this });
 		} catch (error) {
 			this.handleInitializationError(error);
 		}
 	}
 
 	public override async onClose() {
+		this.emitter.emit("view-closed", { view: this });
 		this.wrapper.unload();
 		this.contentEl.empty();
 	}
@@ -93,8 +107,10 @@ export abstract class AbstractNoteView extends ItemView {
 		state: AbstractNoteViewState,
 		result: ViewStateResult
 	): Promise<void> {
-		if (state?.masterNoteId) {
-			this.masterNoteId = state.masterNoteId;
+		issue2Logger.debug("AbstractNoteView.setState state", state);
+		const masterIdFromState = state?.state?.masterNoteId;
+		if (masterIdFromState) {
+			this.masterNoteId = masterIdFromState;
 			log.debug(`Restored note group ID: ${this.masterNoteId}`);
 		} else if (!this.masterNoteId) {
 			log.debug("masterNoteId not found in state, creating new one.");
@@ -109,8 +125,8 @@ export abstract class AbstractNoteView extends ItemView {
 		}
 
 		this.initialState = state;
-		if (this.editor && state.content != null) {
-			this.setContent(state.content);
+		if (this.editor && state.state?.content != null) {
+			this.setContent(state.state.content);
 			await this.wrapper.virtualEditor.setState(state, result);
 			// @ts-ignore
 			result.close = false;

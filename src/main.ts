@@ -9,7 +9,11 @@ import { ObsidianEventManager } from "./managers/ObsidianEventManager";
 import { StateManager } from "./managers/StateManager";
 import { ViewFactory } from "./managers/ViewFactory";
 import { SandboxNoteSettingTab } from "./settings";
-import { HOT_SANDBOX_NOTE_ICON, DEBUG_MODE } from "./utils/constants";
+import {
+	DEBUG_MODE,
+	HOT_SANDBOX_NOTE_ICON,
+	VIEW_TYPE_HOT_SANDBOX,
+} from "./utils/constants";
 import { EventEmitter } from "./utils/EventEmitter";
 import "./utils/setup-logger";
 import { overwriteLogLevel } from "./utils/setup-logger";
@@ -78,7 +82,8 @@ export default class SandboxNotePlugin extends Plugin {
 		);
 		this.editorSyncManager = new EditorSyncManager(
 			emitter,
-			this.stateManager
+			this.stateManager,
+			this
 		);
 		this.editorPluginConnector = new EditorPluginConnector(this, emitter);
 		this.viewFactory = new ViewFactory(this);
@@ -171,5 +176,17 @@ export default class SandboxNotePlugin extends Plugin {
 			logger.setLevel("warn");
 		}
 		logger.debug("Logger initialized");
+	}
+
+	getAllHotSandboxViews(): HotSandboxNoteView[] {
+		const views: HotSandboxNoteView[] = [];
+		this.app.workspace
+			.getLeavesOfType(VIEW_TYPE_HOT_SANDBOX)
+			.forEach((leaf) => {
+				if (leaf.view instanceof HotSandboxNoteView) {
+					views.push(leaf.view);
+				}
+			});
+		return views;
 	}
 }

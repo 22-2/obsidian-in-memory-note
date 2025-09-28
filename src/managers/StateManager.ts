@@ -158,7 +158,7 @@ export class StateManager implements Manager {
 			sourceView.masterNoteId
 		) {
 			// Update in-memory state first
-			this.updateHotNoteContent(sourceView.masterNoteId, content);
+			// this.updateHotNoteContent(sourceView.masterNoteId, content);
 
 			// Then, trigger debounced save if auto-save is enabled
 			if (this.getSettings().enableAutoSave) {

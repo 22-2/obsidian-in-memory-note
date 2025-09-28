@@ -12,7 +12,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                os: [windows-latest]
+                os: [windows-latest, macos-latest]
 
         runs-on: ${{ matrix.os }}
         timeout-minutes: 15
@@ -110,7 +110,7 @@ jobs:
                   npx @telosh/filetree --exclude node_modules,.git
 
             - name: Run Playwright tests
-              run: pnpm run test:e2e:install
+              run: pnpm run test:e2e:example
               env:
                   DEBUG: "pw:browser"
 

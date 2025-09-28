@@ -10,8 +10,11 @@ import {
 	writeFileSync,
 } from "fs";
 import path from "path";
-import type { Page } from "playwright";
+import type { ElectronApplication, Page } from "playwright";
 import { expect } from "@playwright/test";
+import log from "loglevel";
+
+const logger = log.getLogger("PluginManager");
 
 export class PluginManager {
 	async installPlugins(
@@ -20,6 +23,8 @@ export class PluginManager {
 	): Promise<void> {
 		const obsidianDir = path.join(vaultPath, ".obsidian");
 		const pluginsDir = path.join(obsidianDir, "plugins");
+		logger.debug("obsidianDir", obsidianDir);
+		logger.debug("pluginPaths", pluginPaths);
 
 		// .obsidian ディレクトリを作成
 		if (!existsSync(obsidianDir)) {
@@ -50,11 +55,11 @@ export class PluginManager {
 				const srcFile = path.join(pluginPath, file);
 				const destFile = path.join(destDir, file);
 				copyFileSync(srcFile, destFile);
-				console.log(`Copied: ${file} to ${destDir}`);
+				logger.debug(`Copied: ${file} to ${destDir}`);
 			}
 
 			installedIds.push(pluginId);
-			console.log(`Installed plugin: ${pluginId}`);
+			logger.debug(`Installed plugin: ${pluginId}`);
 		}
 
 		// community-plugins.json を書き込み
@@ -63,33 +68,78 @@ export class PluginManager {
 			"community-plugins.json"
 		);
 		writeFileSync(pluginsJsonPath, JSON.stringify(installedIds));
-		console.log(`Enabled plugins: ${installedIds.join(", ")}`);
+		logger.debug(`Enabled plugins: ${installedIds.join(", ")}`);
 	}
 
-	async disableRestrictedMode(page: Page): Promise<void> {
+	async disableRestrictedMode(
+		page: Page,
+		app: ElectronApplication
+	): Promise<void> {
 		if (await this.checkIsCommunityPluginEnabled(page)) {
-			console.log("Already disabled");
+			logger.debug("Community plugins are already enabled.");
 			return;
 		}
 
-		console.log("Disabling Restricted Mode...");
+		logger.debug("Attempting to enable community plugins...");
 
-		// 最初のボタンをクリック（Restricted Modeの無効化）
-		console.log("[STEP1]");
-		await page.pause();
-		expect(await this.clickSettingsButton(page)).toBe("Turn on and reload");
-		await page.waitForTimeout(1000);
+		// 設定タブを開く
+		await page.evaluate(() => {
+			(window as any).app.setting.open();
+			(window as any).app.setting.openTabById("community-plugins");
+		});
 
-		// 2番目のボタンをクリック（コミュニティプラグインの有効化）
-		console.log("[STEP2]");
-		expect(await this.clickSettingsButton(page)).toBe(
-			"Turn on community plugins"
-		);
-		await page.waitForTimeout(1000);
+		// ヘルパー関数: 現在表示されているボタンのテキストを取得
+		const getButtonText = () =>
+			page.evaluate(() => {
+				const button = (
+					window as any
+				).app.setting.activeTab?.setting?.contentEl?.querySelector(
+					"button.mod-cta" // より具体的なセレクタに変更
+				) as HTMLElement | null;
+				return button?.textContent?.trim() || null;
+			});
+
+		// ヘルパー関数: ボタンをクリック
+		const clickButton = () =>
+			page.evaluate(() => {
+				const button = (
+					window as any
+				).app.setting.activeTab?.setting?.contentEl?.querySelector(
+					"button.mod-cta"
+				) as HTMLElement | null;
+				button?.click();
+			});
+
+		let buttonText = await getButtonText();
+		logger.debug(`Initial button text in settings: "${buttonText}"`);
+
+		// [ステップ1] "Turn on and reload" ボタンがあればクリック
+		if (buttonText === "Turn on and reload") {
+			logger.debug("Clicking 'Turn on and reload'...");
+			await clickButton();
+			// UIが更新されるのを待機
+			await page.waitForTimeout(1000);
+			// ボタンのテキストを再取得
+			buttonText = await getButtonText();
+			logger.debug(`Button text after first click: "${buttonText}"`);
+		}
+
+		// [ステップ2] "Turn on community plugins" ボタンがあればクリック
+		if (buttonText === "Turn on community plugins") {
+			logger.debug("Clicking 'Turn on community plugins'...");
+			await clickButton();
+			await page.waitForTimeout(1000);
+		}
 
 		// 設定を閉じる
 		await page.keyboard.press("Escape");
-		console.log("Restricted Mode disabled");
+		logger.debug("Community plugins should now be enabled.");
+
+		// 最終確認
+		expect(
+			await this.checkIsCommunityPluginEnabled(page),
+			"Failed to enable community plugins."
+		).toBe(true);
 	}
 
 	private async clickSettingsButton(page: Page): Promise<string | null> {
@@ -123,10 +173,15 @@ export class PluginManager {
 			return enabled;
 		}, pluginIds);
 
-		console.log(`Enabled plugins: ${enabledIds.join(", ")}`);
+		logger.debug(`Enabled plugins: ${enabledIds.join(", ")}`);
 	}
 
-	checkIsCommunityPluginEnabled(page: Page): Promise<boolean> {
-		return page.evaluate(() => app.plugins.isEnabled());
+	async checkIsCommunityPluginEnabled(page: Page): Promise<boolean> {
+		const isEnabled = await page.evaluate(() => app.plugins.isEnabled());
+		logger.debug(
+			`${isEnabled ? "✅️" : "❌️"} checkIsCommunityPluginEnabled`,
+			page.url()
+		);
+		return isEnabled;
 	}
 }

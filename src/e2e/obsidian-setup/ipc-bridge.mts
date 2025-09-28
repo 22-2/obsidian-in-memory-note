@@ -28,18 +28,7 @@ export class IPCBridge {
 		// スターターページでない場合はappオブジェクトを待つ
 		const isStarter = page.url().includes("starter");
 		if (!isStarter) {
-			await page.waitForFunction(
-				async () => {
-					if (typeof (window as any).app !== "undefined") {
-						return await new Promise<void>((resolve) => {
-							return app.workspace.onLayoutReady(() =>
-								resolve(undefined)
-							);
-						});
-					}
-				},
-				{ timeout: 10000 }
-			);
+			return this.pageManager.waitForVaultReady(page);
 		}
 	}
 

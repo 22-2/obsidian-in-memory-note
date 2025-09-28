@@ -23,7 +23,7 @@ export const runCommand = async (
 	commandName: string,
 	required = true
 ) => {
-	console.log("runCommand", commandName);
+	logger.debug("runCommand", commandName);
 	await __obsidian__.waitForSelector(".workspace-tabs");
 	await __obsidian__.keyboard.press("Control+P");
 	await __obsidian__.waitForSelector(PROMPT_INPUT);

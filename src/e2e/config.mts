@@ -50,3 +50,10 @@ export const COMMUNITY_PLUGINS_FULL_PATH = path.join(
 	VAULT_PATH,
 	COMMUNITY_PLUGINS_JSON_PATH,
 );
+export const LAUNCH_OPTIONS = {
+	args: [APP_MAIN_JS_PATH, "--no-sandbox", "--disable-setuid-sandbox"],
+	env: {
+		...process.env,
+		NODE_ENV: "development",
+	},
+};

@@ -6,13 +6,16 @@ import { _electron as electron } from "playwright/test";
 import type { ElectronApplication, Page } from "playwright";
 import { VaultManager, type VaultOptions } from "./vault-manager.mts";
 import { PageManager } from "./page-manager.mts";
-import { APP_MAIN_JS_PATH } from "../config.mts";
+import log from "loglevel";
+import { LAUNCH_OPTIONS } from "../config.mts";
 
 export interface TestContext {
 	electronApp: ElectronApplication;
 	window: Page;
 	vaultName?: string;
 }
+
+const logger = log.getLogger("ObsidianTestSetup");
 
 export class ObsidianTestSetup {
 	private electronApp?: ElectronApplication;
@@ -21,24 +24,23 @@ export class ObsidianTestSetup {
 	private pageManager?: PageManager;
 
 	async launch(): Promise<void> {
-		this.electronApp = await electron.launch({
-			args: [
-				APP_MAIN_JS_PATH,
-				"--no-sandbox",
-				"--disable-setuid-sandbox",
-			],
-			env: {
-				...process.env,
-				NODE_ENV: "development",
-			},
-		});
+		this.electronApp = await electron.launch(LAUNCH_OPTIONS);
+		await VaultManager.clearData(this.electronApp);
+		const initialWindow = await this.electronApp.firstWindow();
+		await initialWindow.reload({ waitUntil: "domcontentloaded" });
 
 		this.pageManager = new PageManager(this.electronApp);
+		logger.debug("page manager");
 
 		const currentPage = await this.pageManager.ensureSingleWindow();
-		await currentPage.waitForLoadState("domcontentloaded");
 
-		this.vaultManager = new VaultManager(this.electronApp);
+		await this.pageManager.waitForStarterReady(currentPage);
+		logger.debug("init start page");
+
+		this.vaultManager = new VaultManager(
+			this.electronApp,
+			this.pageManager
+		);
 	}
 
 	async openVault(options: VaultOptions = {}): Promise<TestContext> {
@@ -80,6 +82,10 @@ export class ObsidianTestSetup {
 	}
 
 	async cleanup(): Promise<void> {
-		await this.electronApp?.close();
+		if (this.electronApp) {
+			await VaultManager.clearData(this.electronApp);
+			await this.electronApp.close();
+		}
+		logger.debug("[ObsidianTestSetup] cleaned All");
 	}
 }

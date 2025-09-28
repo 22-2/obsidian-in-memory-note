@@ -4,49 +4,78 @@
 
 import type { ElectronApplication, Page } from "playwright";
 import invariant from "tiny-invariant";
+import log from "loglevel";
+import chalk from "chalk";
+const logger = log.getLogger("PageManager");
 
 export class PageManager {
 	constructor(private app: ElectronApplication) {}
 
 	async ensureSingleWindow() {
-		console.log("ensureSingleWindow");
+		logger.trace("ensureSingleWindow");
 		const windows = this.app.windows();
-		console.log(`${windows.length} opend`);
+		logger.debug(`${windows.length} opend`);
 		if (windows.length === 0) {
 			const page = await this.app.firstWindow();
 			await page.waitForLoadState("domcontentloaded");
-			console.log("first window");
+			logger.debug("first window");
 			return page;
 		}
 
-		const page = windows.find(
-			async (win) => await win.evaluate(() => document.body.isShown())
-		);
+		// const page = windows.find(
+		// 	async (win) => await win.evaluate(() => document.body.isShown())
+		// );
+		logger.debug(windows.map((el) => el.url()));
+		const page = windows.at(-1)!;
+		if (page?.url().includes("starter")) {
+			await this.waitForStarterReady(page);
+		} else {
+			await this.waitForVaultReady(page);
+		}
 		invariant(page, "failed to get page");
 		await this.closeAllExcept(page);
-		console.log(`closed all except ${await page.title()}`);
+		logger.debug(`closed all except ${await page.title()}`);
 		return page;
 	}
 
 	async executeActionAndWaitForNewWindow(
 		action: () => Promise<void>,
-		closeOthers = true
+		wait: (page: Page) => Promise<void>
 	): Promise<Page> {
+		const currentWindows = this.app.windows();
+
+		// 1. 新しいウィンドウが開くのを待つ準備をする
+		const windowPromise = this.app.waitForEvent("window", {
+			timeout: 10000,
+		});
+
+		// 2. 新しいウィンドウを開くアクションを実行する
 		await action();
 
-		const newPage = await this.ensureSingleWindow();
+		// 3. 実際に新しいウィンドウが開くまで待つ
+		const newPage = await windowPromise;
 
-		if (closeOthers) {
-			await this.closeAllExcept(newPage);
+		// 4. 新しいページが完全に準備できるのを待つ (Vaultの読み込み完了など)
+		await wait(newPage);
+
+		// 5. 元々開いていた古いウィンドウを閉じる
+		for (const window of currentWindows) {
+			if (window !== newPage && !window.isClosed()) {
+				logger.debug(
+					chalk.yellow(`Closing old window: ${await window.title()}`)
+				);
+				await window.close();
+			}
 		}
 
+		logger.debug(chalk.green("New window is ready:", newPage.url()));
 		return newPage;
 	}
 
 	private async closeAllExcept(keepPage: Page): Promise<void> {
 		for (const window of this.app.windows()) {
 			if (window !== keepPage && !window.isClosed()) {
-				console.log(`close ${await window.title()}`);
+				logger.debug(chalk.red(`close ${window.url()}`));
 				await window.close();
 			}
 		}
@@ -55,35 +84,27 @@ export class PageManager {
 	async waitForVaultReady(page: Page): Promise<void> {
 		await page.waitForLoadState("domcontentloaded");
 
-		// Wait for app object
 		await page.waitForFunction(
-			() => typeof (window as any).app !== "undefined",
-			{ timeout: 10000 }
-		);
-
-		// Wait for vault and workspace
-		await page.waitForFunction(
-			() => {
-				const app = (window as any).app;
-				return (
-					app?.vault && app?.workspace && app?.workspace.layoutReady
-				);
+			async () => {
+				if ((window as any).app?.workspace?.onLayoutReady) {
+					return await new Promise<void>((resolve) => {
+						return app.workspace.onLayoutReady(() =>
+							resolve(undefined)
+						);
+					});
+				}
 			},
 			{ timeout: 10000 }
 		);
-
-		// Wait for UI elements
-		await page.waitForSelector(".workspace", {
-			state: "visible",
-			timeout: 5000,
-		});
 
 		// 追加の安定化待機
 		await page.waitForTimeout(500);
 	}
 
 	async waitForStarterReady(page: Page): Promise<void> {
-		await page.getByRole("combobox").isVisible();
+		await page.waitForSelector(".mod-change-language", {
+			state: "visible",
+		});
 	}
 
 	isStarterPage(page: Page): boolean {

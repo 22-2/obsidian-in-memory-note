@@ -9,6 +9,9 @@ export interface AppEvents {
 	"save-requested": {
 		view: AbstractNoteView;
 	};
+	"delete-requested": {
+		view: AbstractNoteView;
+	};
 	"content-saved": {
 		view: AbstractNoteView;
 	};
@@ -33,5 +36,8 @@ export interface AppEvents {
 	};
 	"settings-changed": {
 		newSettings: PluginSettings;
+	};
+	"settings-update-requested": {
+		settings: PluginSettings;
 	};
 }

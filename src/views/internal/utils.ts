@@ -2,7 +2,9 @@ import { Notice } from "obsidian";
 import type { AbstractNoteView } from "./AbstractNoteView";
 import log from "loglevel";
 
-export async function convertToFileAndClear(view: AbstractNoteView) {
+export async function convertToFileAndClear<T extends AbstractNoteView>(
+	view: T
+) {
 	try {
 		const content = view.getContent();
 		const baseTitle = view.getBaseTitle();

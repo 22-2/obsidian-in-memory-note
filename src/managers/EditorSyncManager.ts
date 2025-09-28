@@ -18,12 +18,12 @@ export class EditorSyncManager implements Manager {
 	private stateManager: StateManager;
 
 	// --- For new HotSandboxNoteView ---
-	private viewMasterIdMap = new WeakMap<AbstractNoteView, string>();
+	private viewMasterIdMap = new WeakMap<HotSandboxNoteView, string>();
 
 	constructor(
 		emitter: EventEmitter<AppEvents>,
 		stateManager: StateManager,
-		private funcs: { getAllHotSandboxViews: () => AbstractNoteView[] }
+		private funcs: { getAllHotSandboxViews: () => HotSandboxNoteView[] }
 	) {
 		this.emitter = emitter;
 		this.stateManager = stateManager;
@@ -50,6 +50,12 @@ export class EditorSyncManager implements Manager {
 	private handleSettingsChanged = () => {
 		this.refreshAllViewTitles();
 	};
+
+	public isLastHotView(masterNoteId: string) {
+		const allViews = this.funcs.getAllHotSandboxViews();
+		const map = Object.groupBy(allViews, (view) => view.masterNoteId!);
+		return map[masterNoteId]?.length === 1;
+	}
 
 	private handleViewOpened = (payload: AppEvents["view-opened"]) => {
 		const { view } = payload;
@@ -106,7 +112,7 @@ export class EditorSyncManager implements Manager {
 	public syncHotViews(
 		masterNoteId: string,
 		content: string,
-		sourceView: AbstractNoteView
+		sourceView: HotSandboxNoteView
 	) {
 		log.debug(
 			`Syncing hot sandbox note content for group: ${masterNoteId}`

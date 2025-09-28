@@ -129,7 +129,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await page.keyboard.press("Control+A"); // Select all
 		await page.keyboard.type(updatedContent);
 
-		await page.pause();
+		// await page.pause();
 		// 5. Verify the content of the left pane is also synchronized and updated
 		const leftPaneEditor = page.locator(
 			".workspace-leaf:not(.mod-active) .cm-content"

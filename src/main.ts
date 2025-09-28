@@ -1,7 +1,7 @@
 import log from "loglevel";
 import { Plugin } from "obsidian";
 import type { AppEvents } from "./events/AppEvents";
-import { DatabaseManager } from "./managers/DatabaseManager";
+import { DatabaseAPI } from "./managers/DatabaseAPI";
 import { EditorPluginConnector } from "./managers/EditorPluginConnector";
 import { EditorSyncManager } from "./managers/EditorSyncManager";
 import type { Manager } from "./managers/Manager";
@@ -25,7 +25,7 @@ const logger = log.getLogger("SandboxNotePlugin");
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
 	// Managers
-	databaseManager!: DatabaseManager;
+	databaseManager!: DatabaseAPI;
 	stateManager!: StateManager;
 	editorSyncManager!: EditorSyncManager;
 	editorPluginConnector!: EditorPluginConnector;
@@ -72,7 +72,7 @@ export default class SandboxNotePlugin extends Plugin {
 	private initializeManagers() {
 		const emitter = new EventEmitter<AppEvents>();
 		this.emitter = emitter;
-		this.databaseManager = new DatabaseManager();
+		this.databaseManager = new DatabaseAPI();
 
 		// StateManager must be initialized first as others depend on it
 		this.stateManager = new StateManager(

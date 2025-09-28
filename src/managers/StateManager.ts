@@ -1,5 +1,4 @@
 import log from "loglevel";
-import { debounce, type Debouncer } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
 import type SandboxNotePlugin from "src/main";
 import type {
@@ -9,161 +8,126 @@ import type {
 } from "src/settings";
 import { DEFAULT_PLUGIN_DATA } from "src/utils/constants";
 import type { EventEmitter } from "src/utils/EventEmitter";
-import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
-import type { DatabaseManager } from "./DatabaseManager";
+import type { DatabaseAPI } from "./DatabaseAPI";
 import type { Manager } from "./Manager";
+import { SettingsManager } from "./SettingsManager";
+import { HotSandboxManager } from "./HotSandboxManager";
+import { AppEventManager } from "./AppEventManager";
 
-/** Manages all plugin state, including settings and note data. Acts as a single source of truth. */
+const logger = log.getLogger("StateManager");
+
+/**
+ * 軽量化されたStateManager - 各マネージャーの調整役として機能
+ */
 export class StateManager implements Manager {
 	private plugin: SandboxNotePlugin;
 	private emitter: EventEmitter<AppEvents>;
-	private databaseManager: DatabaseManager;
-
 	private data: SandboxNotePluginData = DEFAULT_PLUGIN_DATA;
 
-	private debouncedHotSaveFns = new Map<
-		string,
-		Debouncer<[string, string], void>
-	>();
+	// 各マネージャー
+	private settingsManager: SettingsManager;
+	private hotSandboxManager: HotSandboxManager;
+	private eventManager: AppEventManager;
 
 	constructor(
 		plugin: SandboxNotePlugin,
 		emitter: EventEmitter<AppEvents>,
-		databaseManager: DatabaseManager
+		databaseManager: DatabaseAPI
 	) {
 		this.plugin = plugin;
 		this.emitter = emitter;
-		this.databaseManager = databaseManager;
+
+		// マネージャーの初期化
+		this.settingsManager = new SettingsManager(
+			plugin,
+			emitter,
+			DEFAULT_PLUGIN_DATA.settings
+		);
+
+		this.hotSandboxManager = new HotSandboxManager(
+			emitter,
+			databaseManager
+		);
+
+		this.eventManager = new AppEventManager(
+			emitter,
+			this.hotSandboxManager,
+			this.settingsManager
+		);
+
+		// 設定更新リクエストのハンドリング
+		this.emitter.on(
+			"settings-update-requested",
+			this.handleSettingsUpdateRequest
+		);
 	}
 
-	async load() {
-		// Load settings from Obsidian's storage
+	async load(): Promise<void> {
+		// Obsidianからデータ読み込み
 		const loadedData = await this.plugin.loadData();
 		this.data = Object.assign({}, DEFAULT_PLUGIN_DATA, loadedData);
 
-		// Load hot notes from IndexedDB into the state
-		const allNotes = await this.databaseManager.getAllNotes();
-		this.data.data.hotSandboxNotes = allNotes.reduce((acc, note) => {
-			acc[note.id] = note;
-			return acc;
-		}, {} as Record<string, HotSandboxNoteData>);
-
-		log.debug(`Restored ${allNotes.length} hot sandbox notes into state.`);
-
-		this.emitter.on("save-requested", this.handleSaveRequest);
-		this.emitter.on(
-			"editor-content-changed",
-			this.handleEditorContentChanged
+		// 各マネージャーの初期化
+		this.settingsManager = new SettingsManager(
+			this.plugin,
+			this.emitter,
+			this.data.settings
 		);
+
+		await this.hotSandboxManager.initialize();
+
+		// イベントハンドラーの登録
+		this.eventManager.registerEventListeners();
+
+		logger.debug("StateManager and all sub-managers loaded successfully.");
 	}
 
-	unload() {
-		this.emitter.off("save-requested", this.handleSaveRequest);
+	unload(): void {
+		this.eventManager.unregisterEventListeners();
+		this.hotSandboxManager.cleanup();
 		this.emitter.off(
-			"editor-content-changed",
-			this.handleEditorContentChanged
+			"settings-update-requested",
+			this.handleSettingsUpdateRequest
+		);
+
+		logger.debug(
+			"StateManager and all sub-managers unloaded successfully."
 		);
 	}
 
-	// --- Settings Management ---
+	// --- Delegated Methods ---
 
 	getSettings(): PluginSettings {
-		return this.data.settings;
+		return this.settingsManager.getSettings();
 	}
 
-	async updateSettings(settings: PluginSettings) {
-		this.data.settings = settings;
-		await this.plugin.saveData(this.data);
-		this.emitter.emit("settings-changed", { newSettings: settings });
+	async updateSettings(settings: PluginSettings): Promise<void> {
+		await this.settingsManager.updateSettings(settings);
 	}
-
-	// --- Hot Note Data Management ---
 
 	getAllHotNotes(): HotSandboxNoteData[] {
-		return Object.values(this.data.data.hotSandboxNotes);
+		return this.hotSandboxManager.getAllNotes();
 	}
 
 	getHotNoteContent(masterNoteId: string): string {
-		return this.data.data.hotSandboxNotes[masterNoteId]?.content ?? "";
+		return this.hotSandboxManager.getNoteContent(masterNoteId);
 	}
 
-	registerNewHotNote(masterNoteId: string) {
-		if (!this.data.data.hotSandboxNotes[masterNoteId]) {
-			this.data.data.hotSandboxNotes[masterNoteId] = {
-				id: masterNoteId,
-				content: "",
-				mtime: Date.now(),
-			};
-			log.debug(`Registered new hot note in state: ${masterNoteId}`);
-		}
+	registerNewHotNote(masterNoteId: string): void {
+		this.hotSandboxManager.registerNewNote(masterNoteId);
 	}
 
-	updateHotNoteContent(masterNoteId: string, content: string) {
-		const note = this.data.data.hotSandboxNotes[masterNoteId];
-		if (note) {
-			note.content = content;
-			note.mtime = Date.now();
-		}
+	getNoteData(masterNoteId: string): HotSandboxNoteData | undefined {
+		return this.hotSandboxManager.getNoteData(masterNoteId);
 	}
 
-	async saveHotNoteToDb(masterNoteId: string, content: string) {
-		this.updateHotNoteContent(masterNoteId, content);
-		try {
-			const noteToSave = this.data.data.hotSandboxNotes[masterNoteId];
-			if (noteToSave) {
-				await this.databaseManager.saveNote(noteToSave);
-				log.debug(
-					`Saved hot sandbox note to IndexedDB: ${masterNoteId}`
-				);
-			}
-		} catch (error) {
-			log.error(
-				`Failed to save hot sandbox note to DB ${masterNoteId}:`,
-				error
-			);
-		}
-	}
+	// --- Private Event Handlers ---
 
-	private debouncedSaveHotNoteToDb(masterNoteId: string, content: string) {
-		let debouncer = this.debouncedHotSaveFns.get(masterNoteId);
-		if (!debouncer) {
-			debouncer = debounce(
-				(id: string, newContent: string) => {
-					this.saveHotNoteToDb(id, newContent);
-				},
-				this.getSettings().autoSaveDebounceMs,
-				true
-			);
-			this.debouncedHotSaveFns.set(masterNoteId, debouncer);
-		}
-		debouncer(masterNoteId, content);
-	}
-
-	// --- Event Handlers ---
-
-	private handleSaveRequest = (payload: AppEvents["save-requested"]) => {
-		const { view } = payload;
-		if (view instanceof HotSandboxNoteView && view.masterNoteId) {
-			this.saveHotNoteToDb(view.masterNoteId, view.getContent());
-		}
-	};
-
-	private handleEditorContentChanged = (
-		payload: AppEvents["editor-content-changed"]
+	private handleSettingsUpdateRequest = async (
+		payload: AppEvents["settings-update-requested"]
 	) => {
-		const { content, sourceView } = payload;
-
-		if (
-			sourceView instanceof HotSandboxNoteView &&
-			sourceView.masterNoteId
-		) {
-			// Update in-memory state first
-			// this.updateHotNoteContent(sourceView.masterNoteId, content);
-
-			// Then, trigger debounced save if auto-save is enabled
-			if (this.getSettings().enableAutoSave) {
-				this.debouncedSaveHotNoteToDb(sourceView.masterNoteId, content);
-			}
-		}
+		this.data.settings = payload.settings;
+		await this.plugin.saveData(this.data);
+		logger.debug("Settings saved to Obsidian storage.");
 	};
 }

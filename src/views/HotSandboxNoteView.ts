@@ -7,7 +7,10 @@ import {
 	VIEW_TYPE_HOT_SANDBOX,
 } from "src/utils/constants";
 import type SandboxNotePlugin from "../main";
-import { AbstractNoteView } from "./internal/AbstractNoteView";
+import {
+	AbstractNoteView,
+	type AbstractNoteViewFuncs,
+} from "./internal/AbstractNoteView";
 import log from "loglevel";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
@@ -21,9 +24,9 @@ export class HotSandboxNoteView extends AbstractNoteView {
 		leaf: WorkspaceLeaf,
 		protected emitter: EventEmitter<AppEvents>,
 		protected stateManager: StateManager,
-		private funcs: { indexOfMasterId: (masterId: string) => number }
+		protected funcs: AbstractNoteViewFuncs
 	) {
-		super(leaf, emitter, stateManager);
+		super(leaf, emitter, stateManager, funcs);
 	}
 
 	getViewType(): string {
@@ -47,12 +50,7 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	get hasUnsavedChanges(): boolean {
-		if (!this.masterNoteId) return false;
-		const currentContent = this.getContent();
-		const savedContent = this.stateManager.getHotNoteContent(
-			this.masterNoteId
-		);
-		return currentContent !== savedContent;
+		return this.getContent() != "";
 	}
 
 	save(): void {

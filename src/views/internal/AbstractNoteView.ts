@@ -14,10 +14,18 @@ import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
 import type { StateManager } from "src/managers/StateManager";
 import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
 import type { EventEmitter } from "src/utils/EventEmitter";
-import { issue1Logger, issue2Logger } from "../../special-loggers";
+import { issue2Logger } from "../../special-loggers";
 import { EditorWrapper } from "./EditorWrapper";
 import type { AbstractNoteViewState, ObsidianViewState } from "./types";
 import { convertToFileAndClear } from "./utils";
+import { showConfirmModal } from "../../helpers/showConfirmModal";
+
+const logger = log.getLogger("AbstractNoteView");
+
+export type AbstractNoteViewFuncs = {
+	indexOfMasterId: (masterNoteId: string) => number;
+	isLastHotView: (masterNoteId: string) => boolean;
+};
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
@@ -33,7 +41,8 @@ export abstract class AbstractNoteView extends ItemView {
 	constructor(
 		leaf: WorkspaceLeaf,
 		protected emitter: EventEmitter<AppEvents>,
-		protected stateManager: StateManager
+		protected stateManager: StateManager,
+		protected funcs: AbstractNoteViewFuncs
 	) {
 		super(leaf);
 		this.wrapper = new EditorWrapper(this);
@@ -111,9 +120,9 @@ export abstract class AbstractNoteView extends ItemView {
 		const masterIdFromState = state?.state?.masterNoteId;
 		if (masterIdFromState) {
 			this.masterNoteId = masterIdFromState;
-			log.debug(`Restored note group ID: ${this.masterNoteId}`);
+			logger.debug(`Restored note group ID: ${this.masterNoteId}`);
 		} else if (!this.masterNoteId) {
-			log.debug("masterNoteId not found in state, creating new one.");
+			logger.debug("masterNoteId not found in state, creating new one.");
 			this.masterNoteId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
 			this.emitter.emit("register-new-hot-note", {
 				masterNoteId: this.masterNoteId,
@@ -131,8 +140,8 @@ export abstract class AbstractNoteView extends ItemView {
 			// @ts-ignore
 			result.close = false;
 		}
-		log.debug("setState.state", state);
-		log.debug("setState.result", result);
+		logger.debug("setState.state", state);
+		logger.debug("setState.result", result);
 		await super.setState(state, result);
 	}
 
@@ -166,7 +175,10 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	private handleInitializationError(error: unknown) {
-		log.error("Sandbox Note: Failed to initialize inline editor.", error);
+		logger.error(
+			"Sandbox Note: Failed to initialize inline editor.",
+			error
+		);
 		this.contentEl.empty();
 		this.contentEl.createEl("div", {
 			text: "Error: Could not initialize editor. This might be due to an Obsidian update.",
@@ -174,7 +186,7 @@ export abstract class AbstractNoteView extends ItemView {
 		});
 	}
 	private setupEventHandlers() {
-		if (!this.editor) return log.error("Editor not found");
+		if (!this.editor) return logger.error("Editor not found");
 
 		this.emitter.on("obsidian-active-leaf-changed", (payload) => {
 			if (payload?.view?.leaf?.id === this.leaf.id) {
@@ -189,6 +201,35 @@ export abstract class AbstractNoteView extends ItemView {
 			handleContextMenu(e, this.wrapper.virtualEditor.editMode)
 		);
 
+		this.scope.register(["Mod"], "w", async () => {
+			if (!this.masterNoteId) {
+				logger.error(
+					"invalid masterNoteId in HotSandboxNoteView.close()"
+				);
+				return;
+			}
+
+			const isLastView = this.funcs.isLastHotView(this.masterNoteId);
+			if (isLastView) {
+				const confirmed = await showConfirmModal(
+					this.app,
+					"Delete Sandbox",
+					"Are you sure you want to delete this sandbox?"
+				);
+				if (confirmed) {
+					this.emitter.emit("delete-requested", { view: this });
+					logger.debug(
+						`Deleting hot sandbox note content for group: ${this.masterNoteId}`
+					);
+					return;
+				}
+				// User cancelled, but the tab will still close.
+				// The data remains in the DB for the next session.
+				logger.debug(
+					`User cancelled deletion for hot sandbox note: ${this.masterNoteId}`
+				);
+			}
+		});
 		this.scope.register(["Mod"], "s", (e: KeyboardEvent) => {
 			const activeView = this.app.workspace.activeLeaf?.view;
 			if (activeView !== this || !this.editor?.hasFocus()) {
@@ -199,7 +240,7 @@ export abstract class AbstractNoteView extends ItemView {
 				// 変更
 				e.preventDefault();
 				e.stopPropagation();
-				log.debug("Saving note via Ctrl+S");
+				logger.debug("Saving note via Ctrl+S");
 				this.save();
 				return false; // Prevent default save action
 			}

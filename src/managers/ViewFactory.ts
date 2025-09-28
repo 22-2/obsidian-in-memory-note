@@ -22,7 +22,16 @@ export class ViewFactory implements Manager {
 					leaf,
 					this.plugin.emitter,
 					this.plugin.stateManager,
-					this.plugin.editorSyncManager
+					{
+						indexOfMasterId:
+							this.plugin.editorSyncManager.indexOfMasterId.bind(
+								this.plugin.editorSyncManager
+							),
+						isLastHotView:
+							this.plugin.editorSyncManager.isLastHotView.bind(
+								this.plugin.editorSyncManager
+							),
+					}
 				)
 		);
 	}

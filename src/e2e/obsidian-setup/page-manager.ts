@@ -107,6 +107,14 @@ export class PageManager {
 		});
 	}
 
+	waitForPage(page: Page): Promise<void> {
+		if (this.isStarterPage(page)) {
+			return this.waitForStarterReady(page);
+		} else {
+			return this.waitForVaultReady(page);
+		}
+	}
+
 	isStarterPage(page: Page): boolean {
 		return page.url().includes("starter");
 	}

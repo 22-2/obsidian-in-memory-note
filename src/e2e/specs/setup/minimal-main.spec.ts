@@ -69,13 +69,19 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		const { window: page } = vault;
 		const testContent = "Hello, Sandbox!";
 
-		// 1. Create a new sandbox note and input text
-		await createNewSandboxNote(page, testContent);
+		// 1. Create a new sandbox note
+		await createNewSandboxNote(page);
 
-		// 2. Verify the input text exists in the editor
-		expect(await getActiveEditorContent(page)).toBe(testContent);
+		// 2. Input text into the editor
+		await page.locator(ACTIVE_EDITOR_SELECTOR).focus();
+		await page.keyboard.type(testContent);
 
-		// 3. Verify that "*" appears in the tab title because the content is not empty (unsaved state)
+		// 3. Verify the input text exists in the editor
+		await expect(page.locator(ACTIVE_EDITOR_SELECTOR)).toHaveText(
+			testContent
+		);
+
+		// 4.Verify that "*" appears in the tab title *after* content is added.
 		await expect(page.locator(ACTIVE_TITLE_SELECTOR)).toHaveText(
 			"*Hot Sandbox-1"
 		);

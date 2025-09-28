@@ -16,12 +16,12 @@ test("sandbox test", async ({ vault }) => {
 	expect(await vault.window.evaluate(() => app.plugins.isEnabled())).toBe(
 		true
 	);
-	logger.debug(
+	expect(
 		await vault.window.evaluate(
 			(pluginId) => app.plugins.plugins[pluginId],
 			PLUGIN_ID
 		)
-	);
+	).toBeTruthy();
 });
 
 // カスタム設定

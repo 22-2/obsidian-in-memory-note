@@ -39,8 +39,8 @@ export class IPCBridge {
 		return this.send<true | string>("vault-open", vaultPath, createNew);
 	}
 
-	async openSandbox(): Promise<string> {
-		return this.send<string>("sandbox");
+	async openSandbox(): Promise<void> {
+		return void this.send<string>("sandbox");
 	}
 
 	async getSandboxPath(): Promise<string> {

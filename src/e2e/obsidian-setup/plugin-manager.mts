@@ -8,6 +8,7 @@ import {
 	existsSync,
 	readdirSync,
 	writeFileSync,
+	readFileSync,
 } from "fs";
 import path from "path";
 import type { ElectronApplication, Page } from "playwright";
@@ -43,8 +44,19 @@ export class PluginManager {
 				continue;
 			}
 
-			const pluginId = path.basename(pluginPath);
+			// --- 修正箇所 START ---
+			// manifest.jsonからプラグインIDを読み込む
+			const manifestPath = path.join(pluginPath, "manifest.json");
+			if (!existsSync(manifestPath)) {
+				console.warn(`manifest.json not found in: ${pluginPath}`);
+				continue;
+			}
+			const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+			const pluginId = manifest.id; // これが本当のプラグインID
+
+			// const pluginId = path.basename(pluginPath); // <-- 古いコードを削除
 			const destDir = path.join(pluginsDir, pluginId);
+			// --- 修正箇所 END ---
 
 			if (!existsSync(destDir)) {
 				mkdirSync(destDir, { recursive: true });
@@ -68,7 +80,41 @@ export class PluginManager {
 			"community-plugins.json"
 		);
 		writeFileSync(pluginsJsonPath, JSON.stringify(installedIds));
-		logger.debug(`Enabled plugins: ${installedIds.join(", ")}`);
+		logger.debug(`Installed plugins: ${installedIds.join(", ")}`);
+	}
+
+	public async enablePlugins(
+		app: ElectronApplication,
+		page: Page,
+		pluginPaths: string[]
+	): Promise<void> {
+		const pluginManager = new PluginManager();
+
+		// Restricted Mode を無効化
+		await pluginManager.disableRestrictedMode(page, app);
+
+		const pluginIds = pluginPaths.map((p) => {
+			const manifestPath = path.join(p, "manifest.json");
+			if (!existsSync(manifestPath)) {
+				throw new Error(`manifest.json not found in ${p}`);
+			}
+			const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+			return manifest.id;
+		});
+
+		const enabledIds = await page.evaluate(async (ids) => {
+			const app = (window as any).app;
+			const enabled: string[] = [];
+
+			for (const id of ids) {
+				await app.plugins.enablePluginAndSave(id);
+				enabled.push(id);
+			}
+
+			return enabled;
+		}, pluginIds);
+
+		logger.debug(`Enabled plugins: ${enabledIds.join(", ")}`);
 	}
 
 	async disableRestrictedMode(
@@ -160,21 +206,21 @@ export class PluginManager {
 		});
 	}
 
-	async enablePlugins(page: Page, pluginIds: string[]): Promise<void> {
-		const enabledIds = await page.evaluate(async (ids) => {
-			const app = (window as any).app;
-			const enabled: string[] = [];
+	// async enablePlugins(page: Page, pluginIds: string[]): Promise<void> {
+	// 	const enabledIds = await page.evaluate(async (ids) => {
+	// 		const app = (window as any).app;
+	// 		const enabled: string[] = [];
 
-			for (const id of ids) {
-				await app.plugins.enablePluginAndSave(id);
-				enabled.push(id);
-			}
+	// 		for (const id of ids) {
+	// 			await app.plugins.enablePluginAndSave(id);
+	// 			enabled.push(id);
+	// 		}
 
-			return enabled;
-		}, pluginIds);
+	// 		return enabled;
+	// 	}, pluginIds);
 
-		logger.debug(`Enabled plugins: ${enabledIds.join(", ")}`);
-	}
+	// 	logger.debug(`Enabled plugins: ${enabledIds.join(", ")}`);
+	// }
 
 	async checkIsCommunityPluginEnabled(page: Page): Promise<boolean> {
 		const isEnabled = await page.evaluate(() => app.plugins.isEnabled());

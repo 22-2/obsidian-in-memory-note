@@ -110,9 +110,9 @@ const context = await esbuild.context({
 							},
 							{
 								src: [
-									"./styles.css",
-									"./manifest.json",
-									"./main.js",
+									"./dist/styles.css",
+									"./dist/manifest.json",
+									"./dist/main.js",
 								],
 								dest:
 									path.join(

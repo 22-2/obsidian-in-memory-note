@@ -6,6 +6,10 @@ import type { Manager } from "./Manager";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import type { StateManager } from "./StateManager";
 import { uniqBy } from "src/utils";
+import { nanoid } from "nanoid";
+import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
+
+const logger = log.getLogger("EditorSyncManager");
 
 /** Manages shared content synchronization across views */
 export class EditorSyncManager implements Manager {
@@ -46,6 +50,8 @@ export class EditorSyncManager implements Manager {
 
 	private handleViewOpened = (payload: AppEvents["view-opened"]) => {
 		const { view } = payload;
+		logger.debug("handleViewOpened", view);
+		view.masterNoteId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
 		if (view instanceof HotSandboxNoteView) {
 			this.addHotActiveView(view);
 			if (view.masterNoteId) {
@@ -65,6 +71,7 @@ export class EditorSyncManager implements Manager {
 		payload: AppEvents["editor-content-changed"]
 	) => {
 		const { content, sourceView } = payload;
+		console.log("handleEditorContentChanged");
 
 		if (
 			sourceView instanceof HotSandboxNoteView &&
@@ -85,11 +92,15 @@ export class EditorSyncManager implements Manager {
 	}
 
 	refreshAllViewTitles() {
+		logger.debug("refreshAllViewTitles");
 		for (const viewSet of this.hotActiveViews.values()) {
+			logger.debug("viewSet", viewSet);
 			for (const view of viewSet) {
+				logger.debug("view", view);
 				view.leaf.updateHeader();
 			}
 		}
+		logger.debug("finish");
 	}
 
 	public getHotNoteContent(masterNoteId: string): string {
@@ -97,6 +108,7 @@ export class EditorSyncManager implements Manager {
 	}
 
 	public addHotActiveView(view: HotSandboxNoteView) {
+		logger.debug("addHotActiveView", view);
 		if (!view.masterNoteId) return;
 		const { masterNoteId } = view;
 		if (!this.hotActiveViews.has(masterNoteId)) {
@@ -150,7 +162,6 @@ export class EditorSyncManager implements Manager {
 			if (view !== sourceView) {
 				view.setContent(content);
 			}
-			view.leaf.updateHeader();
 		}
 	}
 

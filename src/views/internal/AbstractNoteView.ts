@@ -68,13 +68,6 @@ export abstract class AbstractNoteView extends ItemView {
 			},
 		};
 
-		if (this.masterNoteId) {
-			state.state.masterNoteId = this.masterNoteId;
-		} else {
-			log.error("masterNoteId not found in state, creating new one.");
-			state.state.masterNoteId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
-		}
-
 		state.state.content = this.editor.getValue();
 		state.source = this.isSourceMode;
 		return state;

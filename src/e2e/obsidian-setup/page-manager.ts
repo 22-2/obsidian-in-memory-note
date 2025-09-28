@@ -12,7 +12,7 @@ export class PageManager {
 	constructor(private app: ElectronApplication) {}
 
 	async ensureSingleWindow() {
-		logger.trace("ensureSingleWindow");
+		logger.debug("ensureSingleWindow");
 		const windows = this.app.windows();
 		logger.debug(`${windows.length} opend`);
 		if (windows.length === 0) {

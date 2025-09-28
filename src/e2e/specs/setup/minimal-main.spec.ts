@@ -7,10 +7,11 @@ import { DIST_DIR } from "../../config";
 import { VIEW_TYPE_HOT_SANDBOX } from "../../../utils/constants";
 
 // --- Constants Definition ---
-const SANDBOX_VIEW_SELECTOR = `.workspace-leaf-content[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`;
+const ACTIVE_SANDBOX_VIEW_SELECTOR = `.workspace-leaf.mod-active > .workspace-leaf-content[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`;
 const ACTIVE_LEAF_SELECTOR = ".workspace-leaf.mod-active";
 const ACTIVE_EDITOR_SELECTOR = `${ACTIVE_LEAF_SELECTOR} .cm-content`;
-const ACTIVE_TITLE_SELECTOR = `${ACTIVE_LEAF_SELECTOR} .view-header-title`;
+const ACTIVE_TITLE_SELECTOR = `${ACTIVE_LEAF_SELECTOR} > .workspace-leaf-content > .view-header .view-header-title`;
+const ACTIVE_SANDBOX_TITLE_SELECTOR = `${ACTIVE_SANDBOX_VIEW_SELECTOR} > .view-header .view-actions`;
 
 // --- Test Configuration ---
 // For this test suite, we use a sandbox Vault with the plugin enabled.
@@ -31,7 +32,9 @@ test.use({
  */
 async function createNewSandboxNote(page: Page, content?: string) {
 	await runCommand(page, "Open new hot sandbox note");
-	await expect(page.locator(SANDBOX_VIEW_SELECTOR).last()).toBeVisible();
+	await expect(
+		page.locator(ACTIVE_SANDBOX_VIEW_SELECTOR).last()
+	).toBeVisible();
 	if (content) {
 		await page.locator(ACTIVE_EDITOR_SELECTOR).focus();
 		await page.keyboard.type(content);
@@ -46,13 +49,12 @@ async function createNewSandboxNote(page: Page, content?: string) {
  */
 async function getActiveEditorContent(page: Page): Promise<string> {
 	return await page.evaluate(
-		(VIEW_TYPE_HOT_SANDBOX) => {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		([VIEW_TYPE_HOT_SANDBOX]) => {
 			const activeView = (window as any).app.workspace.activeLeaf.view;
 			if (activeView.getViewType() === VIEW_TYPE_HOT_SANDBOX) {
 				return activeView.editor.getValue();
 			}
-			return "";
+			throw new Error("failed to get active editor");
 		},
 		[VIEW_TYPE_HOT_SANDBOX]
 	);
@@ -89,11 +91,17 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		// 2. Split the screen vertically
 		await page
-			.locator(
-				`${ACTIVE_LEAF_SELECTOR} .view-actions [aria-label="Split vertically"]`
-			)
+			.locator(`${ACTIVE_SANDBOX_TITLE_SELECTOR} .view-actions`)
 			.click();
-		await expect(page.locator(SANDBOX_VIEW_SELECTOR)).toHaveCount(2);
+		await page
+			.locator(`.menu`)
+			.getByText("Split down", { exact: true })
+			.click();
+		await expect(
+			page.locator(
+				ACTIVE_SANDBOX_VIEW_SELECTOR.replace(".mod-active", "")
+			)
+		).toHaveCount(2);
 
 		// 3. Verify the new (right) pane after splitting has the same content
 		const rightPaneEditor = page.locator(ACTIVE_EDITOR_SELECTOR);
@@ -118,16 +126,16 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		// 1. Create the first note group
 		await createNewSandboxNote(page, note1Content);
-		await expect(page.locator(ACTIVE_TITLE_SELECTOR)).toHaveText(
+		await expect(page.locator(ACTIVE_SANDBOX_TITLE_SELECTOR)).toHaveText(
 			"*Hot Sandbox-1"
 		);
 
 		// 2. Create a second, independent note group
 		await createNewSandboxNote(page, note2Content);
-		await expect(page.locator(ACTIVE_TITLE_SELECTOR)).toHaveText(
+		await expect(page.locator(ACTIVE_SANDBOX_TITLE_SELECTOR)).toHaveText(
 			"*Hot Sandbox-2"
 		);
-		await expect(page.locator(SANDBOX_VIEW_SELECTOR)).toHaveCount(2);
+		await expect(page.locator(ACTIVE_SANDBOX_VIEW_SELECTOR)).toHaveCount(2);
 
 		// 3. Verify the content of the second note is correct (currently active)
 		expect(await getActiveEditorContent(page)).toBe(note2Content);
@@ -151,11 +159,13 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await runCommand(page, "Convert to file");
 
 		// 3. Verify the sandbox note view is closed
-		await expect(page.locator(SANDBOX_VIEW_SELECTOR)).not.toBeVisible();
+		await expect(
+			page.locator(ACTIVE_SANDBOX_VIEW_SELECTOR)
+		).not.toBeVisible();
 
 		// 4. Verify a new Markdown file tab is opened
 		await expect(
-			page.locator(`${ACTIVE_LEAF_SELECTOR}[data-type="markdown"]`)
+			page.locator(`${ACTIVE_LEAF_SELECTOR} [data-type="markdown"]`)
 		).toBeVisible();
 
 		// 5. Verify the newly opened file name and content are correct

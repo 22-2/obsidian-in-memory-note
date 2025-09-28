@@ -137,18 +137,26 @@ export class VaultManager {
 		const [win] = [page ?? electronApp.windows()[0]];
 		if (win) {
 			logger.log(chalk.magenta("clearing..."));
-			await win.evaluate(async () => {
+			const success = await win.evaluate(async () => {
 				const webContents =
 					// @ts-expect-error
 					window.electron.remote.BrowserWindow.getFocusedWindow()
-						.webContents as WebContents;
+						?.webContents as WebContents;
+				if (!webContents) {
+					return false;
+				}
 				webContents.session.flushStorageData();
 				await webContents.session.clearStorageData({
 					storages: ["indexdb", "localstorage", "websql"],
 				});
 				await webContents.session.clearCache();
+				return true;
 			});
-			logger.log(chalk.magenta("localStorage cleared."));
+			if (success) {
+				logger.log(chalk.magenta("localStorage cleared."));
+			} else {
+				logger.log(chalk.red("failed to clear localStorage"));
+			}
 		} else {
 			logger.log(chalk.red("window not found"));
 		}

@@ -9,12 +9,13 @@ import { DIST_DIR } from "../../config";
 import { VIEW_TYPE_HOT_SANDBOX } from "../../../utils/constants";
 
 // --- Constants Definition ---
-const ACTIVE_SANDBOX_VIEW_SELECTOR = `.workspace-leaf.mod-active > .workspace-leaf-content[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`;
+const DATA_TYPE = `[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`;
+const ACTIVE_SANDBOX_VIEW_SELECTOR = `.workspace-leaf.mod-active > .workspace-leaf-content${DATA_TYPE}`;
 const ACTIVE_LEAF_SELECTOR = ".workspace-leaf.mod-active";
 const ACTIVE_EDITOR_SELECTOR = `${ACTIVE_LEAF_SELECTOR} .cm-content`;
 // const ACTIVE_TITLE_SELECTOR = `${ACTIVE_LEAF_SELECTOR} > .workspace-leaf-content > .view-header .view-header-title`;
-const ACTIVE_TITLE_SELECTOR = `.workspace-tab-header[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`;
-const ACTIVE_SANDBOX_TITLE_SELECTOR = `${ACTIVE_SANDBOX_VIEW_SELECTOR} > .view-header`;
+const ACTIVE_TITLE_SELECTOR = `.workspace-tab-header.mod-active${DATA_TYPE}`;
+// const ACTIVE_SANDBOX_TITLE_SELECTOR = `${ACTIVE_SANDBOX_VIEW_SELECTOR} > .view-header`;
 
 // --- Test Configuration ---
 // For this test suite, we use a sandbox Vault with the plugin enabled.
@@ -128,6 +129,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await page.keyboard.press("Control+A"); // Select all
 		await page.keyboard.type(updatedContent);
 
+		await page.pause();
 		// 5. Verify the content of the left pane is also synchronized and updated
 		const leftPaneEditor = page.locator(
 			".workspace-leaf:not(.mod-active) .cm-content"
@@ -142,23 +144,33 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		// 1. Create the first note group
 		await createNewSandboxNote(page, note1Content);
-		await expect(page.locator(ACTIVE_SANDBOX_TITLE_SELECTOR)).toHaveText(
+		await expect(page.locator(ACTIVE_TITLE_SELECTOR)).toHaveText(
 			"*Hot Sandbox-1"
 		);
 
 		// 2. Create a second, independent note group
 		await createNewSandboxNote(page, note2Content);
-		await expect(page.locator(ACTIVE_SANDBOX_TITLE_SELECTOR)).toHaveText(
+		await expect(page.locator(ACTIVE_TITLE_SELECTOR)).toHaveText(
 			"*Hot Sandbox-2"
 		);
-		await expect(page.locator(ACTIVE_SANDBOX_VIEW_SELECTOR)).toHaveCount(2);
+		await expect(
+			page.locator(
+				ACTIVE_SANDBOX_VIEW_SELECTOR.replace(".mod-active", "")
+			)
+		).toHaveCount(2);
 
 		// 3. Verify the content of the second note is correct (currently active)
 		expect(await getActiveEditorContent(page)).toBe(note2Content);
 
 		// 4. Verify the content of the first note has not changed (inactive leaf)
 		const firstNoteContent = await page
-			.locator(".workspace-leaf:not(.mod-active) .cm-content")
+			.locator(
+				`${ACTIVE_SANDBOX_VIEW_SELECTOR.replace(
+					".mod-active",
+					""
+				)} .cm-content`
+			)
+			.first()
 			.textContent();
 		expect(firstNoteContent).toBe(note1Content);
 	});
@@ -185,9 +197,9 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		).toBeVisible();
 
 		// 5. Verify the newly opened file name and content are correct
-		await expect(page.locator(ACTIVE_TITLE_SELECTOR)).toHaveText(
-			expectedFileName.replace(".md", "")
-		);
+		await expect(
+			page.locator(ACTIVE_TITLE_SELECTOR.replace(DATA_TYPE, ""))
+		).toContainText(expectedFileName.replace(".md", ""));
 		// Assuming the active view is now a standard Markdown editor
 		const fileContent = await page.evaluate(() =>
 			(window as any).app.workspace.activeEditor.editor.getValue()

@@ -46,3 +46,4 @@ e2e-vault/.obsidian/**/*
 !e2e-vault/.obsidian/workspace.initial.json
 !e2e-vault/.obsidian/workspace.json
 .obsidian-unpacked/obsidian.asar
+.obsidian-unpacked/main.cjs

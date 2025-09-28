@@ -150,6 +150,18 @@ unpack_obsidian_assets() {
 
     pnpm exec asar extract "${APP_ASAR_PATH}" "${OBSIDIAN_UNPACKED_PATH}"
 
+    # Rename main.js to main.cjs to treat it as a CommonJS module
+    local main_js_path="${OBSIDIAN_UNPACKED_PATH}/main.js"
+    local main_cjs_path="${OBSIDIAN_UNPACKED_PATH}/main.cjs"
+    if [[ -f "$main_js_path" ]]; then
+        log_info "Renaming main.js to main.cjs..."
+        mv "$main_js_path" "$main_cjs_path"
+        log_success "Renaming completed."
+    else
+        log_warning "Warning: main.js not found after extraction. Skipping rename."
+    fi
+    # --- 変更点 END ---
+
     # Copy obsidian.asar if it exists
     if [[ -f "$OBSIDIAN_ASAR_PATH" ]]; then
         log_info "Copying ${OBSIDIAN_ASAR_PATH} to ${OBSIDIAN_UNPACKED_PATH}/"

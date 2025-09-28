@@ -1,5 +1,4 @@
 import { type SandboxNotePluginData, type PluginSettings } from "../settings";
-import manifest from "../../manifest.json";
 
 export const DEFAULT_SETTINGS: PluginSettings = {
 	enableLogger: false,
@@ -15,7 +14,7 @@ export const DEFAULT_PLUGIN_DATA: SandboxNotePluginData = {
 	},
 };
 
-export const APP_NAME = manifest.name || "SandboxNote";
+export const APP_NAME = "HotSandboxNote";
 export const VIEW_TYPE_HOT_SANDBOX = "hot-sandbox-note-view";
 export const HOT_SANDBOX_NOTE_ICON = "flame";
 

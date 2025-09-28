@@ -1,4 +1,7 @@
 import "../../log-setup.mts";
+import type SandboxPlugin from "../../../main";
+import * as constants from "../../../utils/constants";
+const { VIEW_TYPE_HOT_SANDBOX } = constants;
 // ===================================================================
 // 8. Example Test (example.test.mts)
 // ===================================================================
@@ -16,12 +19,18 @@ test("sandbox test", async ({ vault }) => {
 	expect(await vault.window.evaluate(() => app.plugins.isEnabled())).toBe(
 		true
 	);
+	const pluginHandle = await vault.window.evaluateHandle(
+		(pluginId) => {
+			return app.plugins.plugins[pluginId as any] as SandboxPlugin;
+		},
+		[PLUGIN_ID]
+	);
+
+	expect(pluginHandle.asElement() !== null).toBeTruthy();
+	await pluginHandle.evaluate((plugin) => plugin.activateNewHotSandboxView());
 	expect(
-		await vault.window.evaluate(
-			(pluginId) => app.plugins.plugins[pluginId],
-			PLUGIN_ID
-		)
-	).toBeTruthy();
+		vault.window.locator(`[data-type="${VIEW_TYPE_HOT_SANDBOX}]`)
+	).toBeVisible();
 });
 
 // カスタム設定

@@ -1,6 +1,7 @@
 {
 	"name": "obsidian-sandbox-note",
 	"version": "2.5.0",
+	"type": "module",
 	"description": "A minimal sandbox note-taking plugin for Obsidian.",
 	"main": "main.js",
 	"scripts": {

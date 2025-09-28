@@ -2,6 +2,7 @@ import type SandboxNotePlugin from "src/main";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import { activateView } from "src/utils/obsidian";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
+import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 import type { Manager } from "./Manager";
 
 /** Manages registration and activation of custom views */
@@ -41,7 +42,7 @@ export class ViewFactory implements Manager {
 	 * @param type The view type to activate.
 	 */
 	private async activateAbstractView(type: string, state?: any) {
-		const leaf = await activateView(this.plugin.app, {
+		const leaf = await activateView<AbstractNoteView>(this.plugin.app, {
 			type,
 			active: true,
 			state,

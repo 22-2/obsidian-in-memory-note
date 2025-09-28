@@ -34,6 +34,8 @@ export default class SandboxNotePlugin extends Plugin {
 	async onload() {
 		if (!DEBUG_MODE) {
 			overwriteLogLevel();
+		} else {
+			logger.debug("BUILT_AT", process.env.BUILT_AT);
 		}
 
 		this.initializeManagers();
@@ -163,10 +165,10 @@ export default class SandboxNotePlugin extends Plugin {
 		const settings = this.stateManager?.getSettings();
 		if (settings) {
 			settings.enableLogger
-				? log.setLevel("debug")
-				: log.setLevel("warn");
+				? logger.setLevel("debug")
+				: logger.setLevel("warn");
 		} else {
-			log.setLevel("warn");
+			logger.setLevel("warn");
 		}
 		logger.debug("Logger initialized");
 	}

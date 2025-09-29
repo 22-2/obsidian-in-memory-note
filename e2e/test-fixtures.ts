@@ -2,10 +2,10 @@
 // test-fixtures.mts - Playwrightテストフィクスチャ
 // ===================================================================
 
-import { ObsidianTestSetup, type TestContext } from "./obsidian-setup/setup";
-import type { VaultOptions } from "./obsidian-setup/vault-manager";
 import { test as base } from "@playwright/test";
 import log from "loglevel";
+import { ObsidianTestSetup, type TestContext } from "./obsidian-setup/setup";
+import type { VaultOptions } from "./obsidian-setup/vault-manager";
 
 type TestFixtures = {
 	obsidianSetup: ObsidianTestSetup;
@@ -46,6 +46,16 @@ export const test = base.extend<TestFixtures>({
 		const context = vaultOptions.useSandbox
 			? await obsidianSetup.openSandbox(vaultOptions)
 			: await obsidianSetup.openVault(vaultOptions);
+		const notices = await context.window
+			.locator(".notice-container .notice")
+			.all();
+
+		logger.debug("remove all notices");
+		await Promise.all(
+			notices.map(async (notice) => {
+				await notice.click();
+			})
+		);
 		logger.debug("enter test");
 		await use(context);
 		logger.debug("done");

@@ -3,10 +3,10 @@ import "../../log-setup";
 // src/e2e/specs/main-features.spec.ts
 
 import type { Page } from "@playwright/test";
-import { expect, test } from "../../test-fixtures";
-import { runCommand } from "../../obsidian-commands/run-command";
-import { DIST_DIR } from "../../config";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
+import { DIST_DIR } from "../../config";
+import { runCommand } from "../../obsidian-commands/run-command";
+import { expect, test } from "../../test-fixtures";
 
 // --- Constants Definition ---
 const DATA_TYPE = `[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`;
@@ -101,15 +101,26 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await createNewSandboxNote(page, initialContent);
 
 		// 2. Split the screen vertically
-		// await page
-		// 	.locator(
-		// 		".workspace-leaf.mod-active > div > div > .view-actions button:not(.mod-bookmark)"
-		// 	)
-		// 	.click();
-		await page.evaluate(() =>
-			// @ts-expect-error
-			app.workspace.activeLeaf.view.moreOptionsButtonEl.click()
+		console.log(
+			await page
+				.locator(
+					`.workspace-leaf.mod-active > div > div > .view-actions button[aria-label="More options"]`
+				)
+				.isVisible()
 		);
+		console.log(
+			await page
+				.locator(
+					`.workspace-leaf.mod-active > div > div > .view-actions button[aria-label="More options"]`
+				)
+				.click()
+		);
+		await page.pause();
+
+		// await page.evaluate(() =>
+		// 	// @ts-expect-error
+		// 	app.workspace.activeLeaf.view.moreOptionsButtonEl.click()
+		// );
 		await page
 			.locator(`.menu`)
 			.getByText("Split right", { exact: true })

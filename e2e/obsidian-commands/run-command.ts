@@ -1,3 +1,4 @@
+import { expect } from "@playwright/test";
 import log from "loglevel";
 import type { Page } from "playwright";
 

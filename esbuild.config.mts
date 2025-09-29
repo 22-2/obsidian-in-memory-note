@@ -24,7 +24,6 @@ export type CopyPluginOptions = {
 const mode = process.argv[2];
 const prod = mode === "production";
 const e2e = mode === "e2e";
-const e2eDev = mode === "e2e-dev";
 
 const copyOpts = {
 	opts: [
@@ -72,7 +71,7 @@ const context = await esbuild.context({
 				.replace(/[\\/:*?"<>|\s.]/g, "-")
 		),
 	},
-	plugins: e2eDev || e2e ? [copyPlugin(copyOpts)] : [],
+	plugins: [copyPlugin(copyOpts)],
 	entryPoints: ["src/main.ts"],
 	bundle: true,
 	external: [

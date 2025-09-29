@@ -7,20 +7,23 @@ import type { IManager } from "./IManager";
 
 const logger = log.getLogger("HotSandboxManager");
 
-type MinimalDBAPI = {
-	getAllSandboxes: DatabaseManager["getAllSandboxes"];
+type Context = {
+	// getAllSandboxes: DatabaseManager["getAllSandboxes"];
+	emitter: EventEmitter<AppEvents>;
+	getDbManager: () => {
+		getAllSandboxes: DatabaseManager["getAllSandboxes"];
+	};
 };
 
 export class CacheManager implements IManager {
 	private sandboxNotes = new Map<string, HotSandboxNoteData>();
 
-	constructor(
-		emitter: EventEmitter<AppEvents>,
-		private context: MinimalDBAPI
-	) {}
+	constructor(private context: Context) {}
 
 	async load(): Promise<void> {
-		const allSandboxes = await this.context.getAllSandboxes();
+		const allSandboxes = await this.context
+			.getDbManager()
+			.getAllSandboxes();
 		allSandboxes.forEach((note) => {
 			this.sandboxNotes.set(note.id, note);
 		});

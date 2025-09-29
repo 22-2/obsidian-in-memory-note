@@ -1,9 +1,11 @@
 import log from "loglevel";
+import type { WorkspaceLeaf } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
 import type SandboxNotePlugin from "src/main";
 import { DatabaseManager } from "src/managers/DatabaseManager";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
+import invariant from "tiny-invariant";
 import { CacheManager } from "./CacheManager";
 import { CodeMirrorExtensionManager } from "./CodeMirrorExtensionManager";
 import { DatabaseAPI } from "./DatabaseAPI";
@@ -16,181 +18,226 @@ import { ViewManager } from "./ViewManager";
 
 const logger = log.getLogger("AppOrchestrator");
 
+// 型名を短くするためのエイリアス
+type ManagerName =
+	| "settingsManager"
+	| "cacheManager"
+	| "pluginEventManager"
+	| "editorSyncManager"
+	| "cmExtensionManager"
+	| "viewManager"
+	| "obsidianEventManager"
+	| "dbManager";
+
+const managerNames: ManagerName[] = [
+	// ロード順序が重要な場合はここにその順序で並べる
+	"settingsManager",
+	"cacheManager",
+	"dbManager",
+	"viewManager",
+	"editorSyncManager",
+	"cmExtensionManager",
+	"pluginEventManager",
+	"obsidianEventManager",
+];
+
 /**
- * Manages the lifecycle and coordination of all sub-managers.
+ * DIコンテナとして機能し、マネージャーのライフサイクルと依存関係を管理します。
  */
 export class AppOrchestrator implements IManager {
 	protected plugin: SandboxNotePlugin;
 	protected emitter: EventEmitter<AppEvents>;
 
-	// Sub-managers
-	protected settingsManager: SettingsManager;
-	protected cacheManager: CacheManager;
-	protected pluginEventManager: PluginEventManager;
-	protected editorSyncManager: EditorSyncManager;
-	protected cmExtensionManager: CodeMirrorExtensionManager;
-	protected viewManager: ViewManager;
-	protected obsidianEventManager: ObsidianEventManager;
-	protected databaseAPI!: DatabaseAPI;
-	protected dbManager!: DatabaseManager;
-
-	private subManagers: IManager[] = [];
+	// 生成したインスタンスをキャッシュするMap
+	private instances = new Map<ManagerName, IManager>();
+	// 各マネージャーを生成するためのファクトリメソッドを登録するMap
+	private factories = new Map<ManagerName, () => IManager>();
+	private dbAPI: DatabaseAPI;
 
 	constructor(plugin: SandboxNotePlugin, emitter: EventEmitter<AppEvents>) {
 		this.plugin = plugin;
 		this.emitter = emitter;
-		this.databaseAPI = new DatabaseAPI();
+		this.dbAPI = new DatabaseAPI();
 
-		// --- Initialize all managers here ---
-		this.cacheManager = new CacheManager(emitter, this.databaseAPI); // 順番
-		this.settingsManager = new SettingsManager({
-			emitter,
-			loadData: plugin.loadData.bind(plugin),
-			saveData: plugin.saveData.bind(plugin),
-		});
-		this.viewManager = new ViewManager({
-			registerView: (type, viewCreator) =>
-				plugin.registerView(type, viewCreator),
-			createView: (leaf) =>
-				new HotSandboxNoteView(leaf, {
+		// ここで各マネージャーの「作り方」を登録する。インスタンス化はしない！
+		this.registerFactories();
+	}
+
+	/**
+	 * 指定された名前のマネージャーインスタンスを取得します。
+	 * インスタンスがなければファクトリを使って生成し、キャッシュします。
+	 */
+	public get<T extends IManager>(name: ManagerName): T {
+		if (!this.instances.has(name)) {
+			const factory = this.factories.get(name);
+			if (!factory) {
+				throw new Error(`No factory registered for ${name}`);
+			}
+			this.instances.set(name, factory());
+		}
+		return this.instances.get(name) as T;
+	}
+
+	private registerFactories(): void {
+		this.factories.set(
+			"settingsManager",
+			() =>
+				new SettingsManager({
 					emitter: this.emitter,
-					getSettings: this.settingsManager.getSettings.bind(
-						this.settingsManager
-					),
-					indexOfMasterId: this.viewManager.indexOfMasterId.bind(
-						this.viewManager
-					),
-					isLastHotView: this.viewManager.isLastHotView.bind(
-						this.viewManager
-					),
-				}),
-			getLeaf: (type) => plugin.app.workspace.getLeaf(type),
-			detachLeavesOfType: (type) =>
-				plugin.app.workspace.detachLeavesOfType(type),
-			getActiveViewOfType: (type) =>
-				plugin.app.workspace.getActiveViewOfType(type),
-			getLeavesOfType: (type: string) =>
-				plugin.app.workspace.getLeavesOfType(type),
-			getAllNotes: this.cacheManager.getAllSandboxes.bind(
-				this.cacheManager
-			),
-		});
-		this.dbManager = new DatabaseManager({
-			dbAPI: this.databaseAPI,
-			cache: {
-				get: this.cacheManager.get.bind(this.cacheManager),
-				set: this.cacheManager.updateNoteContent.bind(
-					this.cacheManager
-				),
-				delete: this.cacheManager.delete.bind(this.cacheManager),
-			},
-			emitter,
-			getAllHotSandboxViews: this.viewManager.getAllViews.bind(
-				this.viewManager
-			),
-		});
-		this.editorSyncManager = new EditorSyncManager({
-			emitter: this.emitter,
-			getAllHotSandboxViews: this.viewManager.getAllViews.bind(
-				this.viewManager
-			),
-			getAllNotes: this.cacheManager.getAllSandboxes.bind(
-				this.cacheManager
-			),
-			registerNewNote: this.cacheManager.registerNewNote.bind(
-				this.cacheManager
-			),
-			getNoteContent: this.cacheManager.getNoteContent.bind(
-				this.cacheManager
-			),
-			getActiveView: this.viewManager.getActiveView.bind(
-				this.viewManager
-			),
-			workspace: this.plugin.app.workspace as never,
-		});
-		this.cmExtensionManager = new CodeMirrorExtensionManager({
-			emitter: this.emitter,
-			plugin: this.plugin,
-		});
-		this.pluginEventManager = new PluginEventManager({
-			applyLogger: plugin.applyLogger.bind(plugin),
-			cache: this.cacheManager,
-			emitter,
-			settings: this.settingsManager,
-			connectEditorPluginToView: (leaf) => {
-				this.cmExtensionManager.connectEditorPluginToView(leaf);
-			},
-			saveSandbox: this.dbManager.debouncedSaveSandboxes.bind(
-				this.dbManager
-			),
-			clearAllDeadSandboxes: this.dbManager.clearAllDeadSandboxes.bind(
-				this.dbManager
-			),
-			getAllViews: this.viewManager.getAllViews.bind(this.viewManager),
-		});
-		this.obsidianEventManager = new ObsidianEventManager(
-			{
-				getActiveView: this.viewManager.getActiveView.bind(
-					this.viewManager
-				),
-				workspaceEvents: plugin.app.workspace,
-			},
-			emitter
+					loadData: this.plugin.loadData.bind(this.plugin),
+					saveData: this.plugin.saveData.bind(this.plugin),
+				})
 		);
 
-		this.subManagers.push(
-			this.editorSyncManager,
-			this.cmExtensionManager,
-			this.viewManager,
-			this.obsidianEventManager,
-			this.cacheManager,
-			this.settingsManager,
-			this.pluginEventManager
+		this.factories.set(
+			"cacheManager",
+			() =>
+				new CacheManager({
+					emitter: this.emitter,
+					getDbManager: () => this.get<DatabaseManager>("dbManager"),
+				})
 		);
+
+		this.factories.set("dbManager", () => {
+			const cacheManager = this.get<CacheManager>("cacheManager");
+			return new DatabaseManager({
+				dbAPI: this.dbAPI,
+				cache: {
+					get: (noteId: string) => cacheManager.get(noteId),
+					set: (noteId: string, content: string) =>
+						cacheManager.updateNoteContent(noteId, content),
+					delete: (noteId: string) => cacheManager.delete(noteId),
+				},
+				emitter: this.emitter,
+				getAllHotSandboxViews: () =>
+					this.get<ViewManager>("viewManager").getAllViews(),
+			});
+		});
+
+		this.factories.set("viewManager", () => {
+			const settingsManager =
+				this.get<SettingsManager>("settingsManager");
+			const cacheManager = this.get<CacheManager>("cacheManager");
+			const viewManager = new ViewManager({
+				registerView: (type, viewCreator) =>
+					this.plugin.registerView(type, viewCreator),
+				createView: (leaf: WorkspaceLeaf): HotSandboxNoteView =>
+					new HotSandboxNoteView(leaf, {
+						emitter: this.emitter,
+						getSettings: () => settingsManager.getSettings(),
+						indexOfMasterId: (id: string) =>
+							viewManager.indexOfMasterId(id),
+						isLastHotView: (id: string) =>
+							viewManager.isLastHotView(id),
+					}),
+				getLeaf: (type) => this.plugin.app.workspace.getLeaf(type),
+				detachLeavesOfType: (type) =>
+					this.plugin.app.workspace.detachLeavesOfType(type),
+				getActiveViewOfType: (type) =>
+					this.plugin.app.workspace.getActiveViewOfType(type),
+				getLeavesOfType: (type: string) =>
+					this.plugin.app.workspace.getLeavesOfType(type),
+				getAllNotes: () => cacheManager.getAllSandboxes(),
+			});
+			return viewManager;
+		});
+
+		this.factories.set("editorSyncManager", () => {
+			const viewManager = this.get<ViewManager>("viewManager");
+			const cacheManager = this.get<CacheManager>("cacheManager");
+			return new EditorSyncManager({
+				emitter: this.emitter,
+				getAllHotSandboxViews: () => viewManager.getAllViews(),
+				getAllNotes: () => cacheManager.getAllSandboxes(),
+				registerNewNote: (note) => cacheManager.registerNewNote(note),
+				getNoteContent: (noteId) => cacheManager.getNoteContent(noteId),
+				getActiveView: () => viewManager.getActiveView(),
+				workspace: this.plugin.app.workspace as never,
+			});
+		});
+
+		this.factories.set(
+			"cmExtensionManager",
+			() =>
+				new CodeMirrorExtensionManager({
+					emitter: this.emitter,
+					plugin: this.plugin,
+				})
+		);
+
+		this.factories.set("pluginEventManager", () => {
+			const dbManager = this.get<DatabaseManager>("dbManager");
+			return new PluginEventManager({
+				applyLogger: this.plugin.applyLogger.bind(this.plugin),
+				cache: this.get<CacheManager>("cacheManager"),
+				emitter: this.emitter,
+				settings: this.get<SettingsManager>("settingsManager"),
+				connectEditorPluginToView: (leaf) => {
+					this.get<CodeMirrorExtensionManager>(
+						"cmExtensionManager"
+					).connectEditorPluginToView(leaf);
+				},
+				saveSandbox: (...args) =>
+					dbManager.debouncedSaveSandboxes(...args),
+				clearAllDeadSandboxes: () => dbManager.clearAllDeadSandboxes(),
+				getAllViews: () =>
+					this.get<ViewManager>("viewManager").getAllViews(),
+			});
+		});
+
+		this.factories.set("obsidianEventManager", () => {
+			const viewManager = this.get<ViewManager>("viewManager");
+			return new ObsidianEventManager(
+				{
+					getActiveView: () => viewManager.getActiveView(),
+					workspaceEvents: this.plugin.app.workspace,
+				},
+				this.emitter
+			);
+		});
 	}
 
 	async load(): Promise<void> {
-		for (const manager of this.subManagers) {
-			manager.load();
+		for (const name of managerNames) {
+			const manager = this.get<IManager>(name);
+			invariant(manager?.load, `No load method for ${name}`);
+			await manager.load();
 		}
-
 		logger.debug(
 			"AppOrchestrator and all sub-managers loaded successfully."
 		);
 	}
 
 	unload(): void {
-		// Unload in reverse order of loading
-		for (const manager of [...this.subManagers].reverse()) {
+		for (const name of managerNames) {
+			const manager = this.instances.get(name) as IManager | undefined;
+			invariant(manager?.unload, `No unload method for ${name}`);
 			manager.unload();
 		}
-
 		logger.debug(
 			"AppOrchestrator and all sub-managers unloaded successfully."
 		);
 	}
 
 	// --- Delegated Methods ---
-
+	// 外部に公開したい機能は、コンテナ経由で取得して呼び出す
 	getActiveView() {
-		return this.viewManager.getActiveView();
+		return this.get<ViewManager>("viewManager").getActiveView();
 	}
-
 	getAllView() {
-		return this.viewManager.getAllViews();
+		return this.get<ViewManager>("viewManager").getAllViews();
 	}
-
 	activateView() {
-		return this.viewManager.activateView();
+		return this.get<ViewManager>("viewManager").activateView();
 	}
-
 	getSettings() {
-		return this.settingsManager.getSettings();
+		return this.get<SettingsManager>("settingsManager").getSettings();
 	}
-
 	async updateSettings(
 		settings: Parameters<SettingsManager["updateSettingsAndSave"]>[0]
 	) {
-		await this.settingsManager.updateSettingsAndSave(settings);
+		await this.get<SettingsManager>(
+			"settingsManager"
+		).updateSettingsAndSave(settings);
 	}
 }

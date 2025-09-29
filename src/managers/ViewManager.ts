@@ -1,4 +1,4 @@
-import type { Plugin, Workspace, WorkspaceLeaf } from "obsidian";
+import type { Plugin, Workspace } from "obsidian";
 import { uniqBy } from "src/utils";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import { activateView } from "src/utils/obsidian";
@@ -14,7 +14,7 @@ type Context = {
 	getLeavesOfType: Workspace["getLeavesOfType"];
 	getActiveViewOfType: Workspace["getActiveViewOfType"];
 	getAllNotes: CacheManager["getAllSandboxes"];
-	createView: (leaf: WorkspaceLeaf) => AbstractNoteView;
+	createView: Parameters<Plugin["registerView"]>[1];
 };
 
 /** Manages registration and activation of custom views */

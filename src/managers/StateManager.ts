@@ -32,7 +32,7 @@ export class StateManager implements Manager {
 	constructor(
 		plugin: SandboxNotePlugin,
 		emitter: EventEmitter<AppEvents>,
-		databaseManager: DatabaseAPI
+		databaseAPI: DatabaseAPI
 	) {
 		this.plugin = plugin;
 		this.emitter = emitter;
@@ -44,10 +44,7 @@ export class StateManager implements Manager {
 			DEFAULT_PLUGIN_DATA.settings
 		);
 
-		this.hotSandboxManager = new HotSandboxManager(
-			emitter,
-			databaseManager
-		);
+		this.hotSandboxManager = new HotSandboxManager(emitter, databaseAPI);
 
 		this.eventManager = new AppEventManager(
 			emitter,

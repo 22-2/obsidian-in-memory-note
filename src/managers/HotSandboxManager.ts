@@ -146,5 +146,6 @@ export class HotSandboxManager {
 	cleanup(): void {
 		this.debouncedSaveFns.clear();
 		this.hotNotes.clear();
+		this.databaseAPI.close();
 	}
 }

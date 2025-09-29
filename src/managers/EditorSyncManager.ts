@@ -6,14 +6,14 @@ import type { EventEmitter } from "src/utils/EventEmitter";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import type { AppOrchestrator } from "./AppOrchestrator";
 import type { Manager } from "./Manager";
-import type { ViewFactory } from "./ViewFactory";
+import type { ViewManager } from "./ViewManager";
 import type { CacheManager } from "./CacheManager";
 
 const logger = log.getLogger("EditorSyncManager");
 
 type Context = {
 	emitter: EventEmitter<AppEvents>;
-	getAllHotSandboxViews: ViewFactory["getAllHotSandboxViews"];
+	getAllHotSandboxViews: ViewManager["getAllHotSandboxViews"];
 	getAllNotes: CacheManager["getAllNotes"];
 	registerNewNote: CacheManager["registerNewNote"];
 	getNoteContent: CacheManager["getNoteContent"];

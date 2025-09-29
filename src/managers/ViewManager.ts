@@ -21,7 +21,7 @@ type Context = {
 };
 
 /** Manages registration and activation of custom views */
-export class ViewFactory implements Manager {
+export class ViewManager implements Manager {
 	constructor(private context: Context) {}
 
 	/** Register custom view types with Obsidian */

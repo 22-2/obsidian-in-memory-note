@@ -13,7 +13,7 @@ import { CacheManager } from "./CacheManager";
 import type { Manager } from "./Manager";
 import { ObsidianEventManager } from "./ObsidianEventManager";
 import { SettingsManager } from "./SettingsManager";
-import { ViewFactory } from "./ViewFactory";
+import { ViewManager } from "./ViewManager";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 
 const logger = log.getLogger("AppOrchestrator");
@@ -31,7 +31,7 @@ export class AppOrchestrator implements Manager {
 	protected appEventManager: AppEventManager;
 	protected editorSyncManager: EditorSyncManager;
 	protected editorPluginConnector: EditorPluginConnector;
-	protected viewFactory: ViewFactory;
+	protected viewManager: ViewManager;
 	protected obsidianEventManager: ObsidianEventManager;
 	protected databaseAPI!: DatabaseAPI;
 	protected dbController!: DatabaseController;
@@ -60,20 +60,20 @@ export class AppOrchestrator implements Manager {
 			emitter
 		);
 
-		this.viewFactory = new ViewFactory({
-			registerView: (type, viewFactory) =>
-				plugin.registerView(type, viewFactory),
+		this.viewManager = new ViewManager({
+			registerView: (type, viewCreator) =>
+				plugin.registerView(type, viewCreator),
 			createView: (leaf) =>
 				new HotSandboxNoteView(leaf, {
 					emitter: this.emitter,
 					getSettings: this.settingsManager.getSettings.bind(
 						this.settingsManager
 					),
-					indexOfMasterId: this.viewFactory.indexOfMasterId.bind(
-						this.viewFactory
+					indexOfMasterId: this.viewManager.indexOfMasterId.bind(
+						this.viewManager
 					),
-					isLastHotView: this.viewFactory.isLastHotView.bind(
-						this.viewFactory
+					isLastHotView: this.viewManager.isLastHotView.bind(
+						this.viewManager
 					),
 				}),
 			getLeaf: (type) => plugin.app.workspace.getLeaf(type),
@@ -87,8 +87,8 @@ export class AppOrchestrator implements Manager {
 		});
 		this.editorSyncManager = new EditorSyncManager({
 			emitter: this.emitter,
-			getAllHotSandboxViews: this.viewFactory.getAllHotSandboxViews.bind(
-				this.viewFactory
+			getAllHotSandboxViews: this.viewManager.getAllHotSandboxViews.bind(
+				this.viewManager
 			),
 			getAllNotes: this.cacheManager.getAllNotes.bind(this.cacheManager),
 			registerNewNote: this.cacheManager.registerNewNote.bind(
@@ -100,8 +100,8 @@ export class AppOrchestrator implements Manager {
 		});
 		this.editorPluginConnector = new EditorPluginConnector({
 			emitter: this.emitter,
-			getActiveView: this.viewFactory.getActiveView.bind(
-				this.viewFactory
+			getActiveView: this.viewManager.getActiveView.bind(
+				this.viewManager
 			),
 			plugin: this.plugin,
 		});
@@ -121,8 +121,8 @@ export class AppOrchestrator implements Manager {
 
 		this.obsidianEventManager = new ObsidianEventManager(
 			{
-				getActiveView: this.viewFactory.getActiveView.bind(
-					this.viewFactory
+				getActiveView: this.viewManager.getActiveView.bind(
+					this.viewManager
 				),
 				workspaceEvents: plugin.app.workspace,
 			},
@@ -132,7 +132,7 @@ export class AppOrchestrator implements Manager {
 		this.subManagers.push(
 			this.editorSyncManager,
 			this.editorPluginConnector,
-			this.viewFactory,
+			this.viewManager,
 			this.obsidianEventManager,
 			this.cacheManager,
 			this.settingsManager,
@@ -164,11 +164,11 @@ export class AppOrchestrator implements Manager {
 	// --- Delegated Methods ---
 
 	getActiveView() {
-		return this.viewFactory.getActiveView();
+		return this.viewManager.getActiveView();
 	}
 
 	activateNewHotSandboxView() {
-		return this.viewFactory.activateNewHotSandboxView();
+		return this.viewManager.activateNewHotSandboxView();
 	}
 
 	getSettings() {

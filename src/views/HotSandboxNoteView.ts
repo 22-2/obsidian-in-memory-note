@@ -1,7 +1,7 @@
 // src/views/HotSandboxNoteView.ts
 import log from "loglevel";
 import { WorkspaceLeaf } from "obsidian";
-import type { ViewFactory } from "src/managers/ViewFactory";
+import type { ViewManager } from "src/managers/ViewManager";
 import {
 	HOT_SANDBOX_NOTE_ICON,
 	VIEW_TYPE_HOT_SANDBOX,
@@ -14,7 +14,7 @@ import {
 const logger = log.getLogger("HotSandboxNoteView");
 
 type Context = AbstractNoteViewContext & {
-	indexOfMasterId: ViewFactory["indexOfMasterId"];
+	indexOfMasterId: ViewManager["indexOfMasterId"];
 };
 
 export class HotSandboxNoteView extends AbstractNoteView {

@@ -12,12 +12,12 @@ import {
 	SyncEditorPlugin,
 } from "src/views/internal/SyncEditorPlugin";
 import type { Manager } from "./Manager";
-import type { ViewFactory } from "./ViewFactory";
+import type { ViewManager } from "./ViewManager";
 
 type Context = {
 	emitter: EventEmitter<AppEvents>;
 	plugin: Plugin;
-	getActiveView: ViewFactory["getActiveView"];
+	getActiveView: ViewManager["getActiveView"];
 };
 
 /** Manages editor extensions and plugin connections */

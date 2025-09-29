@@ -12,7 +12,7 @@ import { nanoid } from "nanoid";
 import type { AppEvents } from "src/events/AppEvents";
 import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
 import type { SettingsManager } from "src/managers/SettingsManager";
-import type { ViewFactory } from "src/managers/ViewFactory";
+import type { ViewManager } from "src/managers/ViewManager";
 import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { showConfirmModal } from "../../helpers/showConfirmModal";
@@ -25,7 +25,7 @@ const logger = log.getLogger("AbstractNoteView");
 
 export type Context = {
 	getSettings: SettingsManager["getSettings"];
-	isLastHotView: ViewFactory["isLastHotView"];
+	isLastHotView: ViewManager["isLastHotView"];
 	emitter: EventEmitter<AppEvents>;
 };
 
@@ -44,9 +44,8 @@ export abstract class AbstractNoteView extends ItemView {
 
 	constructor(
 		leaf: WorkspaceLeaf,
-		protected context: Context // protected emitter: EventEmitter<AppEvents>, // protected orchestrator: AppOrchestrator,
-	) // protected funcs: AbstractNoteViewFuncs
-	{
+		protected context: Context // protected emitter: EventEmitter<AppEvents>, // protected orchestrator: AppOrchestrator, // protected funcs: AbstractNoteViewFuncs
+	) {
 		super(leaf);
 		this.wrapper = new EditorWrapper(this);
 		this.scope = new Scope(this.app.scope);

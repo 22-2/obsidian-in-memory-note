@@ -51,38 +51,51 @@ export class HotSandboxNoteView extends AbstractNoteView {
 		super.setupEventHandlers();
 
 		this.scope.register(["Mod"], "w", async () => {
+			// 1. Initial check: masterId must be present.
 			if (!this.masterId) {
 				logger.error(
-					"invalid masterNoteId in HotSandboxNoteView.close()"
+					"Invalid masterId. Aborting HotSandboxNoteView closing process."
 				);
 				return;
 			}
-			if (!this.hasUnsavedChanges) {
+
+			// 2. Early Exit: If data persistence is not threatened.
+			// Close the tab immediately if:
+			// a) No unsaved changes exist, OR
+			// b) Changes exist, but this is not the last active view (data persists elsewhere/DB).
+			if (
+				!this.hasUnsavedChanges ||
+				!this.context.isLastHotView(this.masterId)
+			) {
 				return this.leaf.detach();
 			}
 
-			if (!this.context.isLastHotView(this.masterId)) {
-				return this.leaf.detach();
-			}
+			// --- 3. Deletion Confirmation: This is the last view with unsaved changes. ---
 
 			const confirmed = await showConfirmModal(
 				this.app,
 				"Delete Sandbox",
-				"Are you sure you want to delete this sandbox?"
+				"This sandbox has unsaved changes. Are you sure you want to permanently delete it?"
 			);
+
 			if (confirmed) {
-				this.leaf.detach();
+				// User confirmed deletion. Request context to delete data.
 				this.context.emitter.emit("delete-requested", { view: this });
 				logger.debug(
-					`Deleting hot sandbox note content for group: ${this.masterId}`
+					`Hot sandbox content deletion requested (Group: ${this.masterId})`
 				);
-				return;
+			} else {
+				// User cancelled. The view closes, but data remains in the DB.
+				logger.debug(
+					`User cancelled deletion (Group: ${this.masterId}). Data will be retained.`
+				);
 			}
-			// User cancelled, but the tab will still close.
-			// The data remains in the DB for the next session.
-			logger.debug(
-				`User cancelled deletion for hot sandbox note: ${this.masterId}`
-			);
+
+			// Prevent undo history restoration for hot sandboxes
+			this.setContent("");
+			// Close the view (tab) regardless of the confirmation result.
+			this.leaf.detach();
+			return;
 		});
 		this.scope.register(["Mod"], "s", (e: KeyboardEvent) => {
 			const activeView = this.app.workspace.activeLeaf?.view;

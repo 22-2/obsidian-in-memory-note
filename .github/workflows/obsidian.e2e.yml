@@ -101,8 +101,8 @@ jobs:
             - name: Prepare E2E test environment
               shell: bash
               run: |
-                  chmod +x e2e-setup.sh
-                  ./e2e-setup.sh
+                  chmod +x e2e/setup.sh
+                  ./e2e/setup.sh
 
             - name: List project files # For debugging purposes
               shell: bash

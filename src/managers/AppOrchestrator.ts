@@ -42,21 +42,8 @@ export class AppOrchestrator implements IManager {
 		this.databaseAPI = new DatabaseAPI();
 
 		// --- Initialize all managers here ---
+		this.cacheManager = new CacheManager(emitter, this.databaseAPI); // 順番
 		this.settingsManager = new SettingsManager(emitter, plugin);
-		this.cacheManager = new CacheManager(emitter, this.databaseAPI);
-		this.dbManager = new DatabaseManager(
-			this.databaseAPI,
-			{
-				get: this.cacheManager.getNoteData.bind(this.cacheManager),
-				set: this.cacheManager.updateNoteContent.bind(
-					this.cacheManager
-				),
-				delete: this.cacheManager.deleteNoteData.bind(
-					this.cacheManager
-				),
-			},
-			emitter
-		);
 		this.viewManager = new ViewManager({
 			registerView: (type, viewCreator) =>
 				plugin.registerView(type, viewCreator),
@@ -81,6 +68,20 @@ export class AppOrchestrator implements IManager {
 			getLeavesOfType: (type: string) =>
 				plugin.app.workspace.getLeavesOfType(type),
 			getAllNotes: this.cacheManager.getAllNotes.bind(this.cacheManager),
+		});
+		this.dbManager = new DatabaseManager({
+			dbAPI: this.databaseAPI,
+			cache: {
+				get: this.cacheManager.get.bind(this.cacheManager),
+				set: this.cacheManager.updateNoteContent.bind(
+					this.cacheManager
+				),
+				delete: this.cacheManager.delete.bind(this.cacheManager),
+			},
+			emitter,
+			getAllHotSandboxViews: this.viewManager.getAllHotSandboxViews.bind(
+				this.viewManager
+			),
 		});
 		this.editorSyncManager = new EditorSyncManager({
 			emitter: this.emitter,
@@ -112,6 +113,9 @@ export class AppOrchestrator implements IManager {
 				this.cmExtensionManager.connectEditorPluginToView(leaf);
 			},
 			saveSandbox: this.dbManager.saveToDatabase.bind(this.dbManager),
+			clearAllDeadSadboxes: this.dbManager.clearAllDeadSadboxes.bind(
+				this.dbManager
+			),
 		});
 		this.obsidianEventManager = new ObsidianEventManager(
 			{
@@ -188,6 +192,6 @@ export class AppOrchestrator implements IManager {
 	}
 
 	getNoteData(masterNoteId: string) {
-		return this.cacheManager.getNoteData(masterNoteId);
+		return this.cacheManager.get(masterNoteId);
 	}
 }

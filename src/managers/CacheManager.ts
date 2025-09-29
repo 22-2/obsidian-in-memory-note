@@ -2,12 +2,13 @@ import log from "loglevel";
 import type { AppEvents } from "src/events/AppEvents";
 import type { HotSandboxNoteData } from "src/settings";
 import type { EventEmitter } from "src/utils/EventEmitter";
+import type { DatabaseManager } from "./DatabaseManager";
 import type { IManager } from "./IManager";
 
 const logger = log.getLogger("HotSandboxManager");
 
 type MinimalDBAPI = {
-	getAllNotes: () => Promise<HotSandboxNoteData[]>;
+	getAllSandboxes: DatabaseManager["getAllSandboxes"];
 };
 
 export class CacheManager implements IManager {
@@ -19,15 +20,13 @@ export class CacheManager implements IManager {
 	) {}
 
 	async load(): Promise<void> {
-		const allNotes = await this.context.getAllNotes();
-		this.sandboxNotes.clear();
-
-		allNotes.forEach((note) => {
+		const allSandboxes = await this.context.getAllSandboxes();
+		allSandboxes.forEach((note) => {
 			this.sandboxNotes.set(note.id, note);
 		});
 
 		logger.debug(
-			`Loaded ${allNotes.length} hot sandbox notes into memory.`
+			`Loaded ${allSandboxes.length} hot sandbox notes into memory.`
 		);
 		// this.emitter.emit("notes-loaded", { count: allNotes.length });
 	}
@@ -40,7 +39,7 @@ export class CacheManager implements IManager {
 		return this.sandboxNotes.get(masterNoteId)?.content ?? "";
 	}
 
-	getNoteData(masterNoteId: string): HotSandboxNoteData | undefined {
+	get(masterNoteId: string): HotSandboxNoteData | undefined {
 		return this.sandboxNotes.get(masterNoteId);
 	}
 
@@ -57,7 +56,7 @@ export class CacheManager implements IManager {
 		}
 	}
 
-	deleteNoteData(masterNoteId: string): void {
+	delete(masterNoteId: string): void {
 		this.sandboxNotes.delete(masterNoteId);
 		logger.debug(`Deleted note: ${masterNoteId}`);
 	}

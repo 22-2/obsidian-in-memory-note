@@ -27,7 +27,7 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	getBaseTitle(): string {
-		let groupCount = this.context.indexOfMasterId(this.masterNoteId ?? "");
+		let groupCount = this.context.indexOfMasterId(this.masterId ?? "");
 		// logger.debug("groupCount", groupCount);
 		if (groupCount === -1) {
 			groupCount = 0;
@@ -47,7 +47,7 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	save(): void {
-		if (!this.masterNoteId) return;
+		if (!this.masterId) return;
 		this.context.emitter.emit("save-requested", {
 			view: this,
 		});

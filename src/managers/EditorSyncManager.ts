@@ -59,12 +59,12 @@ export class EditorSyncManager implements IManager {
 
 	private handleViewOpened = (payload: AppEvents["view-opened"]) => {
 		const { view } = payload;
-		if (view instanceof HotSandboxNoteView && view.masterNoteId) {
-			this.context.registerNewNote(view.masterNoteId);
-			this.viewMasterIdMap.set(view, view.masterNoteId);
-			view.setContent(this.getNoteContent(view.masterNoteId));
+		if (view instanceof HotSandboxNoteView && view.masterId) {
+			this.context.registerNewNote(view.masterId);
+			this.viewMasterIdMap.set(view, view.masterId);
+			view.setContent(this.getNoteContent(view.masterId));
 			log.debug(
-				`View ${view.leaf.id} associated with masterId ${view.masterNoteId}`
+				`View ${view.leaf.id} associated with masterId ${view.masterId}`
 			);
 		}
 	};
@@ -75,11 +75,8 @@ export class EditorSyncManager implements IManager {
 		const { content, sourceView } = payload;
 		logger.debug("handleEditorContentChanged");
 
-		if (
-			sourceView instanceof HotSandboxNoteView &&
-			sourceView.masterNoteId
-		) {
-			this.syncHotViews(sourceView.masterNoteId, content, sourceView);
+		if (sourceView instanceof HotSandboxNoteView && sourceView.masterId) {
+			this.syncHotViews(sourceView.masterId, content, sourceView);
 		}
 
 		this.refreshAllViewTitles();

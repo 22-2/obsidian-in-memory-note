@@ -73,7 +73,7 @@ export class ViewManager implements IManager {
 
 	public isLastHotView(masterNoteId: string) {
 		const allViews = this.getAllHotSandboxViews();
-		const map = Object.groupBy(allViews, (view) => view.masterNoteId!);
+		const map = Object.groupBy(allViews, (view) => view.masterId!);
 		return map[masterNoteId]?.length === 1;
 	}
 

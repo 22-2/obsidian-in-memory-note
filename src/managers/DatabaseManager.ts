@@ -7,8 +7,20 @@ import type { EventEmitter } from "src/utils/EventEmitter";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import type { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 import type { CacheManager } from "./CacheManager";
+import type { ViewManager } from "./ViewManager";
 
 const logger = log.getLogger("DatabaseController");
+
+type Context = {
+	dbAPI: DatabaseAPI;
+	cache: {
+		get: CacheManager["get"];
+		set: CacheManager["updateNoteContent"];
+		delete: CacheManager["delete"];
+	};
+	emitter: EventEmitter<AppEvents>;
+	getAllHotSandboxViews: ViewManager["getAllHotSandboxViews"];
+};
 
 export class DatabaseManager implements IManager {
 	private debouncedSaveFns = new Map<
@@ -16,49 +28,43 @@ export class DatabaseManager implements IManager {
 		Debouncer<[string, string], void>
 	>();
 
-	constructor(
-		private dbAPI: DatabaseAPI,
-		private cache: {
-			get: CacheManager["getNoteData"];
-			set: CacheManager["updateNoteContent"];
-			delete: CacheManager["deleteNoteData"];
-		},
-		private emitter: EventEmitter<AppEvents>
-	) {}
+	constructor(private context: Context) {}
 
 	private sandboxGuard = (
 		view: AbstractNoteView,
-		callback: (view: HotSandboxNoteView & { masterNoteId: string }) => void
+		callback: (view: HotSandboxNoteView & { masterId: string }) => void
 	) => {
-		if (view instanceof HotSandboxNoteView && view.masterNoteId) {
-			return callback(
-				view! as HotSandboxNoteView & { masterNoteId: string }
-			);
+		if (view instanceof HotSandboxNoteView && view.masterId) {
+			return callback(view! as HotSandboxNoteView & { masterId: string });
 		}
 	};
 
 	private handleSaveRequest = (payload: AppEvents["save-requested"]) => {
 		this.sandboxGuard(payload.view, (view) => {
-			this.saveToDatabase(view.masterNoteId, view.getContent());
+			this.saveToDatabase(view.masterId, view.getContent());
 		});
 	};
 
 	private handleDeleteRequest = (payload: AppEvents["delete-requested"]) => {
 		this.sandboxGuard(payload.view, (view) => {
-			this.deleteFromDatabase(view.masterNoteId);
+			this.deleteFromDatabase(view.masterId);
 		});
 	};
 
+	getAllSandboxes() {
+		return this.context.dbAPI.getAllSandboxes();
+	}
+
 	async saveToDatabase(masterNoteId: string, content: string): Promise<void> {
 		try {
-			const note = this.cache.get(masterNoteId);
+			const note = this.context.cache.get(masterNoteId);
 			if (note) {
-				this.cache.set(masterNoteId, content);
-				const updatedNote = this.cache.get(masterNoteId)!;
+				this.context.cache.set(masterNoteId, content);
+				const updatedNote = this.context.cache.get(masterNoteId)!;
 
-				await this.dbAPI.saveNote(updatedNote);
+				await this.context.dbAPI.saveSandbox(updatedNote);
 				logger.debug(`Saved hot note to database: ${masterNoteId}`);
-				// this.emitter.emit("sandbox-note-saved", {
+				// this.context.emitter.emit("sandbox-note-saved", {
 				// 	noteId: masterNoteId,
 				// 	content,
 				// });
@@ -68,7 +74,7 @@ export class DatabaseManager implements IManager {
 				`Failed to save note to database: ${masterNoteId}`,
 				error
 			);
-			// this.emitter.emit("sandbox-note-save-failed", {
+			// this.context.emitter.emit("sandbox-note-save-failed", {
 			// 	noteId: masterNoteId,
 			// 	error,
 			// });
@@ -77,20 +83,20 @@ export class DatabaseManager implements IManager {
 
 	async deleteFromDatabase(masterNoteId: string): Promise<void> {
 		try {
-			await this.dbAPI.deleteNote(masterNoteId);
-			this.cache.delete(masterNoteId);
+			await this.context.dbAPI.deleteSandbox(masterNoteId);
+			this.context.cache.delete(masterNoteId);
 
 			// デバウンサーもクリーンアップ
 			this.debouncedSaveFns.delete(masterNoteId);
 
 			logger.debug(`Deleted hot note from database: ${masterNoteId}`);
-			// this.emitter.emit("sandbox-note-deleted", { noteId: masterNoteId });
+			// this.context.emitter.emit("sandbox-note-deleted", { noteId: masterNoteId });
 		} catch (error) {
 			logger.error(
 				`Failed to delete note from database: ${masterNoteId}`,
 				error
 			);
-			// this.emitter.emit("sandbox-note-delete-failed", {
+			// this.context.emitter.emit("sandbox-note-delete-failed", {
 			// 	noteId: masterNoteId,
 			// 	error,
 			// });
@@ -113,7 +119,26 @@ export class DatabaseManager implements IManager {
 		}
 	}
 
-	debouncedSaveSandbox(
+	async clearAllDeadSadboxes() {
+		const savedSandboxes = await this.context.dbAPI.getAllSandboxes();
+		const allViews = this.context.getAllHotSandboxViews();
+		for (const sandbox of savedSandboxes) {
+			const view = allViews.find((view) => view.masterId === sandbox.id);
+			if (view?.masterId) this.deleteFromAll(view.masterId);
+		}
+	}
+
+	async deleteFromAll(masterId: string) {
+		this.context.cache.delete(masterId);
+		this.debouncedSaveFns.delete(masterId);
+		await this.context.dbAPI.deleteSandbox(masterId);
+	}
+
+	getSandboxByMasterId(masterNoteId: string) {
+		return this.context.dbAPI.getSandbox(masterNoteId);
+	}
+
+	debouncedSaveSandboxes(
 		masterNoteId: string,
 		content: string,
 		debounceMs: number
@@ -124,14 +149,14 @@ export class DatabaseManager implements IManager {
 	}
 
 	load(): void {
-		this.emitter.on("save-requested", this.handleSaveRequest);
-		this.emitter.on("delete-requested", this.handleDeleteRequest);
+		this.context.emitter.on("save-requested", this.handleSaveRequest);
+		this.context.emitter.on("delete-requested", this.handleDeleteRequest);
 	}
 
 	unload(): void {
-		this.dbAPI.close();
+		this.context.dbAPI.close();
 		this.debouncedSaveFns.clear();
-		this.emitter.off("save-requested", this.handleSaveRequest);
-		this.emitter.off("delete-requested", this.handleDeleteRequest);
+		this.context.emitter.off("save-requested", this.handleSaveRequest);
+		this.context.emitter.off("delete-requested", this.handleDeleteRequest);
 	}
 }

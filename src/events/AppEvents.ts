@@ -28,6 +28,7 @@ export interface AppEvents {
 	"obsidian-active-leaf-changed": {
 		view: AbstractNoteView | null;
 	};
+	"obsidian-layout-ready": {};
 	"settings-changed": {
 		newSettings: PluginSettings;
 	};

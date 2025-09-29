@@ -36,7 +36,7 @@ export abstract class AbstractNoteView extends ItemView {
 	private initialState: AbstractNoteViewState | null = null;
 	private saveActionEl!: HTMLElement;
 	public isSourceMode = true;
-	public masterNoteId: string | null = null;
+	public masterId: string | null = null;
 	public scope: Scope;
 	public wrapper: EditorWrapper;
 
@@ -79,7 +79,7 @@ export abstract class AbstractNoteView extends ItemView {
 		};
 
 		state.state.content = (this.editor && this.editor.getValue()) ?? "";
-		state.state.masterNoteId = this.masterNoteId ?? "";
+		state.state.masterNoteId = this.masterId ?? "";
 		state.source = this.isSourceMode;
 		return state;
 	}
@@ -87,13 +87,13 @@ export abstract class AbstractNoteView extends ItemView {
 	public override async onOpen() {
 		issue2Logger.debug("AbstractNoteView.onOpen");
 		try {
-			if (!this.masterNoteId) {
+			if (!this.masterId) {
 				issue2Logger.debug(
 					"masterNoteId not set, creating a new one in onOpen."
 				);
-				this.masterNoteId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
+				this.masterId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
 			}
-			issue2Logger.debug("masterNoteId", this.masterNoteId);
+			issue2Logger.debug("masterNoteId", this.masterId);
 
 			await this.wrapper.initialize(this.contentEl, this.initialState);
 			this.initialState = null;
@@ -118,9 +118,9 @@ export abstract class AbstractNoteView extends ItemView {
 		issue2Logger.debug("AbstractNoteView.setState state", state);
 		const masterIdFromState = state?.state?.masterNoteId;
 		if (masterIdFromState) {
-			this.masterNoteId = masterIdFromState;
-			logger.debug(`Restored note group ID: ${this.masterNoteId}`);
-		} else if (!this.masterNoteId) {
+			this.masterId = masterIdFromState;
+			logger.debug(`Restored note group ID: ${this.masterId}`);
+		} else if (!this.masterId) {
 			return logger.error("masterNoteId not found in state.");
 		}
 
@@ -197,14 +197,14 @@ export abstract class AbstractNoteView extends ItemView {
 		);
 
 		this.scope.register(["Mod"], "w", async () => {
-			if (!this.masterNoteId) {
+			if (!this.masterId) {
 				logger.error(
 					"invalid masterNoteId in HotSandboxNoteView.close()"
 				);
 				return;
 			}
 
-			const isLastView = this.context.isLastHotView(this.masterNoteId);
+			const isLastView = this.context.isLastHotView(this.masterId);
 			if (!isLastView) {
 				return this.leaf.detach();
 			}
@@ -218,14 +218,14 @@ export abstract class AbstractNoteView extends ItemView {
 				this.leaf.detach();
 				this.context.emitter.emit("delete-requested", { view: this });
 				logger.debug(
-					`Deleting hot sandbox note content for group: ${this.masterNoteId}`
+					`Deleting hot sandbox note content for group: ${this.masterId}`
 				);
 				return;
 			}
 			// User cancelled, but the tab will still close.
 			// The data remains in the DB for the next session.
 			logger.debug(
-				`User cancelled deletion for hot sandbox note: ${this.masterNoteId}`
+				`User cancelled deletion for hot sandbox note: ${this.masterId}`
 			);
 		});
 		this.scope.register(["Mod"], "s", (e: KeyboardEvent) => {

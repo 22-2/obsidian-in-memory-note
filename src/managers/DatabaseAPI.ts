@@ -3,7 +3,7 @@ import type { HotSandboxNoteData } from "src/settings";
 
 export class DatabaseAPI extends Dexie {
 	// 'notes' is typed with schema of our note object.
-	notes!: Table<HotSandboxNoteData>;
+	sandboxes!: Table<HotSandboxNoteData>;
 
 	constructor() {
 		super("SandboxNoteDatabase");
@@ -12,24 +12,27 @@ export class DatabaseAPI extends Dexie {
 		});
 	}
 
-	async getNote(id: string): Promise<HotSandboxNoteData | undefined> {
-		return this.notes.get(id);
+	async getSandbox(id: string): Promise<HotSandboxNoteData | undefined> {
+		return this.sandboxes.get(id);
 	}
 
-	async saveNote(note: HotSandboxNoteData): Promise<string> {
-		await this.notes.put(note);
+	async saveSandbox(note: HotSandboxNoteData): Promise<string> {
+		await this.sandboxes.put(note);
 		return note.id;
 	}
 
-	async deleteNote(id: string): Promise<void> {
-		await this.notes.delete(id);
+	async deleteSandbox(id: string): Promise<void> {
+		await this.sandboxes.delete(id);
 	}
 
-	async getAllNotes(): Promise<HotSandboxNoteData[]> {
-		return this.notes.toArray();
+	async getAllSandboxes(): Promise<HotSandboxNoteData[]> {
+		return this.sandboxes.toArray();
 	}
 
-	async clearAllNotes(): Promise<void> {
-		await this.notes.clear();
+	async clearAllSandboxes(): Promise<void> {
+		await this.sandboxes.clear();
+	}
+	countSandboxes(): Promise<number> {
+		return this.sandboxes.count();
 	}
 }

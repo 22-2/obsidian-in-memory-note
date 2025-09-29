@@ -20,7 +20,7 @@ type Context = {
 	connectEditorPluginToView: EditorPluginConnector["connectEditorPluginToView"];
 };
 
-export class AppEventManager implements Manager {
+export class PluginEventManager implements Manager {
 	constructor(private context: Context) {}
 
 	load(): void {

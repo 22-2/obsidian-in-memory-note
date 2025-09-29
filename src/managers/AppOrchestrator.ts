@@ -5,7 +5,7 @@ import type { SandboxNotePluginData } from "src/settings";
 import { DEFAULT_PLUGIN_DATA } from "src/utils/constants";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { DatabaseController } from "src/managers/DatabaseController";
-import { AppEventManager } from "./AppEventManager";
+import { PluginEventManager } from "./PluginEventManager";
 import { DatabaseAPI } from "./DatabaseAPI";
 import { EditorPluginConnector } from "./EditorPluginConnector";
 import { EditorSyncManager } from "./EditorSyncManager";
@@ -28,7 +28,7 @@ export class AppOrchestrator implements Manager {
 	// Sub-managers
 	protected settingsManager: SettingsManager;
 	protected cacheManager: CacheManager;
-	protected appEventManager: AppEventManager;
+	protected pluginEventManager: PluginEventManager;
 	protected editorSyncManager: EditorSyncManager;
 	protected editorPluginConnector: EditorPluginConnector;
 	protected viewManager: ViewManager;
@@ -106,7 +106,7 @@ export class AppOrchestrator implements Manager {
 			plugin: this.plugin,
 		});
 
-		this.appEventManager = new AppEventManager({
+		this.pluginEventManager = new PluginEventManager({
 			applyLogger: plugin.applyLogger.bind(plugin),
 			cache: this.cacheManager,
 			emitter,
@@ -136,7 +136,7 @@ export class AppOrchestrator implements Manager {
 			this.obsidianEventManager,
 			this.cacheManager,
 			this.settingsManager,
-			this.appEventManager
+			this.pluginEventManager
 		);
 	}
 

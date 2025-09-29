@@ -17,6 +17,8 @@ export const CMD_UNDO_CLOSE_TAB = "Undo close tab";
 export const CMD_GO_TO_PREVIOUS_TAB = "Go to previous tab";
 export const CMD_GO_TO_NEXT_TAB = "Go to next tab";
 export const OPEN_SANDBOX_VAULT = "Open sandbox vault";
+export const OPEN_HOT_SANDBOX = "Sandbox Note: Open new hot sandbox note";
+export const CONVERT_HOT_SANDBOX_TO_FILE = "Sandbox Note: Convert to file";
 
 const logger = log.getLogger("run-commands");
 
@@ -32,8 +34,7 @@ export const runCommand = async (
 			.listCommands()
 			.find((c) => c.name === commandName);
 		if (command) {
-			app.commands.executeCommandById(command.id);
-			return true;
+			return app.commands.executeCommandById(command.id);
 		}
 	}, commandName);
 	expect(success).toBe(true);

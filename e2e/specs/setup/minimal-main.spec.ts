@@ -5,7 +5,11 @@ import "../../log-setup";
 import type { Page } from "@playwright/test";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import { DIST_DIR } from "../../config";
-import { runCommand } from "../../obsidian-commands/run-command";
+import {
+	CONVERT_HOT_SANDBOX_TO_FILE,
+	OPEN_HOT_SANDBOX,
+	runCommand,
+} from "../../obsidian-commands/run-command";
 import { expect, test } from "../../test-fixtures";
 
 // --- Constants Definition ---
@@ -35,7 +39,7 @@ test.use({
  * @param content The text to input (optional)
  */
 async function createNewSandboxNote(page: Page, content?: string) {
-	await runCommand(page, "Open new hot sandbox note");
+	await runCommand(page, OPEN_HOT_SANDBOX);
 	await expect(
 		page.locator(ACTIVE_SANDBOX_VIEW_SELECTOR).last()
 	).toBeVisible();
@@ -195,7 +199,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await createNewSandboxNote(page, noteContent);
 
 		// 2. Execute the "Convert to file" command
-		await runCommand(page, "Convert to file");
+		await runCommand(page, CONVERT_HOT_SANDBOX_TO_FILE);
 
 		// 3. Verify the sandbox note view is closed
 		await expect(

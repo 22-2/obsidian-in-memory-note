@@ -1,6 +1,5 @@
 import log from "loglevel";
 import type { Page } from "playwright";
-import invariant from "tiny-invariant";
 
 export const delay = async (milliseconds: number): Promise<void> => {
 	return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -22,35 +21,20 @@ const logger = log.getLogger("run-commands");
 
 export const PROMPT_INPUT = ".prompt-input";
 export const runCommand = async (
-	__obsidian__: Page,
+	page: Page,
 	commandName: string,
 	required = true
 ) => {
 	logger.debug("runCommand", commandName);
-	await __obsidian__.waitForSelector(".workspace-tabs");
-	const isMac = process.platform === "darwin";
-	const commandKey = isMac ? "Meta+P" : "Control+P";
-	await __obsidian__.keyboard.press(commandKey);
-	await __obsidian__.waitForSelector(PROMPT_INPUT);
-	await __obsidian__.keyboard.type(commandName);
-	await delay(500);
-
-	// find matching command
-	const results = await __obsidian__.$(SEL_PALETTE_RESULTS);
-	invariant(results);
-	const items = await results.$$(SEL_PALETTE_ITEM);
-	const item = items[0];
-
-	let content: string | null = null;
-	if (item) content = await item.textContent();
-	await __obsidian__.keyboard.press("Enter");
-	if (content && content.includes(commandName.replace(": ", ""))) {
-	} else {
-		if (required) {
-			throw new Error("could not find command");
-		} else {
-			await __obsidian__.keyboard.press("Escape");
+	const success = await page.evaluate(() => {
+		const command = app.commands
+			.listCommands()
+			.find((c) => c.name === commandName);
+		if (command) {
+			app.commands.executeCommandById(command.id);
+			return true;
 		}
-	}
+	});
+	expect(success).toBe(true);
 	await delay(1000);
 };

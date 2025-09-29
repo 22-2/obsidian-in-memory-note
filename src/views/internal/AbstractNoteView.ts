@@ -210,25 +210,28 @@ export abstract class AbstractNoteView extends ItemView {
 			}
 
 			const isLastView = this.funcs.isLastHotView(this.masterNoteId);
-			if (isLastView) {
-				const confirmed = await showConfirmModal(
-					this.app,
-					"Delete Sandbox",
-					"Are you sure you want to delete this sandbox?"
-				);
-				if (confirmed) {
-					this.emitter.emit("delete-requested", { view: this });
-					logger.debug(
-						`Deleting hot sandbox note content for group: ${this.masterNoteId}`
-					);
-					return;
-				}
-				// User cancelled, but the tab will still close.
-				// The data remains in the DB for the next session.
-				logger.debug(
-					`User cancelled deletion for hot sandbox note: ${this.masterNoteId}`
-				);
+			if (!isLastView) {
+				return this.leaf.detach();
 			}
+
+			const confirmed = await showConfirmModal(
+				this.app,
+				"Delete Sandbox",
+				"Are you sure you want to delete this sandbox?"
+			);
+			if (confirmed) {
+				this.leaf.detach();
+				this.emitter.emit("delete-requested", { view: this });
+				logger.debug(
+					`Deleting hot sandbox note content for group: ${this.masterNoteId}`
+				);
+				return;
+			}
+			// User cancelled, but the tab will still close.
+			// The data remains in the DB for the next session.
+			logger.debug(
+				`User cancelled deletion for hot sandbox note: ${this.masterNoteId}`
+			);
 		});
 		this.scope.register(["Mod"], "s", (e: KeyboardEvent) => {
 			const activeView = this.app.workspace.activeLeaf?.view;

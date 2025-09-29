@@ -47,7 +47,7 @@ export class DatabaseManager implements IManager {
 
 	private handleDeleteRequest = (payload: AppEvents["delete-requested"]) => {
 		this.sandboxGuard(payload.view, (view) => {
-			this.deleteFromDatabase(view.masterId);
+			this.deleteFromAll(view.masterId);
 		});
 	};
 
@@ -84,14 +84,11 @@ export class DatabaseManager implements IManager {
 		}
 	}
 
-	async deleteFromDatabase(masterNoteId: string): Promise<void> {
+	async deleteFromAll(masterNoteId: string): Promise<void> {
 		try {
 			await this.context.dbAPI.deleteSandbox(masterNoteId);
 			this.context.cache.delete(masterNoteId);
-
-			// デバウンサーもクリーンアップ
 			this.debouncedSaveFns.delete(masterNoteId);
-
 			logger.debug(`Deleted hot note from database: ${masterNoteId}`);
 			// this.context.emitter.emit("sandbox-note-deleted", { noteId: masterNoteId });
 		} catch (error) {
@@ -130,12 +127,6 @@ export class DatabaseManager implements IManager {
 			if (!view?.masterId) this.deleteFromAll(sandbox.id);
 		}
 		logger.debug("clear all dead sandboxes");
-	}
-
-	async deleteFromAll(masterId: string) {
-		this.context.cache.delete(masterId);
-		this.debouncedSaveFns.delete(masterId);
-		await this.context.dbAPI.deleteSandbox(masterId);
 	}
 
 	getSandboxByMasterId(masterNoteId: string) {

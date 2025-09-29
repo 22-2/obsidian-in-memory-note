@@ -1,6 +1,7 @@
 // src/views/HotSandboxNoteView.ts
 import log from "loglevel";
 import { WorkspaceLeaf } from "obsidian";
+import { showConfirmModal } from "src/helpers/showConfirmModal";
 import type { ViewManager } from "src/managers/ViewManager";
 import {
 	HOT_SANDBOX_NOTE_ICON,
@@ -42,22 +43,62 @@ export class HotSandboxNoteView extends AbstractNoteView {
 		return HOT_SANDBOX_NOTE_ICON;
 	}
 
-	get hasUnsavedChanges(): boolean {
-		return this.getContent() != "";
-	}
-
-	save(): void {
-		if (!this.masterId) return;
-		this.context.emitter.emit("save-requested", {
-			view: this,
-		});
-	}
-
 	getContent(): string {
 		return this.editor?.getValue() ?? "";
 	}
 
-	updateActionButtons() {
-		// No-op
+	protected override setupEventHandlers() {
+		super.setupEventHandlers();
+
+		this.scope.register(["Mod"], "w", async () => {
+			if (!this.masterId) {
+				logger.error(
+					"invalid masterNoteId in HotSandboxNoteView.close()"
+				);
+				return;
+			}
+			if (!this.hasUnsavedChanges) {
+				return this.leaf.detach();
+			}
+
+			if (!this.context.isLastHotView(this.masterId)) {
+				return this.leaf.detach();
+			}
+
+			const confirmed = await showConfirmModal(
+				this.app,
+				"Delete Sandbox",
+				"Are you sure you want to delete this sandbox?"
+			);
+			if (confirmed) {
+				this.leaf.detach();
+				this.context.emitter.emit("delete-requested", { view: this });
+				logger.debug(
+					`Deleting hot sandbox note content for group: ${this.masterId}`
+				);
+				return;
+			}
+			// User cancelled, but the tab will still close.
+			// The data remains in the DB for the next session.
+			logger.debug(
+				`User cancelled deletion for hot sandbox note: ${this.masterId}`
+			);
+		});
+		this.scope.register(["Mod"], "s", (e: KeyboardEvent) => {
+			const activeView = this.app.workspace.activeLeaf?.view;
+			if (activeView !== this || !this.editor?.hasFocus()) {
+				return true; // Continue with default behavior
+			}
+
+			if (this.context.getSettings().enableCtrlS) {
+				// 変更
+				e.preventDefault();
+				e.stopPropagation();
+				logger.debug("Saving note via Ctrl+S");
+				this.save();
+				return false; // Prevent default save action
+			}
+			return true;
+		});
 	}
 }

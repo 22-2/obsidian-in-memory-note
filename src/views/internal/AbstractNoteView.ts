@@ -15,7 +15,6 @@ import type { SettingsManager } from "src/managers/SettingsManager";
 import type { ViewManager } from "src/managers/ViewManager";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
-import { showConfirmModal } from "../../helpers/showConfirmModal";
 import { issue2Logger } from "../../special-loggers";
 import { EditorWrapper } from "./EditorWrapper";
 import type { AbstractNoteViewState, ObsidianViewState } from "./types";
@@ -55,12 +54,21 @@ export abstract class AbstractNoteView extends ItemView {
 		return this.wrapper.virtualEditor?.editor;
 	}
 
-	protected abstract get hasUnsavedChanges(): boolean;
+	protected get hasUnsavedChanges(): boolean {
+		return this.getContent() != "";
+	}
+
 	public abstract getBaseTitle(): string;
 	public abstract getContent(): string;
 	public abstract getIcon(): string;
 	public abstract getViewType(): string;
-	public abstract save(): void;
+
+	save(): void {
+		if (!this.masterId) return;
+		this.context.emitter.emit("save-requested", {
+			view: this,
+		});
+	}
 
 	public override getDisplayText(): string {
 		const baseTitle = this.getBaseTitle();
@@ -77,6 +85,7 @@ export abstract class AbstractNoteView extends ItemView {
 				content: "",
 			},
 		};
+		logger.debug("AbstractNoteView.getState", state);
 
 		state.state.content = (this.editor && this.editor.getValue()) ?? "";
 		state.state.masterNoteId = this.masterId ?? "";
@@ -85,15 +94,15 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	public override async onOpen() {
-		issue2Logger.debug("AbstractNoteView.onOpen");
+		logger.debug("AbstractNoteView.onOpen");
 		try {
 			if (!this.masterId) {
-				issue2Logger.debug(
+				logger.debug(
 					"masterNoteId not set, creating a new one in onOpen."
 				);
 				this.masterId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
 			}
-			issue2Logger.debug("masterNoteId", this.masterId);
+			logger.debug("masterNoteId", this.masterId);
 
 			await this.wrapper.initialize(this.contentEl, this.initialState);
 			this.initialState = null;
@@ -115,7 +124,7 @@ export abstract class AbstractNoteView extends ItemView {
 		state: AbstractNoteViewState,
 		result: ViewStateResult
 	): Promise<void> {
-		issue2Logger.debug("AbstractNoteView.setState state", state);
+		issue2Logger.debug("AbstractNoteView.setState", state);
 		const masterIdFromState = state?.state?.masterNoteId;
 		if (masterIdFromState) {
 			this.masterId = masterIdFromState;
@@ -180,7 +189,7 @@ export abstract class AbstractNoteView extends ItemView {
 			cls: "sandbox-error-message",
 		});
 	}
-	private setupEventHandlers() {
+	protected setupEventHandlers() {
 		if (!this.editor) return logger.error("Editor not found");
 
 		this.context.emitter.on("obsidian-active-leaf-changed", (payload) => {
@@ -194,79 +203,6 @@ export abstract class AbstractNoteView extends ItemView {
 		);
 		this.registerDomEvent(this.contentEl, "contextmenu", (e) =>
 			handleContextMenu(e, this.wrapper.virtualEditor.editMode)
-		);
-
-		this.scope.register(["Mod"], "w", async () => {
-			if (!this.masterId) {
-				logger.error(
-					"invalid masterNoteId in HotSandboxNoteView.close()"
-				);
-				return;
-			}
-
-			const isLastView = this.context.isLastHotView(this.masterId);
-			if (!isLastView) {
-				return this.leaf.detach();
-			}
-
-			const confirmed = await showConfirmModal(
-				this.app,
-				"Delete Sandbox",
-				"Are you sure you want to delete this sandbox?"
-			);
-			if (confirmed) {
-				this.leaf.detach();
-				this.context.emitter.emit("delete-requested", { view: this });
-				logger.debug(
-					`Deleting hot sandbox note content for group: ${this.masterId}`
-				);
-				return;
-			}
-			// User cancelled, but the tab will still close.
-			// The data remains in the DB for the next session.
-			logger.debug(
-				`User cancelled deletion for hot sandbox note: ${this.masterId}`
-			);
-		});
-		this.scope.register(["Mod"], "s", (e: KeyboardEvent) => {
-			const activeView = this.app.workspace.activeLeaf?.view;
-			if (activeView !== this || !this.editor?.hasFocus()) {
-				return true; // Continue with default behavior
-			}
-
-			if (this.context.getSettings().enableCtrlS) {
-				// 変更
-				e.preventDefault();
-				e.stopPropagation();
-				logger.debug("Saving note via Ctrl+S");
-				this.save();
-				return false; // Prevent default save action
-			}
-			return true;
-		});
-	}
-
-	public updateActionButtons() {
-		const settings = this.context.getSettings();
-		if (!settings.enableAutoSave) {
-			this.saveActionEl?.hide();
-			return;
-		}
-
-		if (!this.saveActionEl) {
-			this.saveActionEl = this.addAction("save", "Save", () =>
-				this.save()
-			);
-		}
-		this.saveActionEl?.show();
-
-		const shouldShowUnsaved =
-			settings.enableAutoSave && this.hasUnsavedChanges;
-
-		this.saveActionEl?.toggleClass("is-disabled", !shouldShowUnsaved);
-		this.saveActionEl?.setAttribute(
-			"aria-disabled",
-			String(!shouldShowUnsaved)
 		);
 	}
 }

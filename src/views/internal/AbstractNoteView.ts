@@ -11,7 +11,7 @@ import log from "loglevel";
 import { nanoid } from "nanoid";
 import type { AppEvents } from "src/events/AppEvents";
 import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
-import type { StateManager } from "src/managers/StateManager";
+import type { AppOrchestrator } from "src/managers/AppOrchestrator";
 import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { issue2Logger } from "../../special-loggers";
@@ -41,7 +41,7 @@ export abstract class AbstractNoteView extends ItemView {
 	constructor(
 		leaf: WorkspaceLeaf,
 		protected emitter: EventEmitter<AppEvents>,
-		protected stateManager: StateManager,
+		protected stateManager: AppOrchestrator,
 		protected funcs: AbstractNoteViewFuncs
 	) {
 		super(leaf);

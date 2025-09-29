@@ -4,41 +4,32 @@ import { activateView } from "src/utils/obsidian";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 import type { Manager } from "./Manager";
+import type { Workspace, WorkspaceLeaf } from "obsidian";
+
+type Context = {
+	registerView: (
+		viewType: string,
+		viewFactory: (leaf: WorkspaceLeaf) => AbstractNoteView
+	) => void;
+	createView: (leaf: WorkspaceLeaf) => AbstractNoteView;
+	getLeaf: Workspace["getLeaf"];
+	detachAll: (type: string) => void;
+};
 
 /** Manages registration and activation of custom views */
 export class ViewFactory implements Manager {
-	private plugin: SandboxNotePlugin;
-
-	constructor(plugin: SandboxNotePlugin) {
-		this.plugin = plugin;
-	}
+	constructor(private context: Context) {}
 
 	/** Register custom view types with Obsidian */
 	public load(): void {
-		this.plugin.registerView(
-			VIEW_TYPE_HOT_SANDBOX,
-			(leaf) =>
-				new HotSandboxNoteView(
-					leaf,
-					this.plugin.emitter,
-					this.plugin.stateManager,
-					{
-						indexOfMasterId:
-							this.plugin.editorSyncManager.indexOfMasterId.bind(
-								this.plugin.editorSyncManager
-							),
-						isLastHotView:
-							this.plugin.editorSyncManager.isLastHotView.bind(
-								this.plugin.editorSyncManager
-							),
-					}
-				)
+		this.context.registerView(VIEW_TYPE_HOT_SANDBOX, (leaf) =>
+			this.context.createView(leaf)
 		);
 	}
 
 	/** Unregister custom view types */
 	public unload(): void {
-		this.plugin.app.workspace.detachLeavesOfType(VIEW_TYPE_HOT_SANDBOX);
+		this.context.detachAll(VIEW_TYPE_HOT_SANDBOX);
 	}
 
 	public async activateNewHotSandboxView() {
@@ -51,11 +42,14 @@ export class ViewFactory implements Manager {
 	 * @param type The view type to activate.
 	 */
 	private async activateAbstractView(type: string, state?: any) {
-		const leaf = await activateView<AbstractNoteView>(this.plugin.app, {
-			type,
-			active: true,
-			state,
-		});
+		const leaf = await activateView<AbstractNoteView>(
+			{ getLeaf: (type) => this.context.getLeaf(type) },
+			{
+				type,
+				active: true,
+				state,
+			}
+		);
 
 		return leaf;
 	}

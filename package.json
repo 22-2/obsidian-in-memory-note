@@ -53,6 +53,7 @@
 		"yaml": "^2.8.1"
 	},
 	"dependencies": {
+		"@codemirror/state": "^6.5.2",
 		"@codemirror/view": "^6.38.2",
 		"dexie": "^4.2.0",
 		"loglevel": "^1.9.2",

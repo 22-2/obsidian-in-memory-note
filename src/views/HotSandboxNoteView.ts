@@ -14,7 +14,7 @@ import {
 import log from "loglevel";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
-import type { StateManager } from "src/managers/StateManager";
+import type { AppOrchestrator } from "src/managers/AppOrchestrator";
 import { issue1Logger } from "../special-loggers";
 
 const logger = log.getLogger("HotSandboxNoteView");
@@ -23,7 +23,7 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	constructor(
 		leaf: WorkspaceLeaf,
 		protected emitter: EventEmitter<AppEvents>,
-		protected stateManager: StateManager,
+		protected stateManager: AppOrchestrator,
 		protected funcs: AbstractNoteViewFuncs
 	) {
 		super(leaf, emitter, stateManager, funcs);

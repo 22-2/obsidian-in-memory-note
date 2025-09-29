@@ -44,11 +44,11 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			.setName("Show debug messages")
 			.setDesc("Enable or disable debug messages in the console.")
 			.addToggle((toggle) => {
-				const settings = this.plugin.stateManager.getSettings();
+				const settings = this.plugin.orchestrator.getSettings();
 				toggle
 					.setValue(settings.enableLogger)
 					.onChange(async (enabled) => {
-						await this.plugin.stateManager.updateSettings({
+						await this.plugin.orchestrator.updateSettings({
 							...settings,
 							enableLogger: enabled,
 						});
@@ -65,11 +65,11 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 					"This feature helps prevent data loss from unexpected shutdowns."
 			)
 			.addToggle((toggle) => {
-				const settings = this.plugin.stateManager.getSettings();
+				const settings = this.plugin.orchestrator.getSettings();
 				toggle
 					.setValue(settings.enableAutoSave)
 					.onChange(async (enabled) => {
-						await this.plugin.stateManager.updateSettings({
+						await this.plugin.orchestrator.updateSettings({
 							...settings,
 							enableAutoSave: enabled,
 						});
@@ -81,7 +81,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 
 	/** Add auto-save debounce delay setting. */
 	private addAutoSaveDebounceSetting() {
-		const settings = this.plugin.stateManager.getSettings();
+		const settings = this.plugin.orchestrator.getSettings();
 		if (!settings.enableAutoSave) {
 			return;
 		}
@@ -105,7 +105,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 					.addOptions(options)
 					.setValue(String(settings.autoSaveDebounceMs))
 					.onChange(async (value) => {
-						await this.plugin.stateManager.updateSettings({
+						await this.plugin.orchestrator.updateSettings({
 							...settings,
 							autoSaveDebounceMs: Number.parseInt(value, 10),
 						});
@@ -121,11 +121,11 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 				"Overrides the default save command (Ctrl+S) to save the content of the sandbox note. "
 			)
 			.addToggle((toggle) => {
-				const settings = this.plugin.stateManager.getSettings();
+				const settings = this.plugin.orchestrator.getSettings();
 				toggle
 					.setValue(settings.enableCtrlS)
 					.onChange(async (enabled) => {
-						await this.plugin.stateManager.updateSettings({
+						await this.plugin.orchestrator.updateSettings({
 							...settings,
 							enableCtrlS: enabled,
 						});

@@ -6,17 +6,23 @@ import type SandboxNotePlugin from "src/main";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { Manager } from "./Manager";
 
+type Context = {
+	getActiveView: SandboxNotePlugin["getActiveView"];
+	workspaceEvents: {
+		on: Workspace["on"];
+		off: Workspace["off"];
+		onLayoutReady: Workspace["onLayoutReady"];
+	};
+};
+
 /** Manages Obsidian workspace event handling */
 export class ObsidianEventManager implements Manager {
-	private plugin: SandboxNotePlugin;
-	private workspace: Workspace;
-	private emitter: EventEmitter<AppEvents>;
 	private debouncedEmitLayoutChange: () => void;
 
-	constructor(plugin: SandboxNotePlugin, emitter: EventEmitter<AppEvents>) {
-		this.plugin = plugin;
-		this.workspace = plugin.app.workspace;
-		this.emitter = emitter;
+	constructor(
+		private context: Context,
+		private emitter: EventEmitter<AppEvents>
+	) {
 		this.debouncedEmitLayoutChange = debounce(
 			this.emitLayoutChange.bind(this),
 			50
@@ -25,14 +31,28 @@ export class ObsidianEventManager implements Manager {
 
 	/** Set up all workspace event listeners */
 	public load(): void {
-		this.workspace.onLayoutReady(() => this.emitLayoutChange());
-		this.workspace.on("active-leaf-change", this.handleActiveLeafChange);
-		this.workspace.on("layout-change", this.debouncedEmitLayoutChange);
+		this.context.workspaceEvents.onLayoutReady(() =>
+			this.emitLayoutChange()
+		);
+		this.context.workspaceEvents.on(
+			"active-leaf-change",
+			this.handleActiveLeafChange
+		);
+		this.context.workspaceEvents.on(
+			"layout-change",
+			this.debouncedEmitLayoutChange
+		);
 	}
 
 	public unload(): void {
-		this.workspace.off("active-leaf-change", this.handleActiveLeafChange);
-		this.workspace.off("layout-change", this.debouncedEmitLayoutChange);
+		this.context.workspaceEvents.off(
+			"active-leaf-change",
+			this.handleActiveLeafChange
+		);
+		this.context.workspaceEvents.off(
+			"layout-change",
+			this.debouncedEmitLayoutChange
+		);
 	}
 
 	/** Emits an event to notify other managers about a layout change. */
@@ -45,8 +65,8 @@ export class ObsidianEventManager implements Manager {
 	 * Handles active leaf changes and emits an event with the new active view.
 	 */
 	private handleActiveLeafChange = () => {
-		const activeView = this.plugin.getActiveView();
-		log.debug(`Active leaf changed to: ${this.workspace.activeLeaf?.id}`);
+		const activeView = this.context.getActiveView();
+		log.debug(`Active leaf changed to: ${activeView?.leaf?.id}`);
 		this.emitter.emit("obsidian-active-leaf-changed", { view: activeView });
 	};
 }

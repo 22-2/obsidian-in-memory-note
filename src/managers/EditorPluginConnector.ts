@@ -4,16 +4,18 @@ import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
-import { syncEditorPlugin } from "src/views/internal/SyncEditorPlugin";
+import {
+	syncEditorPlugin,
+	SyncEditorPlugin,
+} from "src/views/internal/SyncEditorPlugin";
 import type { Manager } from "./Manager";
+import type { Extension } from "@codemirror/state";
+import type { PluginValue, ViewPlugin } from "@codemirror/view";
 
 /** Manages editor extensions and plugin connections */
 export class EditorPluginConnector implements Manager {
 	private plugin: SandboxNotePlugin;
 	private emitter: EventEmitter<AppEvents>;
-
-	/** CodeMirror plugin for watching changes */
-	watchEditorPlugin = syncEditorPlugin;
 
 	constructor(plugin: SandboxNotePlugin, emitter: EventEmitter<AppEvents>) {
 		this.plugin = plugin;
@@ -22,7 +24,7 @@ export class EditorPluginConnector implements Manager {
 
 	/** Register editor extension and set up event listeners */
 	public load() {
-		this.plugin.registerEditorExtension(syncEditorPlugin);
+		this.plugin.registerEditorExtension(syncEditorPlugin as Extension);
 
 		this.emitter.on("obsidian-layout-changed", this.handleLayoutChange);
 		this.emitter.on(
@@ -43,8 +45,13 @@ export class EditorPluginConnector implements Manager {
 	/** Connect watch editor plugin to view */
 	connectEditorPluginToView(view: AbstractNoteView) {
 		if (!view?.editor) return;
-		const editorPlugin = view.editor.cm.plugin(syncEditorPlugin);
-		if (editorPlugin) {
+
+		// FIXME
+		const editorPlugin = view.editor.cm.plugin(
+			// @ts-expect-error
+			syncEditorPlugin as unknown as ViewPlugin<SyncEditorPlugin, any>
+		);
+		if (editorPlugin instanceof SyncEditorPlugin) {
 			editorPlugin.connectToPlugin(this.plugin, view, this.emitter);
 		}
 	}

@@ -1,3 +1,4 @@
+import type { Extension } from "@codemirror/state";
 import { ViewUpdate, type PluginValue, ViewPlugin } from "@codemirror/view";
 import type SandboxNotePlugin from "../../main";
 import { AbstractNoteView } from "./AbstractNoteView";

@@ -1,13 +1,7 @@
 import log from "loglevel";
 import { Plugin } from "obsidian";
 import type { AppEvents } from "./events/AppEvents";
-import { DatabaseAPI } from "./managers/DatabaseAPI";
-import { EditorPluginConnector } from "./managers/EditorPluginConnector";
-import { EditorSyncManager } from "./managers/EditorSyncManager";
-import type { Manager } from "./managers/Manager";
-import { ObsidianEventManager } from "./managers/ObsidianEventManager";
-import { StateManager } from "./managers/StateManager";
-import { ViewFactory } from "./managers/ViewFactory";
+import { AppOrchestrator } from "./managers/AppOrchestrator";
 import { SandboxNoteSettingTab } from "./settings";
 import {
 	DEBUG_MODE,
@@ -24,15 +18,9 @@ const logger = log.getLogger("SandboxNotePlugin");
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
-	// Managers
-	databaseManager!: DatabaseAPI;
-	stateManager!: StateManager;
-	editorSyncManager!: EditorSyncManager;
-	editorPluginConnector!: EditorPluginConnector;
-	viewFactory!: ViewFactory;
-	workspaceEventManager!: ObsidianEventManager;
+	// Core components
+	orchestrator!: AppOrchestrator;
 	emitter!: EventEmitter<AppEvents>;
-	managers: Manager[] = [];
 
 	/** Initialize plugin on load. */
 	async onload() {
@@ -42,68 +30,22 @@ export default class SandboxNotePlugin extends Plugin {
 			logger.debug("BUILT_AT", process.env.BUILT_AT);
 		}
 
-		this.initializeManagers();
+		this.initializeCoreComponents();
 
-		// Load all data via StateManager
-		await this.stateManager.load();
+		// Load all managers and data via the orchestrator
+		await this.orchestrator.load();
 
-		// Initialize logger based on loaded settings
 		this.applyLogger();
-
-		// Load other managers
-		for (const manager of this.managers) {
-			// StateManager is already loaded
-			if (manager !== this.stateManager) {
-				manager.load();
-			}
-		}
-
 		this.setupSettingsTab();
 		this.setupCommandsAndRibbons();
 
 		logger.debug("Sandbox Note plugin loaded");
 	}
 
-	public getActiveView() {
-		return this.app.workspace.getActiveViewOfType(HotSandboxNoteView);
-	}
-
-	/** Initialize all manager instances */
-	private initializeManagers() {
-		const emitter = new EventEmitter<AppEvents>();
-		this.emitter = emitter;
-		this.databaseManager = new DatabaseAPI();
-
-		// StateManager must be initialized first as others depend on it
-		this.stateManager = new StateManager(
-			this,
-			emitter,
-			this.databaseManager
-		);
-		this.editorSyncManager = new EditorSyncManager(
-			emitter,
-			this.stateManager,
-			this
-		);
-		this.editorPluginConnector = new EditorPluginConnector(this, emitter);
-		this.viewFactory = new ViewFactory(this);
-		this.workspaceEventManager = new ObsidianEventManager(this, emitter);
-
-		// Event listeners that bridge views and managers
-		this.emitter.on("connect-editor-plugin", (payload) => {
-			this.editorPluginConnector.connectEditorPluginToView(payload.view);
-		});
-		this.emitter.on("settings-changed", () => {
-			this.applyLogger();
-		});
-
-		this.managers.push(
-			this.stateManager,
-			this.editorSyncManager,
-			this.editorPluginConnector,
-			this.viewFactory,
-			this.workspaceEventManager
-		);
+	/** Initialize the core components of the plugin. */
+	private initializeCoreComponents() {
+		this.emitter = new EventEmitter<AppEvents>();
+		this.orchestrator = new AppOrchestrator(this, this.emitter);
 	}
 
 	/** Setup plugin settings tab. */
@@ -150,21 +92,21 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Cleanup on plugin unload. */
 	async onunload() {
-		for (const manager of this.managers) {
-			manager.unload();
-		}
-		this.databaseManager.close();
+		this.orchestrator.unload();
 		logger.debug("Sandbox Note plugin unloaded");
 	}
 
+	/**
+	 * Activates a new hot sandbox view.
+	 * This is delegated to the ViewFactory managed by the orchestrator.
+	 */
 	async activateNewHotSandboxView() {
-		return this.viewFactory.activateNewHotSandboxView();
+		return this.orchestrator.viewFactory.activateNewHotSandboxView();
 	}
 
 	/** Initialize logger with current settings. */
 	applyLogger(): void {
-		// StateManager might not be initialized on the very first call, so we check for it.
-		const settings = this.stateManager?.getSettings();
+		const settings = this.orchestrator?.getSettings();
 		if (settings) {
 			settings.enableLogger
 				? logger.setLevel("debug")
@@ -175,6 +117,12 @@ export default class SandboxNotePlugin extends Plugin {
 		logger.debug("Logger initialized");
 	}
 
+	/** Returns the currently active HotSandboxNoteView, if any. */
+	public getActiveView(): HotSandboxNoteView | null {
+		return this.app.workspace.getActiveViewOfType(HotSandboxNoteView);
+	}
+
+	/** Returns all open HotSandboxNoteView instances. */
 	getAllHotSandboxViews(): HotSandboxNoteView[] {
 		const views: HotSandboxNoteView[] = [];
 		this.app.workspace

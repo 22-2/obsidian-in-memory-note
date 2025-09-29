@@ -1,4 +1,5 @@
 import {
+	Workspace,
 	WorkspaceLeaf,
 	WorkspaceParent,
 	WorkspaceWindow,
@@ -25,11 +26,15 @@ export function createVirtualFile(app: App) {
 }
 /** Open view in new tab. */
 export async function activateView<T = any, U = any>(
-	app: App,
+	{
+		getLeaf,
+	}: {
+		getLeaf: Workspace["getLeaf"];
+	},
 	viewState: UViewState,
 	eState?: U
 ): Promise<T> {
-	const leaf: WorkspaceLeaf = app.workspace.getLeaf("tab");
+	const leaf: WorkspaceLeaf = getLeaf("tab");
 
 	if (viewState) {
 		await leaf.setViewState(viewState);

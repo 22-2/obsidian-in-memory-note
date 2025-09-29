@@ -1,32 +1,31 @@
 import log from "loglevel";
-import type { AbstractNoteView } from "src/views/internal/AbstractNoteView";
-import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
-import type { Manager } from "./Manager";
-import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
-import type { StateManager } from "./StateManager";
+import type SandboxNotePlugin from "src/main";
 import { uniqBy } from "src/utils";
-import { nanoid } from "nanoid";
-import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
-import { issue1Logger, issue2Logger } from "../special-loggers";
+import type { EventEmitter } from "src/utils/EventEmitter";
+import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
+import type { AppOrchestrator } from "./AppOrchestrator";
+import type { Manager } from "./Manager";
 
 const logger = log.getLogger("EditorSyncManager");
 
 /** Manages shared content synchronization across views */
 export class EditorSyncManager implements Manager {
 	private emitter: EventEmitter<AppEvents>;
-	private stateManager: StateManager;
+	private stateManager: AppOrchestrator;
+	private plugin: SandboxNotePlugin;
 
 	// --- For new HotSandboxNoteView ---
 	private viewMasterIdMap = new WeakMap<HotSandboxNoteView, string>();
 
 	constructor(
 		emitter: EventEmitter<AppEvents>,
-		stateManager: StateManager,
-		private funcs: { getAllHotSandboxViews: () => HotSandboxNoteView[] }
+		stateManager: AppOrchestrator,
+		plugin: SandboxNotePlugin
 	) {
 		this.emitter = emitter;
 		this.stateManager = stateManager;
+		this.plugin = plugin;
 	}
 
 	public load(): void {
@@ -52,7 +51,7 @@ export class EditorSyncManager implements Manager {
 	};
 
 	public isLastHotView(masterNoteId: string) {
-		const allViews = this.funcs.getAllHotSandboxViews();
+		const allViews = this.plugin.getAllHotSandboxViews();
 		const map = Object.groupBy(allViews, (view) => view.masterNoteId!);
 		return map[masterNoteId]?.length === 1;
 	}
@@ -95,7 +94,7 @@ export class EditorSyncManager implements Manager {
 
 	refreshAllViewTitles() {
 		logger.debug("refreshAllViewTitles", this.viewMasterIdMap);
-		const allViews = this.funcs.getAllHotSandboxViews();
+		const allViews = this.plugin.getAllHotSandboxViews();
 		for (const view of allViews) {
 			logger.debug("Updating header for view", view);
 			view.leaf.updateHeader();
@@ -116,7 +115,7 @@ export class EditorSyncManager implements Manager {
 			`Syncing hot sandbox note content for group: ${masterNoteId}`
 		);
 
-		const allViews = this.funcs.getAllHotSandboxViews();
+		const allViews = this.plugin.getAllHotSandboxViews();
 
 		for (const view of allViews) {
 			// WeakMapからこのビューのmasterIdを取得

@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@codemirror/state':
+        specifier: ^6.5.2
+        version: 6.5.2
       '@codemirror/view':
         specifier: ^6.38.2
         version: 6.38.2

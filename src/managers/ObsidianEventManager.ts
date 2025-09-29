@@ -5,9 +5,10 @@ import type { AppEvents } from "src/events/AppEvents";
 import type SandboxNotePlugin from "src/main";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { Manager } from "./Manager";
+import { ViewFactory } from "./ViewFactory";
 
 type Context = {
-	getActiveView: SandboxNotePlugin["getActiveView"];
+	getActiveView: ViewFactory["getActiveView"];
 	workspaceEvents: {
 		on: Workspace["on"];
 		off: Workspace["off"];

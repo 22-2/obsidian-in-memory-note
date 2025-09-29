@@ -6,44 +6,45 @@ import type { EventEmitter } from "src/utils/EventEmitter";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import type { AppOrchestrator } from "./AppOrchestrator";
 import type { Manager } from "./Manager";
+import type { ViewFactory } from "./ViewFactory";
+import type { CacheManager } from "./CacheManager";
 
 const logger = log.getLogger("EditorSyncManager");
 
+type Context = {
+	emitter: EventEmitter<AppEvents>;
+	getAllHotSandboxViews: ViewFactory["getAllHotSandboxViews"];
+	getAllNotes: CacheManager["getAllNotes"];
+	registerNewNote: CacheManager["registerNewNote"];
+	getNoteContent: CacheManager["getNoteContent"];
+};
+
 /** Manages shared content synchronization across views */
 export class EditorSyncManager implements Manager {
-	private emitter: EventEmitter<AppEvents>;
-	private stateManager: AppOrchestrator;
-	private plugin: SandboxNotePlugin;
-
 	// --- For new HotSandboxNoteView ---
 	private viewMasterIdMap = new WeakMap<HotSandboxNoteView, string>();
 
-	constructor(
-		emitter: EventEmitter<AppEvents>,
-		stateManager: AppOrchestrator,
-		plugin: SandboxNotePlugin
-	) {
-		this.emitter = emitter;
-		this.stateManager = stateManager;
-		this.plugin = plugin;
-	}
+	constructor(private context: Context) {}
 
 	public load(): void {
-		this.emitter.on(
+		this.context.emitter.on(
 			"editor-content-changed",
 			this.handleEditorContentChanged
 		);
-		this.emitter.on("view-opened", this.handleViewOpened);
-		this.emitter.on("settings-changed", this.handleSettingsChanged);
+		this.context.emitter.on("view-opened", this.handleViewOpened);
+		this.context.emitter.on("settings-changed", this.handleSettingsChanged);
 	}
 
 	public unload(): void {
-		this.emitter.off(
+		this.context.emitter.off(
 			"editor-content-changed",
 			this.handleEditorContentChanged
 		);
-		this.emitter.off("view-opened", this.handleViewOpened);
-		this.emitter.off("settings-changed", this.handleSettingsChanged);
+		this.context.emitter.off("view-opened", this.handleViewOpened);
+		this.context.emitter.off(
+			"settings-changed",
+			this.handleSettingsChanged
+		);
 	}
 
 	private handleSettingsChanged = () => {
@@ -51,7 +52,7 @@ export class EditorSyncManager implements Manager {
 	};
 
 	public isLastHotView(masterNoteId: string) {
-		const allViews = this.plugin.getAllHotSandboxViews();
+		const allViews = this.context.getAllHotSandboxViews();
 		const map = Object.groupBy(allViews, (view) => view.masterNoteId!);
 		return map[masterNoteId]?.length === 1;
 	}
@@ -59,7 +60,7 @@ export class EditorSyncManager implements Manager {
 	private handleViewOpened = (payload: AppEvents["view-opened"]) => {
 		const { view } = payload;
 		if (view instanceof HotSandboxNoteView && view.masterNoteId) {
-			this.stateManager.registerNewNote(view.masterNoteId);
+			this.context.registerNewNote(view.masterNoteId);
 			this.viewMasterIdMap.set(view, view.masterNoteId);
 			view.setContent(this.getNoteContent(view.masterNoteId));
 			log.debug(
@@ -85,16 +86,13 @@ export class EditorSyncManager implements Manager {
 	};
 
 	public indexOfMasterId(masterNoteId: string): number {
-		const masterNotes = uniqBy(
-			this.stateManager.getAllNotes(),
-			(n) => n.id
-		);
+		const masterNotes = uniqBy(this.context.getAllNotes(), (n) => n.id);
 		return masterNotes.findIndex((note) => note.id === masterNoteId);
 	}
 
 	refreshAllViewTitles() {
 		logger.debug("refreshAllViewTitles", this.viewMasterIdMap);
-		const allViews = this.plugin.getAllHotSandboxViews();
+		const allViews = this.context.getAllHotSandboxViews();
 		for (const view of allViews) {
 			logger.debug("Updating header for view", view);
 			view.leaf.updateHeader();
@@ -103,7 +101,7 @@ export class EditorSyncManager implements Manager {
 	}
 
 	public getNoteContent(masterNoteId: string): string {
-		return this.stateManager.getNoteContent(masterNoteId);
+		return this.context.getNoteContent(masterNoteId);
 	}
 
 	public syncHotViews(
@@ -115,7 +113,7 @@ export class EditorSyncManager implements Manager {
 			`Syncing hot sandbox note content for group: ${masterNoteId}`
 		);
 
-		const allViews = this.plugin.getAllHotSandboxViews();
+		const allViews = this.context.getAllHotSandboxViews();
 
 		for (const view of allViews) {
 			// WeakMapからこのビューのmasterIdを取得

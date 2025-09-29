@@ -1,3 +1,6 @@
+import type { Extension } from "@codemirror/state";
+import type { ViewPlugin } from "@codemirror/view";
+import type { Plugin } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
 import type SandboxNotePlugin from "src/main";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
@@ -9,25 +12,29 @@ import {
 	SyncEditorPlugin,
 } from "src/views/internal/SyncEditorPlugin";
 import type { Manager } from "./Manager";
-import type { Extension } from "@codemirror/state";
-import type { PluginValue, ViewPlugin } from "@codemirror/view";
+import type { ViewFactory } from "./ViewFactory";
+
+type Context = {
+	emitter: EventEmitter<AppEvents>;
+	plugin: Plugin;
+	getActiveView: ViewFactory["getActiveView"];
+};
 
 /** Manages editor extensions and plugin connections */
 export class EditorPluginConnector implements Manager {
-	private plugin: SandboxNotePlugin;
-	private emitter: EventEmitter<AppEvents>;
-
-	constructor(plugin: SandboxNotePlugin, emitter: EventEmitter<AppEvents>) {
-		this.plugin = plugin;
-		this.emitter = emitter;
-	}
+	constructor(private context: Context) {}
 
 	/** Register editor extension and set up event listeners */
 	public load() {
-		this.plugin.registerEditorExtension(syncEditorPlugin as Extension);
+		this.context.plugin.registerEditorExtension(
+			syncEditorPlugin as Extension
+		);
 
-		this.emitter.on("obsidian-layout-changed", this.handleLayoutChange);
-		this.emitter.on(
+		this.context.emitter.on(
+			"obsidian-layout-changed",
+			this.handleLayoutChange
+		);
+		this.context.emitter.on(
 			"obsidian-active-leaf-changed",
 			this.handleActiveLeafChange
 		);
@@ -35,8 +42,11 @@ export class EditorPluginConnector implements Manager {
 
 	/** Unload event listeners. */
 	public unload() {
-		this.emitter.off("obsidian-layout-changed", this.handleLayoutChange);
-		this.emitter.off(
+		this.context.emitter.off(
+			"obsidian-layout-changed",
+			this.handleLayoutChange
+		);
+		this.context.emitter.off(
 			"obsidian-active-leaf-changed",
 			this.handleActiveLeafChange
 		);
@@ -52,13 +62,17 @@ export class EditorPluginConnector implements Manager {
 			syncEditorPlugin as unknown as ViewPlugin<SyncEditorPlugin, any>
 		);
 		if (editorPlugin instanceof SyncEditorPlugin) {
-			editorPlugin.connectToPlugin(this.plugin, view, this.emitter);
+			editorPlugin.connectToPlugin(
+				this.context.plugin as SandboxNotePlugin,
+				view,
+				this.context.emitter
+			);
 		}
 	}
 
 	/** Connects the editor plugin to any existing sandbox views on layout change. */
 	private handleLayoutChange = () => {
-		this.plugin.app.workspace
+		this.context.plugin.app.workspace
 			.getLeavesOfType(VIEW_TYPE_HOT_SANDBOX)
 			.forEach((leaf) => {
 				const view = leaf.view;
@@ -85,9 +99,9 @@ export class EditorPluginConnector implements Manager {
 	 * This ensures that commands and other editor features work correctly.
 	 */
 	private syncActiveEditorState(): void {
-		const activeView = this.plugin.getActiveView();
+		const activeView = this.context.getActiveView();
 		// @ts-ignore
-		const workspace = this.plugin.app.workspace;
+		const workspace = this.context.plugin.app.workspace;
 
 		if (activeView instanceof AbstractNoteView && activeView.editor) {
 			workspace._activeEditor = activeView.wrapper.virtualEditor;

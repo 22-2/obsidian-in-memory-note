@@ -60,8 +60,6 @@ export class AppOrchestrator implements Manager {
 			emitter
 		);
 
-		this.editorSyncManager = new EditorSyncManager(emitter, this, plugin);
-		this.editorPluginConnector = new EditorPluginConnector(plugin, emitter);
 		this.viewFactory = new ViewFactory({
 			registerView: (type, viewFactory) =>
 				plugin.registerView(type, viewFactory),
@@ -83,16 +81,35 @@ export class AppOrchestrator implements Manager {
 			getLeavesOfType: (type: string) =>
 				plugin.app.workspace.getLeavesOfType(type),
 		});
+		this.editorSyncManager = new EditorSyncManager({
+			emitter: this.emitter,
+			getAllHotSandboxViews: this.viewFactory.getAllHotSandboxViews.bind(
+				this.viewFactory
+			),
+			getAllNotes: this.cacheManager.getAllNotes.bind(this.cacheManager),
+			registerNewNote: this.cacheManager.registerNewNote.bind(
+				this.cacheManager
+			),
+			getNoteContent: this.cacheManager.getNoteContent.bind(
+				this.cacheManager
+			),
+		});
+		this.editorPluginConnector = new EditorPluginConnector({
+			emitter: this.emitter,
+			getActiveView: this.viewFactory.getActiveView.bind(
+				this.viewFactory
+			),
+			plugin: this.plugin,
+		});
 
 		this.appEventManager = new AppEventManager({
 			applyLogger: plugin.applyLogger.bind(plugin),
 			cache: this.cacheManager,
 			emitter,
 			settings: this.settingsManager,
-			connectEditorPluginToView:
-				this.editorPluginConnector.connectEditorPluginToView.bind(
-					this.editorPluginConnector
-				),
+			connectEditorPluginToView: (leaf) => {
+				this.editorPluginConnector.connectEditorPluginToView(leaf);
+			},
 			saveSandbox: this.dbController.saveToDatabase.bind(
 				this.dbController
 			),

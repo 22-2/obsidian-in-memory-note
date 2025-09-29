@@ -1,9 +1,8 @@
-import type { Extension } from "@codemirror/state";
-import { ViewUpdate, type PluginValue, ViewPlugin } from "@codemirror/view";
+import { ViewPlugin, ViewUpdate, type PluginValue } from "@codemirror/view";
+import type { AppEvents } from "src/events/AppEvents";
+import type { EventEmitter } from "src/utils/EventEmitter";
 import type SandboxNotePlugin from "../../main";
 import { AbstractNoteView } from "./AbstractNoteView";
-import type { EventEmitter } from "src/utils/EventEmitter";
-import type { AppEvents } from "src/events/AppEvents";
 
 /** CodeMirror plugin for syncing content across views. */
 export class SyncEditorPlugin implements PluginValue {

@@ -1,20 +1,18 @@
 import log from "loglevel";
 import type { AppEvents } from "src/events/AppEvents";
 import type SandboxNotePlugin from "src/main";
-import type { SandboxNotePluginData } from "src/settings";
-import { DEFAULT_PLUGIN_DATA } from "src/utils/constants";
+import { DatabaseManager } from "src/managers/DatabaseManager";
 import type { EventEmitter } from "src/utils/EventEmitter";
-import { DatabaseController } from "src/managers/DatabaseController";
-import { PluginEventManager } from "./PluginEventManager";
-import { DatabaseAPI } from "./DatabaseAPI";
-import { EditorPluginConnector } from "./EditorPluginConnector";
-import { EditorSyncManager } from "./EditorSyncManager";
+import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import { CacheManager } from "./CacheManager";
+import { CodeMirrorExtensionManager } from "./CodeMirrorExtensionManager";
+import { DatabaseAPI } from "./DatabaseAPI";
+import { EditorSyncManager } from "./EditorSyncManager";
 import type { IManager } from "./IManager";
 import { ObsidianEventManager } from "./ObsidianEventManager";
+import { PluginEventManager } from "./PluginEventManager";
 import { SettingsManager } from "./SettingsManager";
 import { ViewManager } from "./ViewManager";
-import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 
 const logger = log.getLogger("AppOrchestrator");
 
@@ -30,11 +28,11 @@ export class AppOrchestrator implements IManager {
 	protected cacheManager: CacheManager;
 	protected pluginEventManager: PluginEventManager;
 	protected editorSyncManager: EditorSyncManager;
-	protected editorPluginConnector: EditorPluginConnector;
+	protected cmExtensionManager: CodeMirrorExtensionManager;
 	protected viewManager: ViewManager;
 	protected obsidianEventManager: ObsidianEventManager;
 	protected databaseAPI!: DatabaseAPI;
-	protected dbController!: DatabaseController;
+	protected dbManager!: DatabaseManager;
 
 	private subManagers: IManager[] = [];
 
@@ -46,7 +44,7 @@ export class AppOrchestrator implements IManager {
 		// --- Initialize all managers here ---
 		this.settingsManager = new SettingsManager(emitter, plugin);
 		this.cacheManager = new CacheManager(emitter, this.databaseAPI);
-		this.dbController = new DatabaseController(
+		this.dbManager = new DatabaseManager(
 			this.databaseAPI,
 			{
 				get: this.cacheManager.getNoteData.bind(this.cacheManager),
@@ -59,7 +57,6 @@ export class AppOrchestrator implements IManager {
 			},
 			emitter
 		);
-
 		this.viewManager = new ViewManager({
 			registerView: (type, viewCreator) =>
 				plugin.registerView(type, viewCreator),
@@ -97,28 +94,25 @@ export class AppOrchestrator implements IManager {
 			getNoteContent: this.cacheManager.getNoteContent.bind(
 				this.cacheManager
 			),
-		});
-		this.editorPluginConnector = new EditorPluginConnector({
-			emitter: this.emitter,
 			getActiveView: this.viewManager.getActiveView.bind(
 				this.viewManager
 			),
+			workspace: this.plugin.app.workspace as never,
+		});
+		this.cmExtensionManager = new CodeMirrorExtensionManager({
+			emitter: this.emitter,
 			plugin: this.plugin,
 		});
-
 		this.pluginEventManager = new PluginEventManager({
 			applyLogger: plugin.applyLogger.bind(plugin),
 			cache: this.cacheManager,
 			emitter,
 			settings: this.settingsManager,
 			connectEditorPluginToView: (leaf) => {
-				this.editorPluginConnector.connectEditorPluginToView(leaf);
+				this.cmExtensionManager.connectEditorPluginToView(leaf);
 			},
-			saveSandbox: this.dbController.saveToDatabase.bind(
-				this.dbController
-			),
+			saveSandbox: this.dbManager.saveToDatabase.bind(this.dbManager),
 		});
-
 		this.obsidianEventManager = new ObsidianEventManager(
 			{
 				getActiveView: this.viewManager.getActiveView.bind(
@@ -131,7 +125,7 @@ export class AppOrchestrator implements IManager {
 
 		this.subManagers.push(
 			this.editorSyncManager,
-			this.editorPluginConnector,
+			this.cmExtensionManager,
 			this.viewManager,
 			this.obsidianEventManager,
 			this.cacheManager,

@@ -1,14 +1,11 @@
-import type SandboxNotePlugin from "src/main";
+import type { Plugin, Workspace, WorkspaceLeaf } from "obsidian";
+import { uniqBy } from "src/utils";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import { activateView } from "src/utils/obsidian";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
-import type { IManager } from "./IManager";
-import type { Plugin, Workspace, WorkspaceLeaf } from "obsidian";
-import { uniqBy } from "src/utils";
 import type { CacheManager } from "./CacheManager";
-import type { EventEmitter } from "src/utils/EventEmitter";
-import type { AppEvents } from "src/events/AppEvents";
+import type { IManager } from "./IManager";
 
 type Context = {
 	registerView: Plugin["registerView"];

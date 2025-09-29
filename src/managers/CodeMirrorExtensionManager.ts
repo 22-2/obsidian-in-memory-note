@@ -3,25 +3,23 @@ import type { ViewPlugin } from "@codemirror/view";
 import type { Plugin } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
 import type SandboxNotePlugin from "src/main";
-import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import type { EventEmitter } from "src/utils/EventEmitter";
+import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 import {
-	syncEditorPlugin,
 	SyncEditorPlugin,
+	syncEditorPlugin,
 } from "src/views/internal/SyncEditorPlugin";
 import type { IManager } from "./IManager";
-import type { ViewManager } from "./ViewManager";
 
 type Context = {
 	emitter: EventEmitter<AppEvents>;
 	plugin: Plugin;
-	getActiveView: ViewManager["getActiveView"];
 };
 
 /** Manages editor extensions and plugin connections */
-export class EditorPluginConnector implements IManager {
+export class CodeMirrorExtensionManager implements IManager {
 	constructor(private context: Context) {}
 
 	/** Register editor extension and set up event listeners */
@@ -80,7 +78,6 @@ export class EditorPluginConnector implements IManager {
 					this.connectEditorPluginToView(view);
 				}
 			});
-		this.syncActiveEditorState();
 	};
 
 	/** Connects the editor plugin to the newly active view and syncs editor state. */
@@ -91,26 +88,5 @@ export class EditorPluginConnector implements IManager {
 		if (view) {
 			this.connectEditorPluginToView(view);
 		}
-		this.syncActiveEditorState();
 	};
-
-	/**
-	 * Syncs Obsidian's internal active editor state with our virtual editor.
-	 * This ensures that commands and other editor features work correctly.
-	 */
-	private syncActiveEditorState(): void {
-		const activeView = this.context.getActiveView();
-		// @ts-ignore
-		const workspace = this.context.plugin.app.workspace;
-
-		if (activeView instanceof AbstractNoteView && activeView.editor) {
-			workspace._activeEditor = activeView.wrapper.virtualEditor;
-		} else if (
-			// @ts-expect-error
-			workspace._activeEditor?.leaf?.__FAKE_LEAF__ &&
-			!(activeView instanceof AbstractNoteView)
-		) {
-			workspace._activeEditor = null;
-		}
-	}
 }

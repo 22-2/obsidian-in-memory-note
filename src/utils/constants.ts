@@ -1,5 +1,5 @@
-import { type SandboxNotePluginData, type PluginSettings } from "../settings";
 import log from "loglevel";
+import { type PluginSettings, type SandboxNotePluginData } from "../settings";
 
 export const DEBUG_MODE =
 	typeof process !== "undefined" && process.env.NODE_ENV === "development";

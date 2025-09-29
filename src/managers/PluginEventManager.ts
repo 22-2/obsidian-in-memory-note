@@ -1,23 +1,23 @@
+import log from "loglevel";
 import type { AppEvents } from "src/events/AppEvents";
-import type { DatabaseController } from "src/managers/DatabaseController";
-import type { EditorPluginConnector } from "src/managers/EditorPluginConnector";
+import type { CodeMirrorExtensionManager } from "src/managers/CodeMirrorExtensionManager";
+import type { DatabaseManager } from "src/managers/DatabaseManager";
 import type { IManager } from "src/managers/IManager";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
+import SandboxPlugin from "../main";
 import type { CacheManager } from "./CacheManager";
 import type { SettingsManager } from "./SettingsManager";
-import log from "loglevel";
-import SandboxPlugin from "../main";
 
 const logger = log.getLogger("AppOrchestrator");
 
 type Context = {
-	saveSandbox: DatabaseController["debouncedSaveSandbox"];
+	saveSandbox: DatabaseManager["debouncedSaveSandbox"];
 	applyLogger: SandboxPlugin["applyLogger"];
 	cache: CacheManager;
 	emitter: EventEmitter<AppEvents>;
 	settings: SettingsManager;
-	connectEditorPluginToView: EditorPluginConnector["connectEditorPluginToView"];
+	connectEditorPluginToView: CodeMirrorExtensionManager["connectEditorPluginToView"];
 };
 
 export class PluginEventManager implements IManager {

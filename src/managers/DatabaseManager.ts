@@ -10,7 +10,7 @@ import type { CacheManager } from "./CacheManager";
 
 const logger = log.getLogger("DatabaseController");
 
-export class DatabaseController implements IManager {
+export class DatabaseManager implements IManager {
 	private debouncedSaveFns = new Map<
 		string,
 		Debouncer<[string, string], void>

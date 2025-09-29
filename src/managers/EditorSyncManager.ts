@@ -1,13 +1,11 @@
 import log from "loglevel";
 import type { AppEvents } from "src/events/AppEvents";
-import type SandboxNotePlugin from "src/main";
-import { uniqBy } from "src/utils";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
-import type { AppOrchestrator } from "./AppOrchestrator";
+import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
+import type { CacheManager } from "./CacheManager";
 import type { IManager } from "./IManager";
 import type { ViewManager } from "./ViewManager";
-import type { CacheManager } from "./CacheManager";
 
 const logger = log.getLogger("EditorSyncManager");
 
@@ -17,6 +15,10 @@ type Context = {
 	getAllNotes: CacheManager["getAllNotes"];
 	registerNewNote: CacheManager["registerNewNote"];
 	getNoteContent: CacheManager["getNoteContent"];
+	getActiveView: ViewManager["getActiveView"];
+	workspace: {
+		_activeEditor: never;
+	};
 };
 
 /** Manages shared content synchronization across views */
@@ -33,6 +35,10 @@ export class EditorSyncManager implements IManager {
 		);
 		this.context.emitter.on("view-opened", this.handleViewOpened);
 		this.context.emitter.on("settings-changed", this.handleSettingsChanged);
+		this.context.emitter.on(
+			"obsidian-layout-changed",
+			this.syncActiveEditorState
+		);
 	}
 
 	public unload(): void {
@@ -114,4 +120,25 @@ export class EditorSyncManager implements IManager {
 			}
 		}
 	}
+
+	/**
+	 * Syncs Obsidian's internal active editor state with our virtual editor.
+	 * This ensures that commands and other editor features work correctly.
+	 */
+	private syncActiveEditorState = (): void => {
+		const activeView = this.context.getActiveView();
+		const workspace = this.context.workspace;
+
+		if (activeView instanceof AbstractNoteView && activeView.editor) {
+			// @ts-expect-error
+			workspace._activeEditor = activeView.wrapper.virtualEditor;
+		} else if (
+			// @ts-expect-error
+			workspace._activeEditor?.leaf?.__FAKE_LEAF__ &&
+			!(activeView instanceof AbstractNoteView)
+		) {
+			// @ts-expect-error
+			workspace._activeEditor = null;
+		}
+	};
 }

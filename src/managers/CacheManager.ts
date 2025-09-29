@@ -1,8 +1,7 @@
 import log from "loglevel";
-import { debounce, type Debouncer } from "obsidian";
+import type { AppEvents } from "src/events/AppEvents";
 import type { HotSandboxNoteData } from "src/settings";
 import type { EventEmitter } from "src/utils/EventEmitter";
-import type { AppEvents } from "src/events/AppEvents";
 import type { IManager } from "./IManager";
 
 const logger = log.getLogger("HotSandboxManager");
@@ -12,15 +11,12 @@ type MinimalDBAPI = {
 };
 
 export class CacheManager implements IManager {
-	private emitter: EventEmitter<AppEvents>;
 	private sandboxNotes = new Map<string, HotSandboxNoteData>();
 
 	constructor(
 		emitter: EventEmitter<AppEvents>,
 		private context: MinimalDBAPI
-	) {
-		this.emitter = emitter;
-	}
+	) {}
 
 	async load(): Promise<void> {
 		const allNotes = await this.context.getAllNotes();

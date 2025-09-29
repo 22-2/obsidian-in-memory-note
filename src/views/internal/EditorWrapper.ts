@@ -1,9 +1,9 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\views\helpers\EditorWrapper.ts
+import log from "loglevel";
 import { type ViewStateResult, WorkspaceLeaf } from "obsidian";
 import { noop } from "src/utils";
 import type { AbstractNoteView } from "./AbstractNoteView";
 import { VirtualMarkdownView } from "./VirtualMarkdownView";
-import log from "loglevel";
 import type { AbstractNoteViewState } from "./types";
 
 /** Manages inline MarkdownView without physical file. */

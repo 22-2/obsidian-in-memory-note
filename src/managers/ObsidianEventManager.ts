@@ -1,8 +1,7 @@
 import log from "loglevel";
-import type { App, Workspace } from "obsidian";
+import type { Workspace } from "obsidian";
 import { debounce } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
-import type SandboxNotePlugin from "src/main";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { IManager } from "./IManager";
 import { ViewManager } from "./ViewManager";

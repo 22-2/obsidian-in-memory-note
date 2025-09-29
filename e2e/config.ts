@@ -53,7 +53,7 @@ invariant(
 
 
 export const LAUNCH_OPTIONS = {
-	args: [APP_MAIN_JS_PATH, "--no-sandbox", "--disable-setuid-sandbox"],
+	args: [APP_MAIN_JS_PATH, "--no-sandbox", "--disable-setuid-sandbox", "--unsafely-disable-devtools-self-xss-warnings"],
 	env: {
 		...process.env,
 		NODE_ENV: "development",

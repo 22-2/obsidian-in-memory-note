@@ -115,7 +115,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 				)
 				.click()
 		);
-		await page.pause();
+		// await page.pause();
 
 		// await page.evaluate(() =>
 		// 	// @ts-expect-error

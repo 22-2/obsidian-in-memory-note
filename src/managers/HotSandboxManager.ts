@@ -10,7 +10,7 @@ const logger = log.getLogger("HotSandboxManager");
 export class HotSandboxManager {
 	private emitter: EventEmitter<AppEvents>;
 	private databaseAPI: DatabaseAPI;
-	private hotNotes = new Map<string, HotSandboxNoteData>();
+	private sandboxNotes = new Map<string, HotSandboxNoteData>();
 	private debouncedSaveFns = new Map<
 		string,
 		Debouncer<[string, string], void>
@@ -23,10 +23,10 @@ export class HotSandboxManager {
 
 	async initialize(): Promise<void> {
 		const allNotes = await this.databaseAPI.getAllNotes();
-		this.hotNotes.clear();
+		this.sandboxNotes.clear();
 
 		allNotes.forEach((note) => {
-			this.hotNotes.set(note.id, note);
+			this.sandboxNotes.set(note.id, note);
 		});
 
 		logger.debug(
@@ -36,36 +36,36 @@ export class HotSandboxManager {
 	}
 
 	getAllNotes(): HotSandboxNoteData[] {
-		return Array.from(this.hotNotes.values());
+		return Array.from(this.sandboxNotes.values());
 	}
 
 	getNoteContent(masterNoteId: string): string {
-		return this.hotNotes.get(masterNoteId)?.content ?? "";
+		return this.sandboxNotes.get(masterNoteId)?.content ?? "";
 	}
 
 	getNoteData(masterNoteId: string): HotSandboxNoteData | undefined {
-		return this.hotNotes.get(masterNoteId);
+		return this.sandboxNotes.get(masterNoteId);
 	}
 
 	registerNewNote(masterNoteId: string): void {
-		if (!this.hotNotes.has(masterNoteId)) {
+		if (!this.sandboxNotes.has(masterNoteId)) {
 			const newNote: HotSandboxNoteData = {
 				id: masterNoteId,
 				content: "",
 				mtime: Date.now(),
 			};
-			this.hotNotes.set(masterNoteId, newNote);
+			this.sandboxNotes.set(masterNoteId, newNote);
 			logger.debug(`Registered new note: ${masterNoteId}`);
-			// this.emitter.emit("hot-note-registered", { noteId: masterNoteId });
+			// this.emitter.emit("sandbox-note-registered", { noteId: masterNoteId });
 		}
 	}
 
 	updateNoteContent(masterNoteId: string, content: string): void {
-		const note = this.hotNotes.get(masterNoteId);
+		const note = this.sandboxNotes.get(masterNoteId);
 		if (note) {
 			note.content = content;
 			note.mtime = Date.now();
-			// this.emitter.emit("hot-note-content-updated", {
+			// this.emitter.emit("sandbox-note-content-updated", {
 			// 	noteId: masterNoteId,
 			// 	content,
 			// });
@@ -74,14 +74,14 @@ export class HotSandboxManager {
 
 	async saveToDatabase(masterNoteId: string, content: string): Promise<void> {
 		try {
-			const note = this.hotNotes.get(masterNoteId);
+			const note = this.sandboxNotes.get(masterNoteId);
 			if (note) {
 				this.updateNoteContent(masterNoteId, content);
-				const updatedNote = this.hotNotes.get(masterNoteId)!;
+				const updatedNote = this.sandboxNotes.get(masterNoteId)!;
 
 				await this.databaseAPI.saveNote(updatedNote);
 				logger.debug(`Saved hot note to database: ${masterNoteId}`);
-				// this.emitter.emit("hot-note-saved", {
+				// this.emitter.emit("sandbox-note-saved", {
 				// 	noteId: masterNoteId,
 				// 	content,
 				// });
@@ -91,7 +91,7 @@ export class HotSandboxManager {
 				`Failed to save note to database: ${masterNoteId}`,
 				error
 			);
-			// this.emitter.emit("hot-note-save-failed", {
+			// this.emitter.emit("sandbox-note-save-failed", {
 			// 	noteId: masterNoteId,
 			// 	error,
 			// });
@@ -101,19 +101,19 @@ export class HotSandboxManager {
 	async deleteFromDatabase(masterNoteId: string): Promise<void> {
 		try {
 			await this.databaseAPI.deleteNote(masterNoteId);
-			this.hotNotes.delete(masterNoteId);
+			this.sandboxNotes.delete(masterNoteId);
 
 			// デバウンサーもクリーンアップ
 			this.debouncedSaveFns.delete(masterNoteId);
 
 			logger.debug(`Deleted hot note from database: ${masterNoteId}`);
-			// this.emitter.emit("hot-note-deleted", { noteId: masterNoteId });
+			// this.emitter.emit("sandbox-note-deleted", { noteId: masterNoteId });
 		} catch (error) {
 			logger.error(
 				`Failed to delete note from database: ${masterNoteId}`,
 				error
 			);
-			// this.emitter.emit("hot-note-delete-failed", {
+			// this.emitter.emit("sandbox-note-delete-failed", {
 			// 	noteId: masterNoteId,
 			// 	error,
 			// });
@@ -145,7 +145,7 @@ export class HotSandboxManager {
 
 	cleanup(): void {
 		this.debouncedSaveFns.clear();
-		this.hotNotes.clear();
+		this.sandboxNotes.clear();
 		this.databaseAPI.close();
 	}
 }

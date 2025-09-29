@@ -90,9 +90,6 @@ export abstract class AbstractNoteView extends ItemView {
 					"masterNoteId not set, creating a new one in onOpen."
 				);
 				this.masterNoteId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
-				this.emitter.emit("register-new-hot-note", {
-					masterNoteId: this.masterNoteId,
-				});
 			}
 			issue2Logger.debug("masterNoteId", this.masterNoteId);
 
@@ -122,11 +119,7 @@ export abstract class AbstractNoteView extends ItemView {
 			this.masterNoteId = masterIdFromState;
 			logger.debug(`Restored note group ID: ${this.masterNoteId}`);
 		} else if (!this.masterNoteId) {
-			logger.debug("masterNoteId not found in state, creating new one.");
-			this.masterNoteId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
-			this.emitter.emit("register-new-hot-note", {
-				masterNoteId: this.masterNoteId,
-			});
+			return logger.error("masterNoteId not found in state.");
 		}
 
 		if (typeof state.source === "boolean") {

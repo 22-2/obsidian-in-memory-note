@@ -24,7 +24,6 @@ export class SettingsManager {
 
 	async updateSettings(settings: PluginSettings): Promise<void> {
 		this.settings = settings;
-		// StateManagerに設定保存を委譲
 		this.emitter.emit("settings-update-requested", { settings });
 		this.emitter.emit("settings-changed", { newSettings: settings });
 	}

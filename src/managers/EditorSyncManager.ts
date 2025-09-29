@@ -59,12 +59,10 @@ export class EditorSyncManager implements Manager {
 
 	private handleViewOpened = (payload: AppEvents["view-opened"]) => {
 		const { view } = payload;
-		issue1Logger.debug("EditorSyncManager.handleViewOpened", view);
-		logger.debug("handleViewOpened", view);
-		logger.debug("handleViewOpened.getState", view.getState());
 		if (view instanceof HotSandboxNoteView && view.masterNoteId) {
+			this.stateManager.registerNewNote(view.masterNoteId);
 			this.viewMasterIdMap.set(view, view.masterNoteId);
-			view.setContent(this.getHotNoteContent(view.masterNoteId));
+			view.setContent(this.getNoteContent(view.masterNoteId));
 			log.debug(
 				`View ${view.leaf.id} associated with masterId ${view.masterNoteId}`
 			);
@@ -89,7 +87,7 @@ export class EditorSyncManager implements Manager {
 
 	public indexOfMasterId(masterNoteId: string): number {
 		const masterNotes = uniqBy(
-			this.stateManager.getAllHotNotes(),
+			this.stateManager.getAllNotes(),
 			(n) => n.id
 		);
 		return masterNotes.findIndex((note) => note.id === masterNoteId);
@@ -105,8 +103,8 @@ export class EditorSyncManager implements Manager {
 		logger.debug("finish");
 	}
 
-	public getHotNoteContent(masterNoteId: string): string {
-		return this.stateManager.getHotNoteContent(masterNoteId);
+	public getNoteContent(masterNoteId: string): string {
+		return this.stateManager.getNoteContent(masterNoteId);
 	}
 
 	public syncHotViews(

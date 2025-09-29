@@ -102,15 +102,15 @@ export class StateManager implements Manager {
 		await this.settingsManager.updateSettings(settings);
 	}
 
-	getAllHotNotes(): HotSandboxNoteData[] {
+	getAllNotes(): HotSandboxNoteData[] {
 		return this.hotSandboxManager.getAllNotes();
 	}
 
-	getHotNoteContent(masterNoteId: string): string {
+	getNoteContent(masterNoteId: string): string {
 		return this.hotSandboxManager.getNoteContent(masterNoteId);
 	}
 
-	registerNewHotNote(masterNoteId: string): void {
+	registerNewNote(masterNoteId: string): void {
 		this.hotSandboxManager.registerNewNote(masterNoteId);
 	}
 

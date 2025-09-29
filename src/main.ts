@@ -48,7 +48,7 @@ export default class SandboxNotePlugin extends Plugin {
 		await this.stateManager.load();
 
 		// Initialize logger based on loaded settings
-		this.initializeLogger();
+		this.applyLogger();
 
 		// Load other managers
 		for (const manager of this.managers) {
@@ -93,11 +93,8 @@ export default class SandboxNotePlugin extends Plugin {
 		this.emitter.on("connect-editor-plugin", (payload) => {
 			this.editorPluginConnector.connectEditorPluginToView(payload.view);
 		});
-		this.emitter.on("register-new-hot-note", (payload) => {
-			this.stateManager.registerNewHotNote(payload.masterNoteId);
-		});
 		this.emitter.on("settings-changed", () => {
-			this.initializeLogger();
+			this.applyLogger();
 		});
 
 		this.managers.push(
@@ -165,7 +162,7 @@ export default class SandboxNotePlugin extends Plugin {
 	}
 
 	/** Initialize logger with current settings. */
-	initializeLogger(): void {
+	applyLogger(): void {
 		// StateManager might not be initialized on the very first call, so we check for it.
 		const settings = this.stateManager?.getSettings();
 		if (settings) {

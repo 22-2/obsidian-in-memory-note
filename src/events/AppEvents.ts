@@ -15,9 +15,6 @@ export interface AppEvents {
 	"content-saved": {
 		view: AbstractNoteView;
 	};
-	"unsaved-state-changed": {
-		hasUnsavedChanges: boolean;
-	};
 	"view-opened": {
 		view: AbstractNoteView;
 	};
@@ -26,9 +23,6 @@ export interface AppEvents {
 	};
 	"connect-editor-plugin": {
 		view: AbstractNoteView;
-	};
-	"register-new-hot-note": {
-		masterNoteId: string;
 	};
 	"obsidian-layout-changed": void;
 	"obsidian-active-leaf-changed": {

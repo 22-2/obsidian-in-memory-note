@@ -69,8 +69,8 @@ export class AppOrchestrator implements Manager {
 						this.editorSyncManager.indexOfMasterId.bind(
 							this.editorSyncManager
 						),
-					isLastHotView: this.editorSyncManager.isLastHotView.bind(
-						this.editorSyncManager
+					isLastHotView: this.viewFactory.isLastHotView.bind(
+						this.viewFactory
 					),
 				}),
 			getLeaf: (type) => plugin.app.workspace.getLeaf(type),

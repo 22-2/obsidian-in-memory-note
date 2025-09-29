@@ -51,12 +51,6 @@ export class EditorSyncManager implements Manager {
 		this.refreshAllViewTitles();
 	};
 
-	public isLastHotView(masterNoteId: string) {
-		const allViews = this.context.getAllHotSandboxViews();
-		const map = Object.groupBy(allViews, (view) => view.masterNoteId!);
-		return map[masterNoteId]?.length === 1;
-	}
-
 	private handleViewOpened = (payload: AppEvents["view-opened"]) => {
 		const { view } = payload;
 		if (view instanceof HotSandboxNoteView && view.masterNoteId) {

@@ -12,6 +12,7 @@ import { nanoid } from "nanoid";
 import type { AppEvents } from "src/events/AppEvents";
 import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
 import type { AppOrchestrator } from "src/managers/AppOrchestrator";
+import type { SettingsManager } from "src/managers/SettingsManager";
 import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { issue2Logger } from "../../special-loggers";
@@ -19,12 +20,14 @@ import { EditorWrapper } from "./EditorWrapper";
 import type { AbstractNoteViewState, ObsidianViewState } from "./types";
 import { convertToFileAndClear } from "./utils";
 import { showConfirmModal } from "../../helpers/showConfirmModal";
+import type { ViewFactory } from "src/managers/ViewFactory";
 
 const logger = log.getLogger("AbstractNoteView");
 
-export type AbstractNoteViewFuncs = {
-	indexOfMasterId: (masterNoteId: string) => number;
-	isLastHotView: (masterNoteId: string) => boolean;
+type Context = {
+	getSettings: SettingsManager["getSettings"];
+	isLastHotView: ViewFactory["isLastHotView"];
+	emitter: EventEmitter<AppEvents>;
 };
 
 /** Abstract base class for note views with an inline editor. */
@@ -40,10 +43,11 @@ export abstract class AbstractNoteView extends ItemView {
 
 	constructor(
 		leaf: WorkspaceLeaf,
-		protected emitter: EventEmitter<AppEvents>,
-		protected orchestrator: AppOrchestrator,
-		protected funcs: AbstractNoteViewFuncs
-	) {
+		private context: Context
+	) // protected emitter: EventEmitter<AppEvents>,
+	// protected orchestrator: AppOrchestrator,
+	// protected funcs: AbstractNoteViewFuncs
+	{
 		super(leaf);
 		this.wrapper = new EditorWrapper(this);
 		this.scope = new Scope(this.app.scope);
@@ -96,15 +100,15 @@ export abstract class AbstractNoteView extends ItemView {
 			await this.wrapper.initialize(this.contentEl, this.initialState);
 			this.initialState = null;
 			this.setupEventHandlers();
-			this.emitter.emit("connect-editor-plugin", { view: this });
-			this.emitter.emit("view-opened", { view: this });
+			this.context.emitter.emit("connect-editor-plugin", { view: this });
+			this.context.emitter.emit("view-opened", { view: this });
 		} catch (error) {
 			this.handleInitializationError(error);
 		}
 	}
 
 	public override async onClose() {
-		this.emitter.emit("view-closed", { view: this });
+		this.context.emitter.emit("view-closed", { view: this });
 		this.wrapper.unload();
 		this.contentEl.empty();
 	}
@@ -181,7 +185,7 @@ export abstract class AbstractNoteView extends ItemView {
 	private setupEventHandlers() {
 		if (!this.editor) return logger.error("Editor not found");
 
-		this.emitter.on("obsidian-active-leaf-changed", (payload) => {
+		this.context.emitter.on("obsidian-active-leaf-changed", (payload) => {
 			if (payload?.view?.leaf?.id === this.leaf.id) {
 				this.editor?.focus();
 			}
@@ -202,7 +206,7 @@ export abstract class AbstractNoteView extends ItemView {
 				return;
 			}
 
-			const isLastView = this.funcs.isLastHotView(this.masterNoteId);
+			const isLastView = this.context.isLastHotView(this.masterNoteId);
 			if (!isLastView) {
 				return this.leaf.detach();
 			}
@@ -214,7 +218,7 @@ export abstract class AbstractNoteView extends ItemView {
 			);
 			if (confirmed) {
 				this.leaf.detach();
-				this.emitter.emit("delete-requested", { view: this });
+				this.context.emitter.emit("delete-requested", { view: this });
 				logger.debug(
 					`Deleting hot sandbox note content for group: ${this.masterNoteId}`
 				);
@@ -232,7 +236,7 @@ export abstract class AbstractNoteView extends ItemView {
 				return true; // Continue with default behavior
 			}
 
-			if (this.orchestrator.getSettings().enableCtrlS) {
+			if (this.context.getSettings().enableCtrlS) {
 				// 変更
 				e.preventDefault();
 				e.stopPropagation();
@@ -245,7 +249,7 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	public updateActionButtons() {
-		const settings = this.orchestrator.getSettings(); // 変更
+		const settings = this.context.getSettings();
 		if (!settings.enableAutoSave) {
 			this.saveActionEl?.hide();
 			return;

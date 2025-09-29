@@ -68,4 +68,10 @@ export class ViewFactory implements Manager {
 		});
 		return views;
 	}
+
+	public isLastHotView(masterNoteId: string) {
+		const allViews = this.getAllHotSandboxViews();
+		const map = Object.groupBy(allViews, (view) => view.masterNoteId!);
+		return map[masterNoteId]?.length === 1;
+	}
 }

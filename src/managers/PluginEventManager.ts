@@ -32,10 +32,6 @@ export class PluginEventManager implements IManager {
 			this.handleEditorContentChanged
 		);
 		this.context.emitter.on(
-			"settings-update-requested",
-			this.handleSettingsUpdateRequest
-		);
-		this.context.emitter.on(
 			"connect-editor-plugin",
 			this.handleConnectEditorPlugin
 		);
@@ -52,10 +48,6 @@ export class PluginEventManager implements IManager {
 		this.context.emitter.off(
 			"editor-content-changed",
 			this.handleEditorContentChanged
-		);
-		this.context.emitter.off(
-			"settings-update-requested",
-			this.handleSettingsUpdateRequest
 		);
 		this.context.emitter.off(
 			"connect-editor-plugin",
@@ -90,15 +82,6 @@ export class PluginEventManager implements IManager {
 				}
 			});
 		}
-	};
-
-	private handleSettingsUpdateRequest = async (
-		payload: AppEvents["settings-update-requested"]
-	) => {
-		// this.data.settings = payload.settings;
-		this.context.settings.updateSettingsAndSave(payload.settings);
-		// await this.plugin.saveData(this.data);
-		logger.debug("Settings saved to Obsidian storage.");
 	};
 
 	private handleConnectEditorPlugin = (

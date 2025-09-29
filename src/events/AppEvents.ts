@@ -34,7 +34,4 @@ export interface AppEvents {
 	"settings-changed": {
 		newSettings: PluginSettings;
 	};
-	"settings-update-requested": {
-		settings: PluginSettings;
-	};
 }

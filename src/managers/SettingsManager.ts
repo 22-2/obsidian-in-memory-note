@@ -1,3 +1,4 @@
+import type { Plugin } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
 import type { PluginSettings } from "src/settings";
 import { type SandboxNotePluginData } from "src/settings";
@@ -5,17 +6,15 @@ import type { EventEmitter } from "src/utils/EventEmitter";
 import { DEFAULT_PLUGIN_DATA } from "src/utils/constants";
 import type { IManager } from "./IManager";
 
+type Context = {
+	emitter: EventEmitter<AppEvents>;
+	loadData: Plugin["loadData"];
+	saveData: Plugin["saveData"];
+};
+
 export class SettingsManager implements IManager {
 	private data: SandboxNotePluginData = DEFAULT_PLUGIN_DATA;
-	constructor(
-		private emitter: EventEmitter<AppEvents>,
-		private context: {
-			loadData: () => Promise<SandboxNotePluginData>;
-			saveData: (data: SandboxNotePluginData) => Promise<void>;
-		}
-	) {
-		this.emitter = emitter;
-	}
+	constructor(private context: Context) {}
 
 	getSettings(): PluginSettings {
 		return this.data.settings;
@@ -33,11 +32,12 @@ export class SettingsManager implements IManager {
 
 	async updateSettingsAndSave(settings: PluginSettings): Promise<void> {
 		this.data.settings = settings;
-		this.emitter.emit("settings-update-requested", { settings });
-		this.emitter.emit("settings-changed", { newSettings: settings });
-		this.context.saveData({
+		await this.context.saveData({
 			...this.data,
 			settings: this.data.settings,
+		});
+		this.context.emitter.emit("settings-changed", {
+			newSettings: this.data.settings,
 		});
 	}
 }

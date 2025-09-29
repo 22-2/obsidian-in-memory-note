@@ -97,7 +97,10 @@ export class DatabaseController implements Manager {
 		}
 	}
 
-	createDebouncedSave(masterNoteId: string, debounceMs: number): void {
+	private createDebouncedSave(
+		masterNoteId: string,
+		debounceMs: number
+	): void {
 		if (!this.debouncedSaveFns.has(masterNoteId)) {
 			const debouncer = debounce(
 				(id: string, content: string) => {
@@ -110,7 +113,7 @@ export class DatabaseController implements Manager {
 		}
 	}
 
-	debouncedSave(
+	debouncedSaveSandbox(
 		masterNoteId: string,
 		content: string,
 		debounceMs: number

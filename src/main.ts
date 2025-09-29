@@ -69,7 +69,7 @@ export default class SandboxNotePlugin extends Plugin {
 			name: "Convert to file",
 			icon: "file-pen-line",
 			checkCallback: (checking) => {
-				const view = this.getActiveView();
+				const view = this.orchestrator.getActiveView();
 				if (view) {
 					if (!checking) {
 						convertToFileAndClear(view);
@@ -100,8 +100,8 @@ export default class SandboxNotePlugin extends Plugin {
 	 * Activates a new hot sandbox view.
 	 * This is delegated to the ViewFactory managed by the orchestrator.
 	 */
-	async activateNewHotSandboxView() {
-		return this.orchestrator.viewFactory.activateNewHotSandboxView();
+	activateNewHotSandboxView() {
+		return this.orchestrator.activateNewHotSandboxView();
 	}
 
 	/** Initialize logger with current settings. */
@@ -115,23 +115,5 @@ export default class SandboxNotePlugin extends Plugin {
 			logger.setLevel("warn");
 		}
 		logger.debug("Logger initialized");
-	}
-
-	/** Returns the currently active HotSandboxNoteView, if any. */
-	public getActiveView(): HotSandboxNoteView | null {
-		return this.app.workspace.getActiveViewOfType(HotSandboxNoteView);
-	}
-
-	/** Returns all open HotSandboxNoteView instances. */
-	getAllHotSandboxViews(): HotSandboxNoteView[] {
-		const views: HotSandboxNoteView[] = [];
-		this.app.workspace
-			.getLeavesOfType(VIEW_TYPE_HOT_SANDBOX)
-			.forEach((leaf) => {
-				if (leaf.view instanceof HotSandboxNoteView) {
-					views.push(leaf.view);
-				}
-			});
-		return views;
 	}
 }

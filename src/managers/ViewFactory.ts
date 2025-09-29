@@ -4,16 +4,15 @@ import { activateView } from "src/utils/obsidian";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 import type { Manager } from "./Manager";
-import type { Workspace, WorkspaceLeaf } from "obsidian";
+import type { Plugin, Workspace, WorkspaceLeaf } from "obsidian";
 
 type Context = {
-	registerView: (
-		viewType: string,
-		viewFactory: (leaf: WorkspaceLeaf) => AbstractNoteView
-	) => void;
+	registerView: Plugin["registerView"];
 	createView: (leaf: WorkspaceLeaf) => AbstractNoteView;
 	getLeaf: Workspace["getLeaf"];
-	detachAll: (type: string) => void;
+	detachLeavesOfType: Workspace["detachLeavesOfType"];
+	getLeavesOfType: Workspace["getLeavesOfType"];
+	getActiveViewOfType: Workspace["getActiveViewOfType"];
 };
 
 /** Manages registration and activation of custom views */
@@ -29,7 +28,7 @@ export class ViewFactory implements Manager {
 
 	/** Unregister custom view types */
 	public unload(): void {
-		this.context.detachAll(VIEW_TYPE_HOT_SANDBOX);
+		this.context.detachLeavesOfType(VIEW_TYPE_HOT_SANDBOX);
 	}
 
 	public async activateNewHotSandboxView() {
@@ -52,5 +51,21 @@ export class ViewFactory implements Manager {
 		);
 
 		return leaf;
+	}
+
+	/** Returns the currently active HotSandboxNoteView, if any. */
+	public getActiveView(): HotSandboxNoteView | null {
+		return this.context.getActiveViewOfType(HotSandboxNoteView);
+	}
+
+	/** Returns all open HotSandboxNoteView instances. */
+	getAllHotSandboxViews(): HotSandboxNoteView[] {
+		const views: HotSandboxNoteView[] = [];
+		this.context.getLeavesOfType(VIEW_TYPE_HOT_SANDBOX).forEach((leaf) => {
+			if (leaf.view instanceof HotSandboxNoteView) {
+				views.push(leaf.view);
+			}
+		});
+		return views;
 	}
 }

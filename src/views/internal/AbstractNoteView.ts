@@ -41,7 +41,7 @@ export abstract class AbstractNoteView extends ItemView {
 	constructor(
 		leaf: WorkspaceLeaf,
 		protected emitter: EventEmitter<AppEvents>,
-		protected stateManager: AppOrchestrator,
+		protected orchestrator: AppOrchestrator,
 		protected funcs: AbstractNoteViewFuncs
 	) {
 		super(leaf);
@@ -232,7 +232,7 @@ export abstract class AbstractNoteView extends ItemView {
 				return true; // Continue with default behavior
 			}
 
-			if (this.stateManager.getSettings().enableCtrlS) {
+			if (this.orchestrator.getSettings().enableCtrlS) {
 				// 変更
 				e.preventDefault();
 				e.stopPropagation();
@@ -245,7 +245,7 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	public updateActionButtons() {
-		const settings = this.stateManager.getSettings(); // 変更
+		const settings = this.orchestrator.getSettings(); // 変更
 		if (!settings.enableAutoSave) {
 			this.saveActionEl?.hide();
 			return;

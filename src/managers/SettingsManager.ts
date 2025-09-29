@@ -7,7 +7,7 @@ import type { Manager } from "./Manager";
 import { type SandboxNotePluginData } from "src/settings";
 
 export class SettingsManager implements Manager {
-	private settings!: PluginSettings;
+	private data!: SandboxNotePluginData;
 	constructor(
 		private emitter: EventEmitter<AppEvents>,
 		private context: {
@@ -19,23 +19,26 @@ export class SettingsManager implements Manager {
 	}
 
 	getSettings(): PluginSettings {
-		return this.settings;
+		return this.data.settings;
 	}
 
 	async load() {
 		const loadedData = await this.context.loadData();
-		this.settings = Object.assign(
-			{},
-			DEFAULT_PLUGIN_DATA,
-			loadedData.settings
-		);
+		this.data = {
+			...DEFAULT_PLUGIN_DATA,
+			...loadedData,
+		};
 	}
 
 	unload(): void {}
 
-	async updateSettings(settings: PluginSettings): Promise<void> {
-		this.settings = settings;
+	async updateSettingsAndSave(settings: PluginSettings): Promise<void> {
+		this.data.settings = settings;
 		this.emitter.emit("settings-update-requested", { settings });
 		this.emitter.emit("settings-changed", { newSettings: settings });
+		this.context.saveData({
+			...this.data,
+			settings: this.data.settings,
+		});
 	}
 }

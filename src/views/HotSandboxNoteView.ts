@@ -23,10 +23,10 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	constructor(
 		leaf: WorkspaceLeaf,
 		protected emitter: EventEmitter<AppEvents>,
-		protected stateManager: AppOrchestrator,
+		protected orchestrator: AppOrchestrator,
 		protected funcs: AbstractNoteViewFuncs
 	) {
-		super(leaf, emitter, stateManager, funcs);
+		super(leaf, emitter, orchestrator, funcs);
 	}
 
 	getViewType(): string {

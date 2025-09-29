@@ -24,7 +24,6 @@ const logger = log.getLogger("AppOrchestrator");
 export class AppOrchestrator implements Manager {
 	protected plugin: SandboxNotePlugin;
 	protected emitter: EventEmitter<AppEvents>;
-	protected data: SandboxNotePluginData = DEFAULT_PLUGIN_DATA;
 
 	// Sub-managers
 	protected settingsManager: SettingsManager;
@@ -61,13 +60,6 @@ export class AppOrchestrator implements Manager {
 			emitter
 		);
 
-		this.appEventManager = new AppEventManager(
-			emitter,
-			this.cacheManager,
-			this.settingsManager,
-			this.dbController
-		);
-
 		this.editorSyncManager = new EditorSyncManager(emitter, this, plugin);
 		this.editorPluginConnector = new EditorPluginConnector(plugin, emitter);
 		this.viewFactory = new ViewFactory({
@@ -84,11 +76,33 @@ export class AppOrchestrator implements Manager {
 					),
 				}),
 			getLeaf: (type) => plugin.app.workspace.getLeaf(type),
-			detachAll: (type) => plugin.app.workspace.detachLeavesOfType(type),
+			detachLeavesOfType: (type) =>
+				plugin.app.workspace.detachLeavesOfType(type),
+			getActiveViewOfType: (type) =>
+				plugin.app.workspace.getActiveViewOfType(type),
+			getLeavesOfType: (type: string) =>
+				plugin.app.workspace.getLeavesOfType(type),
 		});
+
+		this.appEventManager = new AppEventManager({
+			applyLogger: plugin.applyLogger.bind(plugin),
+			cache: this.cacheManager,
+			emitter,
+			settings: this.settingsManager,
+			connectEditorPluginToView:
+				this.editorPluginConnector.connectEditorPluginToView.bind(
+					this.editorPluginConnector
+				),
+			saveSandbox: this.dbController.saveToDatabase.bind(
+				this.dbController
+			),
+		});
+
 		this.obsidianEventManager = new ObsidianEventManager(
 			{
-				getActiveView: plugin.getActiveView.bind(plugin),
+				getActiveView: this.viewFactory.getActiveView.bind(
+					this.viewFactory
+				),
 				workspaceEvents: plugin.app.workspace,
 			},
 			emitter
@@ -103,8 +117,6 @@ export class AppOrchestrator implements Manager {
 			this.settingsManager,
 			this.appEventManager
 		);
-
-		this.registerInternalEvents();
 	}
 
 	async load(): Promise<void> {
@@ -123,67 +135,29 @@ export class AppOrchestrator implements Manager {
 			manager.unload();
 		}
 
-		this.unregisterInternalEvents();
-
 		logger.debug(
 			"AppOrchestrator and all sub-managers unloaded successfully."
 		);
 	}
 
-	// --- Event Handlers ---
-
-	private handleSettingsUpdateRequest = async (
-		payload: AppEvents["settings-update-requested"]
-	) => {
-		this.data.settings = payload.settings;
-		await this.plugin.saveData(this.data);
-		logger.debug("Settings saved to Obsidian storage.");
-	};
-
-	private handleConnectEditorPlugin = (
-		payload: AppEvents["connect-editor-plugin"]
-	) => {
-		this.editorPluginConnector.connectEditorPluginToView(payload.view);
-	};
-
-	private handleSettingsChanged = () => {
-		this.plugin.applyLogger();
-	};
-
-	private registerInternalEvents() {
-		this.emitter.on(
-			"settings-update-requested",
-			this.handleSettingsUpdateRequest
-		);
-		this.emitter.on(
-			"connect-editor-plugin",
-			this.handleConnectEditorPlugin
-		);
-		this.emitter.on("settings-changed", this.handleSettingsChanged);
-	}
-
-	private unregisterInternalEvents() {
-		this.emitter.off(
-			"settings-update-requested",
-			this.handleSettingsUpdateRequest
-		);
-		this.emitter.off(
-			"connect-editor-plugin",
-			this.handleConnectEditorPlugin
-		);
-		this.emitter.off("settings-changed", this.handleSettingsChanged);
-	}
-
 	// --- Delegated Methods ---
+
+	getActiveView() {
+		return this.viewFactory.getActiveView();
+	}
+
+	activateNewHotSandboxView() {
+		return this.viewFactory.activateNewHotSandboxView();
+	}
 
 	getSettings() {
 		return this.settingsManager.getSettings();
 	}
 
 	async updateSettings(
-		settings: Parameters<SettingsManager["updateSettings"]>[0]
+		settings: Parameters<SettingsManager["updateSettingsAndSave"]>[0]
 	) {
-		await this.settingsManager.updateSettings(settings);
+		await this.settingsManager.updateSettingsAndSave(settings);
 	}
 
 	getAllNotes() {

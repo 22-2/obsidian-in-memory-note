@@ -1,6 +1,6 @@
-import "../../log-setup";
 import type SandboxPlugin from "src/main";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
+import "../../log-setup";
 // ===================================================================
 // 8. Example Test (example.test.mts)
 // ===================================================================
@@ -23,7 +23,7 @@ test("sandbox test", async ({ vault }) => {
 
 	expect(pluginHandle).toBeTruthy();
 	await pluginHandle.evaluate((plugin) => plugin.activateNewHotSandboxView());
-	expect(
+	await expect(
 		vault.window.locator(
 			`.workspace-leaf-content[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`
 		)

@@ -11,16 +11,15 @@ import log from "loglevel";
 import { nanoid } from "nanoid";
 import type { AppEvents } from "src/events/AppEvents";
 import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
-import type { AppOrchestrator } from "src/managers/AppOrchestrator";
 import type { SettingsManager } from "src/managers/SettingsManager";
+import type { ViewFactory } from "src/managers/ViewFactory";
 import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
 import type { EventEmitter } from "src/utils/EventEmitter";
+import { showConfirmModal } from "../../helpers/showConfirmModal";
 import { issue2Logger } from "../../special-loggers";
 import { EditorWrapper } from "./EditorWrapper";
 import type { AbstractNoteViewState, ObsidianViewState } from "./types";
 import { convertToFileAndClear } from "./utils";
-import { showConfirmModal } from "../../helpers/showConfirmModal";
-import type { ViewFactory } from "src/managers/ViewFactory";
 
 const logger = log.getLogger("AbstractNoteView");
 
@@ -45,9 +44,8 @@ export abstract class AbstractNoteView extends ItemView {
 
 	constructor(
 		leaf: WorkspaceLeaf,
-		protected context: Context // protected emitter: EventEmitter<AppEvents>,
-	) // protected orchestrator: AppOrchestrator,
-	// protected funcs: AbstractNoteViewFuncs
+		protected context: Context // protected emitter: EventEmitter<AppEvents>, // protected orchestrator: AppOrchestrator,
+	) // protected funcs: AbstractNoteViewFuncs
 	{
 		super(leaf);
 		this.wrapper = new EditorWrapper(this);

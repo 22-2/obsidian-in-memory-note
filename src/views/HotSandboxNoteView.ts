@@ -1,18 +1,15 @@
 // src/views/HotSandboxNoteView.ts
 import log from "loglevel";
 import { WorkspaceLeaf } from "obsidian";
-import type { AppEvents } from "src/events/AppEvents";
-import type { AppOrchestrator } from "src/managers/AppOrchestrator";
+import type { ViewFactory } from "src/managers/ViewFactory";
 import {
 	HOT_SANDBOX_NOTE_ICON,
 	VIEW_TYPE_HOT_SANDBOX,
 } from "src/utils/constants";
-import type { EventEmitter } from "src/utils/EventEmitter";
 import {
 	AbstractNoteView,
 	type AbstractNoteViewContext,
 } from "./internal/AbstractNoteView";
-import type { ViewFactory } from "src/managers/ViewFactory";
 
 const logger = log.getLogger("HotSandboxNoteView");
 

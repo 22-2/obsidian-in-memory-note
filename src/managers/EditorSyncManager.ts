@@ -67,7 +67,7 @@ export class EditorSyncManager implements IManager {
 		payload: AppEvents["editor-content-changed"]
 	) => {
 		const { content, sourceView } = payload;
-		console.log("handleEditorContentChanged");
+		logger.debug("handleEditorContentChanged");
 
 		if (
 			sourceView instanceof HotSandboxNoteView &&

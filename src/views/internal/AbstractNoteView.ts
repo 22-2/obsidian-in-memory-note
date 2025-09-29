@@ -24,11 +24,13 @@ import type { ViewFactory } from "src/managers/ViewFactory";
 
 const logger = log.getLogger("AbstractNoteView");
 
-type Context = {
+export type Context = {
 	getSettings: SettingsManager["getSettings"];
 	isLastHotView: ViewFactory["isLastHotView"];
 	emitter: EventEmitter<AppEvents>;
 };
+
+export type { Context as AbstractNoteViewContext };
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
@@ -43,9 +45,8 @@ export abstract class AbstractNoteView extends ItemView {
 
 	constructor(
 		leaf: WorkspaceLeaf,
-		private context: Context
-	) // protected emitter: EventEmitter<AppEvents>,
-	// protected orchestrator: AppOrchestrator,
+		protected context: Context // protected emitter: EventEmitter<AppEvents>,
+	) // protected orchestrator: AppOrchestrator,
 	// protected funcs: AbstractNoteViewFuncs
 	{
 		super(leaf);

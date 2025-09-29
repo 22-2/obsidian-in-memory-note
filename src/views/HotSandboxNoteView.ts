@@ -1,32 +1,28 @@
 // src/views/HotSandboxNoteView.ts
-import { nanoid } from "nanoid";
-import { WorkspaceLeaf } from "obsidian";
-import {
-	HOT_SANDBOX_NOTE_ICON,
-	HOT_SANDBOX_ID_PREFIX,
-	VIEW_TYPE_HOT_SANDBOX,
-} from "src/utils/constants";
-import type SandboxNotePlugin from "../main";
-import {
-	AbstractNoteView,
-	type AbstractNoteViewFuncs,
-} from "./internal/AbstractNoteView";
 import log from "loglevel";
-import type { EventEmitter } from "src/utils/EventEmitter";
+import { WorkspaceLeaf } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
 import type { AppOrchestrator } from "src/managers/AppOrchestrator";
-import { issue1Logger } from "../special-loggers";
+import {
+	HOT_SANDBOX_NOTE_ICON,
+	VIEW_TYPE_HOT_SANDBOX,
+} from "src/utils/constants";
+import type { EventEmitter } from "src/utils/EventEmitter";
+import {
+	AbstractNoteView,
+	type AbstractNoteViewContext,
+} from "./internal/AbstractNoteView";
+import type { ViewFactory } from "src/managers/ViewFactory";
 
 const logger = log.getLogger("HotSandboxNoteView");
 
+type Context = AbstractNoteViewContext & {
+	indexOfMasterId: ViewFactory["indexOfMasterId"];
+};
+
 export class HotSandboxNoteView extends AbstractNoteView {
-	constructor(
-		leaf: WorkspaceLeaf,
-		protected emitter: EventEmitter<AppEvents>,
-		protected orchestrator: AppOrchestrator,
-		protected funcs: AbstractNoteViewFuncs
-	) {
-		super(leaf, emitter, orchestrator, funcs);
+	constructor(leaf: WorkspaceLeaf, protected context: Context) {
+		super(leaf, context);
 	}
 
 	getViewType(): string {
@@ -34,7 +30,7 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	getBaseTitle(): string {
-		let groupCount = this.funcs.indexOfMasterId(this.masterNoteId ?? "");
+		let groupCount = this.context.indexOfMasterId(this.masterNoteId ?? "");
 		// logger.debug("groupCount", groupCount);
 		if (groupCount === -1) {
 			groupCount = 0;
@@ -55,7 +51,7 @@ export class HotSandboxNoteView extends AbstractNoteView {
 
 	save(): void {
 		if (!this.masterNoteId) return;
-		this.emitter.emit("save-requested", {
+		this.context.emitter.emit("save-requested", {
 			view: this,
 		});
 	}

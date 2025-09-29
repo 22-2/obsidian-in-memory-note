@@ -79,11 +79,6 @@ export class EditorSyncManager implements Manager {
 		this.refreshAllViewTitles();
 	};
 
-	public indexOfMasterId(masterNoteId: string): number {
-		const masterNotes = uniqBy(this.context.getAllNotes(), (n) => n.id);
-		return masterNotes.findIndex((note) => note.id === masterNoteId);
-	}
-
 	refreshAllViewTitles() {
 		logger.debug("refreshAllViewTitles", this.viewMasterIdMap);
 		const allViews = this.context.getAllHotSandboxViews();

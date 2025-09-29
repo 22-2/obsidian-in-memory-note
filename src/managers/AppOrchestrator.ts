@@ -64,11 +64,14 @@ export class AppOrchestrator implements Manager {
 			registerView: (type, viewFactory) =>
 				plugin.registerView(type, viewFactory),
 			createView: (leaf) =>
-				new HotSandboxNoteView(leaf, this.emitter, this, {
-					indexOfMasterId:
-						this.editorSyncManager.indexOfMasterId.bind(
-							this.editorSyncManager
-						),
+				new HotSandboxNoteView(leaf, {
+					emitter: this.emitter,
+					getSettings: this.settingsManager.getSettings.bind(
+						this.settingsManager
+					),
+					indexOfMasterId: this.viewFactory.indexOfMasterId.bind(
+						this.viewFactory
+					),
 					isLastHotView: this.viewFactory.isLastHotView.bind(
 						this.viewFactory
 					),
@@ -80,6 +83,7 @@ export class AppOrchestrator implements Manager {
 				plugin.app.workspace.getActiveViewOfType(type),
 			getLeavesOfType: (type: string) =>
 				plugin.app.workspace.getLeavesOfType(type),
+			getAllNotes: this.cacheManager.getAllNotes.bind(this.cacheManager),
 		});
 		this.editorSyncManager = new EditorSyncManager({
 			emitter: this.emitter,

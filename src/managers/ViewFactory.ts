@@ -5,14 +5,19 @@ import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 import type { Manager } from "./Manager";
 import type { Plugin, Workspace, WorkspaceLeaf } from "obsidian";
+import { uniqBy } from "src/utils";
+import type { CacheManager } from "./CacheManager";
+import type { EventEmitter } from "src/utils/EventEmitter";
+import type { AppEvents } from "src/events/AppEvents";
 
 type Context = {
 	registerView: Plugin["registerView"];
-	createView: (leaf: WorkspaceLeaf) => AbstractNoteView;
 	getLeaf: Workspace["getLeaf"];
 	detachLeavesOfType: Workspace["detachLeavesOfType"];
 	getLeavesOfType: Workspace["getLeavesOfType"];
 	getActiveViewOfType: Workspace["getActiveViewOfType"];
+	getAllNotes: CacheManager["getAllNotes"];
+	createView: (leaf: WorkspaceLeaf) => AbstractNoteView;
 };
 
 /** Manages registration and activation of custom views */
@@ -73,5 +78,10 @@ export class ViewFactory implements Manager {
 		const allViews = this.getAllHotSandboxViews();
 		const map = Object.groupBy(allViews, (view) => view.masterNoteId!);
 		return map[masterNoteId]?.length === 1;
+	}
+
+	public indexOfMasterId(masterNoteId: string): number {
+		const masterNotes = uniqBy(this.context.getAllNotes(), (n) => n.id);
+		return masterNotes.findIndex((note) => note.id === masterNoteId);
 	}
 }

@@ -1,2 +1,2 @@
 .obsidian-unpacked/obsidian.asar filter=lfs diff=lfs merge=lfs -text
-e2e-assets/app.asar.unpacked.zip filter=lfs diff=lfs merge=lfs -text
+e2e/assets/app.asar.unpacked.zip filter=lfs diff=lfs merge=lfs -text

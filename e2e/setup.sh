@@ -7,12 +7,6 @@
 set -e
 
 # =============================================================================
-# Configuration
-# =============================================================================
-readonly VAULT_NAME="e2e-vault"
-readonly PLUGIN_SOURCE_DIR="./"
-
-# =============================================================================
 # Color Constants
 # =============================================================================
 readonly COLOR_GREEN='\033[0;32m'
@@ -51,10 +45,8 @@ check_file() {
     echo "${file_name}: ${file_path}"
     if [[ -f "$file_path" ]]; then
         echo "  ✓ File exists"
-        # return 0
     else
         echo "  ✗ File does not exist"
-        # return 0
     fi
 }
 
@@ -102,18 +94,33 @@ validate_plugin_manifest() {
 
 setup_paths() {
     readonly SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-    readonly PLUGIN_SOURCE_FULL_PATH="${SCRIPT_DIR}/${PLUGIN_SOURCE_DIR}"
+    readonly PATHS_JSON="${SCRIPT_DIR}/paths.json"
+
+    if [[ ! -f "$PATHS_JSON" ]]; then
+        log_error "Error: Configuration file not found at '${PATHS_JSON}'."
+    fi
+
+    # Read values from JSON configuration
+    readonly VAULT_NAME=$(jq -r '.vaultName' "$PATHS_JSON")
+    readonly PLUGIN_SOURCE_DIR=$(jq -r '.pluginSourceDir' "$PATHS_JSON")
+    readonly OBSIDIAN_UNPACKED_DIR=$(jq -r '.obsidianUnpackedDir' "$PATHS_JSON")
+    readonly E2E_ASSETS_DIR=$(jq -r '.e2eAssetsDir' "$PATHS_JSON")
+    readonly DIST_DIR_NAME=$(jq -r '.distDir' "$PATHS_JSON")
+    readonly APP_MAIN_FILE=$(jq -r '.appMainFile' "$PATHS_JSON")
+
+    # Construct full paths based on the loaded configuration
+    readonly PLUGIN_SOURCE_FULL_PATH=$(realpath "${SCRIPT_DIR}/${PLUGIN_SOURCE_DIR}")
     readonly PLUGIN_MANIFEST_PATH="${PLUGIN_SOURCE_FULL_PATH}/manifest.json"
-    readonly OBSIDIAN_UNPACKED_PATH="${SCRIPT_DIR}/.obsidian-unpacked"
-    readonly APP_ASAR_PATH="${SCRIPT_DIR}/e2e-assets/app.asar"
-    readonly OBSIDIAN_ASAR_PATH="${SCRIPT_DIR}/e2e-assets/obsidian.asar"
+    readonly OBSIDIAN_UNPACKED_PATH="${SCRIPT_DIR}/${OBSIDIAN_UNPACKED_DIR}"
+    readonly APP_ASAR_PATH="${SCRIPT_DIR}/${E2E_ASSETS_DIR}/app.asar"
+    readonly OBSIDIAN_ASAR_PATH="${SCRIPT_DIR}/${E2E_ASSETS_DIR}/obsidian.asar"
     readonly VAULT_PATH="${SCRIPT_DIR}/${VAULT_NAME}"
-	readonly APP_ASAR_UNPACKED_ZIP_PATH="${SCRIPT_DIR}/e2e-assets/app.asar.unpacked.zip"
-	readonly APP_ASAR_UNPACKED_DIR_PATH="${SCRIPT_DIR}/e2e-assets/app.asar.unpacked"
+	readonly APP_ASAR_UNPACKED_ZIP_PATH="${SCRIPT_DIR}/${E2E_ASSETS_DIR}/app.asar.unpacked.zip"
+	readonly APP_ASAR_UNPACKED_DIR_PATH="${SCRIPT_DIR}/${E2E_ASSETS_DIR}/app.asar.unpacked"
 }
 
 unpack_obsidian_assets() {
-    log_success "\nUnpacking Obsidian ASAR archives from e2e-assets/..."
+    log_success "\nUnpacking Obsidian ASAR archives from ${E2E_ASSETS_DIR}/..."
 
     # Debug: Check file existence
     check_file "$OBSIDIAN_UNPACKED_PATH" "OBSIDIAN_UNPACKED_PATH"
@@ -144,23 +151,18 @@ unpack_obsidian_assets() {
 
     # Extract app.asar
     log_info "Extracting ${APP_ASAR_PATH} to ${OBSIDIAN_UNPACKED_PATH}"
-    local temp_file
-    temp_file=$(mktemp)
-    trap 'rm -f -- "$temp_file"' EXIT
-
     pnpm exec asar extract "${APP_ASAR_PATH}" "${OBSIDIAN_UNPACKED_PATH}"
 
     # Rename main.js to main.cjs to treat it as a CommonJS module
     local main_js_path="${OBSIDIAN_UNPACKED_PATH}/main.js"
-    local main_cjs_path="${OBSIDIAN_UNPACKED_PATH}/main.cjs"
+    local main_cjs_path="${OBSIDIAN_UNPACKED_PATH}/${APP_MAIN_FILE}"
     if [[ -f "$main_js_path" ]]; then
-        log_info "Renaming main.js to main.cjs..."
+        log_info "Renaming main.js to ${APP_MAIN_FILE}..."
         mv "$main_js_path" "$main_cjs_path"
         log_success "Renaming completed."
     else
         log_warning "Warning: main.js not found after extraction. Skipping rename."
     fi
-    # --- 変更点 END ---
 
     # Copy obsidian.asar if it exists
     if [[ -f "$OBSIDIAN_ASAR_PATH" ]]; then
@@ -187,7 +189,7 @@ create_vault() {
 build_plugin() {
     log_success "\nBuilding plugin for E2E tests..."
 
-    if ! (cd "$SCRIPT_DIR" && pnpm build:e2e); then
+    if ! (cd "$PLUGIN_SOURCE_FULL_PATH" && pnpm build); then
         log_error "Failed to build plugin."
     fi
 
@@ -196,7 +198,7 @@ build_plugin() {
 
 link_plugin() {
     local plugin_id="$1"
-    local plugin_build_dir="${PLUGIN_SOURCE_FULL_PATH}/dist"
+    local plugin_build_dir="${PLUGIN_SOURCE_FULL_PATH}/${DIST_DIR_NAME}"
     local plugin_link_path="${VAULT_PATH}/.obsidian/plugins/${plugin_id}"
 
     log_success "\nLinking built plugin to ${plugin_link_path}..."

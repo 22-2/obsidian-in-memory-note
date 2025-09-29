@@ -6,7 +6,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "../../test-fixtures";
 import { runCommand } from "../../obsidian-commands/run-command";
 import { DIST_DIR } from "../../config";
-import { VIEW_TYPE_HOT_SANDBOX } from "../../../utils/constants";
+import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 
 // --- Constants Definition ---
 const DATA_TYPE = `[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`;

@@ -11,6 +11,11 @@
 		"allowImportingTsExtensions": true,
 		"downlevelIteration": true,
 		"resolveJsonModule": true,
+		"paths": {
+			"src/*": [
+				"src/*"
+			]
+		},
 		"lib": [
 			"DOM",
 			"ESNext"
@@ -23,11 +28,8 @@
 	},
 	"include": [
 		"src/**/*",
-		"src/*",
-		"**/*.ts",
-		"**/*.mts",
-		"**/*.spec.mts",
-		"scripts/run-test-and-log.mts"
+		"e2e/**/*",
+		"scripts/*.*"
 	],
 	"exclude": [
 		"node_modules/*"

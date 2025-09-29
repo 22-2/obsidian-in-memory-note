@@ -10,7 +10,7 @@ $ErrorActionPreference = "Stop"
 $ObsidianAppExePath = "C:\Users\17890\AppData\Local\Programs\obsidian\Obsidian.exe" # Obsidian.exe のフルパス
 $VaultName = "e2e-vault" # テスト用Vaultの名前
 # モノレポのルートディレクトリからの、プラグインソースディレクトリへの相対パス
-$PluginSourceDir = "./"
+$PluginSourceDir = "./."
 # --- End Configuration ---
 
 # --- Derived Paths and Variables ---

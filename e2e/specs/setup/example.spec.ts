@@ -1,6 +1,6 @@
 import "../../log-setup";
-import type SandboxPlugin from "../../../main";
-import { VIEW_TYPE_HOT_SANDBOX } from "../../../utils/constants";
+import type SandboxPlugin from "src/main";
+import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 // ===================================================================
 // 8. Example Test (example.test.mts)
 // ===================================================================

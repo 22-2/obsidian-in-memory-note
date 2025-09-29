@@ -1,0 +1,8 @@
+{
+	"vaultName": "vault",
+	"pluginSourceDir": "..",
+	"obsidianUnpackedDir": ".obsidian-unpacked",
+	"e2eAssetsDir": "e2e-assets",
+	"distDir": "dist",
+	"appMainFile": "main.cjs"
+}

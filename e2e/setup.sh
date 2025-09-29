@@ -142,7 +142,7 @@ unpack_obsidian_assets() {
 		log_info "Unzipping ${APP_ASAR_UNPACKED_ZIP_PATH}..."
 		# Clean up previous directory if it exists
 		rm -rf "$APP_ASAR_UNPACKED_DIR_PATH"
-		# Unzip to e2e-assets/app.asar.unpacked
+		# Unzip to e2e/assets/app.asar.unpacked
 		unzip -q "$APP_ASAR_UNPACKED_ZIP_PATH" -d "$(dirname "$APP_ASAR_UNPACKED_ZIP_PATH")"
 		log_success "Unzip completed."
 	else

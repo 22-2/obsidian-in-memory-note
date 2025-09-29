@@ -8,7 +8,7 @@ export class DatabaseAPI extends Dexie {
 	constructor() {
 		super("SandboxNoteDatabase");
 		this.version(1).stores({
-			notes: "&id, content, mtime", // Primary key and indexed props
+			sandboxes: "&id, content, mtime", // Primary key and indexed props
 		});
 	}
 

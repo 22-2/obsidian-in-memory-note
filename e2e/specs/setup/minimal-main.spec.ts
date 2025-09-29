@@ -132,7 +132,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		// await page.pause();
 		// 5. Verify the content of the left pane is also synchronized and updated
 		const leftPaneEditor = page.locator(
-			".workspace-leaf:not(.mod-active) .cm-content"
+			`.workspace-leaf.mod-active ${DATA_TYPE}  [data-type="markdown"] .cm-content`
 		);
 		await expect(leftPaneEditor).toHaveText(updatedContent);
 	});

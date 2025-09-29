@@ -9,10 +9,11 @@ export interface AppEvents {
 	"save-requested": {
 		view: AbstractNoteView;
 	};
-	"delete-requested": {
+	"save-result": {
 		view: AbstractNoteView;
+		success: boolean;
 	};
-	"content-saved": {
+	"delete-requested": {
 		view: AbstractNoteView;
 	};
 	"view-opened": {
@@ -24,11 +25,12 @@ export interface AppEvents {
 	"connect-editor-plugin": {
 		view: AbstractNoteView;
 	};
+	"plugin-unload": void;
 	"obsidian-layout-changed": void;
 	"obsidian-active-leaf-changed": {
 		view: AbstractNoteView | null;
 	};
-	"obsidian-layout-ready": {};
+	"obsidian-layout-ready": void;
 	"settings-changed": {
 		newSettings: PluginSettings;
 	};

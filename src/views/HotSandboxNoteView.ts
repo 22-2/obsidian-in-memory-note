@@ -1,6 +1,6 @@
 // src/views/HotSandboxNoteView.ts
 import log from "loglevel";
-import { WorkspaceLeaf } from "obsidian";
+import { Notice, WorkspaceLeaf } from "obsidian";
 import { showConfirmModal } from "src/helpers/showConfirmModal";
 import type { ViewManager } from "src/managers/ViewManager";
 import {
@@ -103,15 +103,17 @@ export class HotSandboxNoteView extends AbstractNoteView {
 				return true; // Continue with default behavior
 			}
 
-			if (this.context.getSettings().enableCtrlS) {
-				// 変更
-				e.preventDefault();
-				e.stopPropagation();
-				logger.debug("Saving note via Ctrl+S");
-				this.save();
-				return false; // Prevent default save action
-			}
-			return true;
+			new Notice("not implmented yet");
+
+			// if (this.context.getSettings().enableCtrlS) {
+			// 	// 変更
+			// 	e.preventDefault();
+			// 	e.stopPropagation();
+			// 	logger.debug("Saving note via Ctrl+S");
+			// 	this.save();
+			// 	return false; // Prevent default save action
+			// }
+			// return true;
 		});
 	}
 }

@@ -11,8 +11,8 @@ const logger = log.getLogger("EditorSyncManager");
 
 type Context = {
 	emitter: EventEmitter<AppEvents>;
-	getAllHotSandboxViews: ViewManager["getAllHotSandboxViews"];
-	getAllNotes: CacheManager["getAllNotes"];
+	getAllHotSandboxViews: ViewManager["getAllViews"];
+	getAllNotes: CacheManager["getAllSandboxes"];
 	registerNewNote: CacheManager["registerNewNote"];
 	getNoteContent: CacheManager["getNoteContent"];
 	getActiveView: ViewManager["getActiveView"];
@@ -92,18 +92,16 @@ export class EditorSyncManager implements IManager {
 		logger.debug("finish");
 	}
 
-	public getNoteContent(masterNoteId: string): string {
-		return this.context.getNoteContent(masterNoteId);
+	public getNoteContent(masterId: string): string {
+		return this.context.getNoteContent(masterId);
 	}
 
 	public syncHotViews(
-		masterNoteId: string,
+		masterId: string,
 		content: string,
 		sourceView: HotSandboxNoteView
 	) {
-		log.debug(
-			`Syncing hot sandbox note content for group: ${masterNoteId}`
-		);
+		log.debug(`Syncing hot sandbox note content for group: ${masterId}`);
 
 		const allViews = this.context.getAllHotSandboxViews();
 
@@ -112,7 +110,7 @@ export class EditorSyncManager implements IManager {
 			const currentMasterId = this.viewMasterIdMap.get(view);
 
 			// 同期対象のグループに属しており、かつ、変更元のビューではない場合
-			if (currentMasterId === masterNoteId && view !== sourceView) {
+			if (currentMasterId === masterId && view !== sourceView) {
 				view.setContent(content);
 			}
 		}

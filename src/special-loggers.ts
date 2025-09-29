@@ -27,5 +27,5 @@ export const issue1Logger = log.getLogger(
 	"Content Synchronization Across Multiple Views"
 );
 export const issue2Logger = log.getLogger(
-	"addHotActiveView not inheriting masterNoteId"
+	"addHotActiveView not inheriting masterId"
 );

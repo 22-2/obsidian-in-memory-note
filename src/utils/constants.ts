@@ -10,7 +10,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enableLogger: DEBUG_MODE,
 	enableAutoSave: true,
 	autoSaveDebounceMs: 3000,
-	enableCtrlS: false,
 };
 
 export const DEFAULT_PLUGIN_DATA: SandboxNotePluginData = {
@@ -22,6 +21,6 @@ export const DEFAULT_PLUGIN_DATA: SandboxNotePluginData = {
 
 export const APP_NAME = "HotSandboxNote";
 export const VIEW_TYPE_HOT_SANDBOX = "hot-sandbox-note-view";
-export const HOT_SANDBOX_NOTE_ICON = "flame";
+export const HOT_SANDBOX_NOTE_ICON = "package";
 
 export const HOT_SANDBOX_ID_PREFIX = "hsbox-";

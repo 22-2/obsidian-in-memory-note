@@ -67,7 +67,9 @@ export class AppOrchestrator implements IManager {
 				plugin.app.workspace.getActiveViewOfType(type),
 			getLeavesOfType: (type: string) =>
 				plugin.app.workspace.getLeavesOfType(type),
-			getAllNotes: this.cacheManager.getAllNotes.bind(this.cacheManager),
+			getAllNotes: this.cacheManager.getAllSandboxes.bind(
+				this.cacheManager
+			),
 		});
 		this.dbManager = new DatabaseManager({
 			dbAPI: this.databaseAPI,
@@ -79,16 +81,18 @@ export class AppOrchestrator implements IManager {
 				delete: this.cacheManager.delete.bind(this.cacheManager),
 			},
 			emitter,
-			getAllHotSandboxViews: this.viewManager.getAllHotSandboxViews.bind(
+			getAllHotSandboxViews: this.viewManager.getAllViews.bind(
 				this.viewManager
 			),
 		});
 		this.editorSyncManager = new EditorSyncManager({
 			emitter: this.emitter,
-			getAllHotSandboxViews: this.viewManager.getAllHotSandboxViews.bind(
+			getAllHotSandboxViews: this.viewManager.getAllViews.bind(
 				this.viewManager
 			),
-			getAllNotes: this.cacheManager.getAllNotes.bind(this.cacheManager),
+			getAllNotes: this.cacheManager.getAllSandboxes.bind(
+				this.cacheManager
+			),
 			registerNewNote: this.cacheManager.registerNewNote.bind(
 				this.cacheManager
 			),
@@ -118,6 +122,7 @@ export class AppOrchestrator implements IManager {
 			clearAllDeadSandboxes: this.dbManager.clearAllDeadSandboxes.bind(
 				this.dbManager
 			),
+			getAllViews: this.viewManager.getAllViews.bind(this.viewManager),
 		});
 		this.obsidianEventManager = new ObsidianEventManager(
 			{
@@ -167,8 +172,12 @@ export class AppOrchestrator implements IManager {
 		return this.viewManager.getActiveView();
 	}
 
-	activateNewHotSandboxView() {
-		return this.viewManager.activateNewHotSandboxView();
+	getAllView() {
+		return this.viewManager.getAllViews();
+	}
+
+	activateView() {
+		return this.viewManager.activateView();
 	}
 
 	getSettings() {
@@ -179,21 +188,5 @@ export class AppOrchestrator implements IManager {
 		settings: Parameters<SettingsManager["updateSettingsAndSave"]>[0]
 	) {
 		await this.settingsManager.updateSettingsAndSave(settings);
-	}
-
-	getAllNotes() {
-		return this.cacheManager.getAllNotes();
-	}
-
-	getNoteContent(masterNoteId: string) {
-		return this.cacheManager.getNoteContent(masterNoteId);
-	}
-
-	registerNewNote(masterNoteId: string) {
-		this.cacheManager.registerNewNote(masterNoteId);
-	}
-
-	getNoteData(masterNoteId: string) {
-		return this.cacheManager.get(masterNoteId);
 	}
 }

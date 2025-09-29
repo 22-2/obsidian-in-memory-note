@@ -65,10 +65,23 @@ export abstract class AbstractNoteView extends ItemView {
 
 	save(): void {
 		if (!this.masterId) return;
+		const { promise, resolve, reject } = Promise.withResolvers<void>();
+		this.saving = promise;
+
 		this.context.emitter.emit("save-requested", {
 			view: this,
 		});
+
+		this.context.emitter.once("save-result", (payload) => {
+			if (payload.view === this) {
+				logger.debug("Save completed for view", this.masterId);
+				payload.success ? resolve() : reject();
+				this.saving = null;
+			}
+		});
 	}
+
+	saving: null | Promise<void> = null;
 
 	public override getDisplayText(): string {
 		const baseTitle = this.getBaseTitle();
@@ -81,14 +94,14 @@ export abstract class AbstractNoteView extends ItemView {
 			...(super.getState() as ObsidianViewState),
 			type: this.getViewType(),
 			state: {
-				masterNoteId: "",
+				masterId: "",
 				content: "",
 			},
 		};
 		logger.debug("AbstractNoteView.getState", state);
 
 		state.state.content = (this.editor && this.editor.getValue()) ?? "";
-		state.state.masterNoteId = this.masterId ?? "";
+		state.state.masterId = this.masterId ?? "";
 		state.source = this.isSourceMode;
 		return state;
 	}
@@ -97,12 +110,10 @@ export abstract class AbstractNoteView extends ItemView {
 		logger.debug("AbstractNoteView.onOpen");
 		try {
 			if (!this.masterId) {
-				logger.debug(
-					"masterNoteId not set, creating a new one in onOpen."
-				);
+				logger.debug("masterId not set, creating a new one in onOpen.");
 				this.masterId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
 			}
-			logger.debug("masterNoteId", this.masterId);
+			logger.debug("masterId", this.masterId);
 
 			await this.wrapper.initialize(this.contentEl, this.initialState);
 			this.initialState = null;
@@ -125,12 +136,12 @@ export abstract class AbstractNoteView extends ItemView {
 		result: ViewStateResult
 	): Promise<void> {
 		issue2Logger.debug("AbstractNoteView.setState", state);
-		const masterIdFromState = state?.state?.masterNoteId;
+		const masterIdFromState = state?.state?.masterId;
 		if (masterIdFromState) {
 			this.masterId = masterIdFromState;
 			logger.debug(`Restored note group ID: ${this.masterId}`);
 		} else if (!this.masterId) {
-			return logger.error("masterNoteId not found in state.");
+			return logger.error("masterId not found in state.");
 		}
 
 		if (typeof state.source === "boolean") {

@@ -8,6 +8,7 @@ import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import SandboxPlugin from "../main";
 import type { CacheManager } from "./CacheManager";
 import type { SettingsManager } from "./SettingsManager";
+import type { ViewManager } from "./ViewManager";
 
 const logger = log.getLogger("PluginEventManager");
 
@@ -19,6 +20,7 @@ type Context = {
 	settings: SettingsManager;
 	connectEditorPluginToView: CodeMirrorExtensionManager["connectEditorPluginToView"];
 	clearAllDeadSandboxes: DatabaseManager["clearAllDeadSandboxes"];
+	getAllViews: ViewManager["getAllViews"];
 };
 
 export class PluginEventManager implements IManager {
@@ -43,6 +45,7 @@ export class PluginEventManager implements IManager {
 			"obsidian-layout-ready",
 			this.handleLayoutReady
 		);
+		this.context.emitter.on("plugin-unload", this.handleUnload);
 	}
 
 	unload(): void {
@@ -74,6 +77,19 @@ export class PluginEventManager implements IManager {
 			this.context.cache.delete(view.masterId);
 		}
 		this.context.clearAllDeadSandboxes();
+	};
+
+	private handleUnload = () => {
+		for (const view of this.context.getAllViews()) {
+			view.save();
+			this.context.emitter.once("save-result", ({ success, view }) => {
+				if (success) {
+					view.close();
+				} else {
+					logger.error("Failed to save view on unload", view);
+				}
+			});
+		}
 	};
 
 	private handleSettingsUpdateRequest = async (

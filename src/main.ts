@@ -3,15 +3,10 @@ import { Plugin } from "obsidian";
 import type { AppEvents } from "./events/AppEvents";
 import { AppOrchestrator } from "./managers/AppOrchestrator";
 import { SandboxNoteSettingTab } from "./settings";
-import {
-	DEBUG_MODE,
-	HOT_SANDBOX_NOTE_ICON,
-	VIEW_TYPE_HOT_SANDBOX,
-} from "./utils/constants";
 import { EventEmitter } from "./utils/EventEmitter";
+import { DEBUG_MODE, HOT_SANDBOX_NOTE_ICON } from "./utils/constants";
 import "./utils/setup-logger";
 import { overwriteLogLevel } from "./utils/setup-logger";
-import { HotSandboxNoteView } from "./views/HotSandboxNoteView";
 import { convertToFileAndClear } from "./views/internal/utils";
 
 const logger = log.getLogger("SandboxNotePlugin");
@@ -93,6 +88,7 @@ export default class SandboxNotePlugin extends Plugin {
 	/** Cleanup on plugin unload. */
 	async onunload() {
 		this.orchestrator.unload();
+		this.emitter.emit("plugin-unload", undefined);
 		logger.debug("Sandbox Note plugin unloaded");
 	}
 
@@ -101,7 +97,7 @@ export default class SandboxNotePlugin extends Plugin {
 	 * This is delegated to the ViewFactory managed by the orchestrator.
 	 */
 	activateNewHotSandboxView() {
-		return this.orchestrator.activateNewHotSandboxView();
+		return this.orchestrator.activateView();
 	}
 
 	/** Initialize logger with current settings. */

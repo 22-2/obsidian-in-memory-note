@@ -13,7 +13,7 @@ type Context = {
 	detachLeavesOfType: Workspace["detachLeavesOfType"];
 	getLeavesOfType: Workspace["getLeavesOfType"];
 	getActiveViewOfType: Workspace["getActiveViewOfType"];
-	getAllNotes: CacheManager["getAllNotes"];
+	getAllNotes: CacheManager["getAllSandboxes"];
 	createView: (leaf: WorkspaceLeaf) => AbstractNoteView;
 };
 
@@ -33,26 +33,14 @@ export class ViewManager implements IManager {
 		this.context.detachLeavesOfType(VIEW_TYPE_HOT_SANDBOX);
 	}
 
-	public async activateNewHotSandboxView() {
-		// Pass an empty state to ensure a new masterNoteId is created
-		return this.activateAbstractView(VIEW_TYPE_HOT_SANDBOX, {});
-	}
-
-	/**
-	 * Helper function to open a view of a specific type in a new tab.
-	 * @param type The view type to activate.
-	 */
-	private async activateAbstractView(type: string, state?: any) {
-		const leaf = await activateView<AbstractNoteView>(
+	public async activateView() {
+		return activateView<AbstractNoteView>(
 			{ getLeaf: (type) => this.context.getLeaf(type) },
 			{
-				type,
+				type: VIEW_TYPE_HOT_SANDBOX,
 				active: true,
-				state,
 			}
 		);
-
-		return leaf;
 	}
 
 	/** Returns the currently active HotSandboxNoteView, if any. */
@@ -61,7 +49,7 @@ export class ViewManager implements IManager {
 	}
 
 	/** Returns all open HotSandboxNoteView instances. */
-	getAllHotSandboxViews(): HotSandboxNoteView[] {
+	getAllViews(): HotSandboxNoteView[] {
 		const views: HotSandboxNoteView[] = [];
 		this.context.getLeavesOfType(VIEW_TYPE_HOT_SANDBOX).forEach((leaf) => {
 			if (leaf.view instanceof HotSandboxNoteView) {
@@ -71,14 +59,14 @@ export class ViewManager implements IManager {
 		return views;
 	}
 
-	public isLastHotView(masterNoteId: string) {
-		const allViews = this.getAllHotSandboxViews();
+	public isLastHotView(masterId: string) {
+		const allViews = this.getAllViews();
 		const map = Object.groupBy(allViews, (view) => view.masterId!);
-		return map[masterNoteId]?.length === 1;
+		return map[masterId]?.length === 1;
 	}
 
-	public indexOfMasterId(masterNoteId: string): number {
+	public indexOfMasterId(masterId: string): number {
 		const masterNotes = uniqBy(this.context.getAllNotes(), (n) => n.id);
-		return masterNotes.findIndex((note) => note.id === masterNoteId);
+		return masterNotes.findIndex((note) => note.id === masterId);
 	}
 }

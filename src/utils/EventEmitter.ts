@@ -27,6 +27,17 @@ export class EventEmitter<Events extends object> {
 		);
 	}
 
+	once<K extends keyof Events>(
+		event: K,
+		listener: Listener<Events[K]>
+	): void {
+		const onceListener: Listener<Events[K]> = (payload) => {
+			listener(payload);
+			this.off(event, onceListener);
+		};
+		this.on(event, onceListener);
+	}
+
 	emit<K extends keyof Events>(event: K, payload: Events[K]): void {
 		log.debug(`Emitting event: ${event.toString()}`, payload);
 		this.listeners[event]?.forEach((l) => l(payload));

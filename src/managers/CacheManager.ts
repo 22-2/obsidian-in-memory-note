@@ -31,43 +31,43 @@ export class CacheManager implements IManager {
 		// this.emitter.emit("notes-loaded", { count: allNotes.length });
 	}
 
-	getAllNotes(): HotSandboxNoteData[] {
+	getAllSandboxes(): HotSandboxNoteData[] {
 		return Array.from(this.sandboxNotes.values());
 	}
 
-	getNoteContent(masterNoteId: string): string {
-		return this.sandboxNotes.get(masterNoteId)?.content ?? "";
+	getNoteContent(masterId: string): string {
+		return this.sandboxNotes.get(masterId)?.content ?? "";
 	}
 
-	get(masterNoteId: string): HotSandboxNoteData | undefined {
-		return this.sandboxNotes.get(masterNoteId);
+	get(masterId: string): HotSandboxNoteData | undefined {
+		return this.sandboxNotes.get(masterId);
 	}
 
-	registerNewNote(masterNoteId: string): void {
-		if (!this.sandboxNotes.has(masterNoteId)) {
+	registerNewNote(masterId: string): void {
+		if (!this.sandboxNotes.has(masterId)) {
 			const newNote: HotSandboxNoteData = {
-				id: masterNoteId,
+				id: masterId,
 				content: "",
 				mtime: Date.now(),
 			};
-			this.sandboxNotes.set(masterNoteId, newNote);
-			logger.debug(`Registered new note: ${masterNoteId}`);
-			// this.emitter.emit("sandbox-note-registered", { noteId: masterNoteId });
+			this.sandboxNotes.set(masterId, newNote);
+			logger.debug(`Registered new note: ${masterId}`);
+			// this.emitter.emit("sandbox-note-registered", { noteId: masterId });
 		}
 	}
 
-	delete(masterNoteId: string): void {
-		this.sandboxNotes.delete(masterNoteId);
-		logger.debug(`Deleted note: ${masterNoteId}`);
+	delete(masterId: string): void {
+		this.sandboxNotes.delete(masterId);
+		logger.debug(`Deleted note: ${masterId}`);
 	}
 
-	updateNoteContent(masterNoteId: string, content: string): void {
-		const note = this.sandboxNotes.get(masterNoteId);
+	updateNoteContent(masterId: string, content: string): void {
+		const note = this.sandboxNotes.get(masterId);
 		if (note) {
 			note.content = content;
 			note.mtime = Date.now();
 			// this.emitter.emit("sandbox-note-content-updated", {
-			// 	noteId: masterNoteId,
+			// 	noteId: masterId,
 			// 	content,
 			// });
 		}

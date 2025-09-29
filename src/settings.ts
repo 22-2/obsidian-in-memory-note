@@ -20,7 +20,6 @@ export interface PluginSettings {
 	enableLogger: boolean;
 	enableAutoSave: boolean;
 	autoSaveDebounceMs: number;
-	enableCtrlS: boolean;
 }
 /** Settings tab for the plugin. */
 export class SandboxNoteSettingTab extends PluginSettingTab {
@@ -33,9 +32,9 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 		this.containerEl.empty();
 
 		this.addDebugLoggingSetting();
-		this.addAutoSaveSetting();
+		// this.addAutoSaveSetting();
 		this.addAutoSaveDebounceSetting();
-		this.addCtrlSSetting();
+		// this.addCtrlSSetting();
 	}
 
 	/** Add debug logging toggle. */
@@ -52,29 +51,6 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 							...settings,
 							enableLogger: enabled,
 						});
-					});
-			});
-	}
-
-	/** Add auto-save content setting. */
-	private addAutoSaveSetting() {
-		new Setting(this.containerEl)
-			.setName("Auto-save note content")
-			.setDesc(
-				"When enabled, the note content is saved automatically after you stop typing. " +
-					"This feature helps prevent data loss from unexpected shutdowns."
-			)
-			.addToggle((toggle) => {
-				const settings = this.plugin.orchestrator.getSettings();
-				toggle
-					.setValue(settings.enableAutoSave)
-					.onChange(async (enabled) => {
-						await this.plugin.orchestrator.updateSettings({
-							...settings,
-							enableAutoSave: enabled,
-						});
-						// Re-render the dependent setting
-						this.display();
 					});
 			});
 	}
@@ -108,26 +84,6 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 						await this.plugin.orchestrator.updateSettings({
 							...settings,
 							autoSaveDebounceMs: Number.parseInt(value, 10),
-						});
-					});
-			});
-	}
-
-	/** Add Ctrl+S save setting. */
-	private addCtrlSSetting() {
-		new Setting(this.containerEl)
-			.setName("Enable Ctrl+S to save sandbox note")
-			.setDesc(
-				"Overrides the default save command (Ctrl+S) to save the content of the sandbox note. "
-			)
-			.addToggle((toggle) => {
-				const settings = this.plugin.orchestrator.getSettings();
-				toggle
-					.setValue(settings.enableCtrlS)
-					.onChange(async (enabled) => {
-						await this.plugin.orchestrator.updateSettings({
-							...settings,
-							enableCtrlS: enabled,
 						});
 					});
 			});

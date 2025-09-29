@@ -10,6 +10,6 @@ export interface ObsidianViewState<T = any> {
 }
 
 export interface AbstractNoteViewState
-	extends ObsidianViewState<{ content: string; masterNoteId: string }> {
+	extends ObsidianViewState<{ content: string; masterId: string }> {
 	type: string;
 }

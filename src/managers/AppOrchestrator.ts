@@ -43,7 +43,11 @@ export class AppOrchestrator implements IManager {
 
 		// --- Initialize all managers here ---
 		this.cacheManager = new CacheManager(emitter, this.databaseAPI); // 順番
-		this.settingsManager = new SettingsManager(emitter, plugin);
+		this.settingsManager = new SettingsManager({
+			emitter,
+			loadData: plugin.loadData.bind(plugin),
+			saveData: plugin.saveData.bind(plugin),
+		});
 		this.viewManager = new ViewManager({
 			registerView: (type, viewCreator) =>
 				plugin.registerView(type, viewCreator),

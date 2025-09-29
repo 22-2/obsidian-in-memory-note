@@ -112,8 +112,10 @@ export class AppOrchestrator implements IManager {
 			connectEditorPluginToView: (leaf) => {
 				this.cmExtensionManager.connectEditorPluginToView(leaf);
 			},
-			saveSandbox: this.dbManager.saveToDatabase.bind(this.dbManager),
-			clearAllDeadSadboxes: this.dbManager.clearAllDeadSadboxes.bind(
+			saveSandbox: this.dbManager.debouncedSaveSandboxes.bind(
+				this.dbManager
+			),
+			clearAllDeadSandboxes: this.dbManager.clearAllDeadSandboxes.bind(
 				this.dbManager
 			),
 		});

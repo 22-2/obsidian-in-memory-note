@@ -55,7 +55,10 @@ export class DatabaseManager implements IManager {
 		return this.context.dbAPI.getAllSandboxes();
 	}
 
-	async saveToDatabase(masterNoteId: string, content: string): Promise<void> {
+	private async saveToDatabase(
+		masterNoteId: string,
+		content: string
+	): Promise<void> {
 		try {
 			const note = this.context.cache.get(masterNoteId);
 			if (note) {
@@ -119,13 +122,14 @@ export class DatabaseManager implements IManager {
 		}
 	}
 
-	async clearAllDeadSadboxes() {
+	async clearAllDeadSandboxes() {
 		const savedSandboxes = await this.context.dbAPI.getAllSandboxes();
 		const allViews = this.context.getAllHotSandboxViews();
 		for (const sandbox of savedSandboxes) {
 			const view = allViews.find((view) => view.masterId === sandbox.id);
-			if (view?.masterId) this.deleteFromAll(view.masterId);
+			if (!view?.masterId) this.deleteFromAll(sandbox.id);
 		}
+		logger.debug("clear all dead sandboxes");
 	}
 
 	async deleteFromAll(masterId: string) {

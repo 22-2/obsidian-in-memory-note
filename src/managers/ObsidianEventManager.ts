@@ -32,7 +32,7 @@ export class ObsidianEventManager implements IManager {
 	/** Set up all workspace event listeners */
 	public load(): void {
 		this.context.workspaceEvents.onLayoutReady(() =>
-			this.emitLayoutChange()
+			this.emitter.emit("obsidian-layout-ready", {})
 		);
 		this.context.workspaceEvents.on(
 			"active-leaf-change",

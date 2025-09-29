@@ -18,7 +18,7 @@ type Context = {
 	emitter: EventEmitter<AppEvents>;
 	settings: SettingsManager;
 	connectEditorPluginToView: CodeMirrorExtensionManager["connectEditorPluginToView"];
-	clearAllDeadSadboxes: DatabaseManager["clearAllDeadSadboxes"];
+	clearAllDeadSandboxes: DatabaseManager["clearAllDeadSandboxes"];
 };
 
 export class PluginEventManager implements IManager {
@@ -65,7 +65,7 @@ export class PluginEventManager implements IManager {
 	}
 
 	private handleLayoutReady = () => {
-		this.context.clearAllDeadSadboxes();
+		this.context.clearAllDeadSandboxes();
 	};
 
 	private handleViewClosed = (payload: AppEvents["view-closed"]) => {
@@ -73,7 +73,7 @@ export class PluginEventManager implements IManager {
 		if (view instanceof HotSandboxNoteView && view.masterId) {
 			this.context.cache.delete(view.masterId);
 		}
-		this.context.clearAllDeadSadboxes();
+		this.context.clearAllDeadSandboxes();
 	};
 
 	private handleSettingsUpdateRequest = async (

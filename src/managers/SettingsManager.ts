@@ -6,7 +6,7 @@ import { DEFAULT_PLUGIN_DATA } from "src/utils/constants";
 import type { IManager } from "./IManager";
 
 export class SettingsManager implements IManager {
-	private data!: SandboxNotePluginData;
+	private data: SandboxNotePluginData = DEFAULT_PLUGIN_DATA;
 	constructor(
 		private emitter: EventEmitter<AppEvents>,
 		private context: {
@@ -24,7 +24,7 @@ export class SettingsManager implements IManager {
 	async load() {
 		const loadedData = await this.context.loadData();
 		this.data = {
-			...DEFAULT_PLUGIN_DATA,
+			...this.data,
 			...loadedData,
 		};
 	}

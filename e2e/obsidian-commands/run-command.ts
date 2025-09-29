@@ -34,7 +34,7 @@ export const runCommand = async (
 			app.commands.executeCommandById(command.id);
 			return true;
 		}
-	});
+	}, [commandName]);
 	expect(success).toBe(true);
 	await delay(1000);
 };

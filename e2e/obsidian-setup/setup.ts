@@ -100,6 +100,9 @@ export class ObsidianTestSetup {
 
 	async cleanup(): Promise<void> {
 		if (this.electronApp) {
+			await Promise.all(
+				this.electronApp.windows().map((win) => win.close())
+			);
 			await this.electronApp.close();
 		}
 		if (this.tempUserDataDir) {

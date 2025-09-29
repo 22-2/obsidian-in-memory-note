@@ -28,7 +28,9 @@ export const runCommand = async (
 ) => {
 	logger.debug("runCommand", commandName);
 	await __obsidian__.waitForSelector(".workspace-tabs");
-	await __obsidian__.keyboard.press("Control+P");
+	const isMac = process.platform === "darwin";
+	const commandKey = isMac ? "Meta+P" : "Control+P";
+	await __obsidian__.keyboard.press(commandKey);
 	await __obsidian__.waitForSelector(PROMPT_INPUT);
 	await __obsidian__.keyboard.type(commandName);
 	await delay(500);

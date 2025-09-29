@@ -4,7 +4,7 @@ import { debounce } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
 import type SandboxNotePlugin from "src/main";
 import type { EventEmitter } from "src/utils/EventEmitter";
-import type { Manager } from "./Manager";
+import type { IManager } from "./IManager";
 import { ViewManager } from "./ViewManager";
 
 type Context = {
@@ -17,7 +17,7 @@ type Context = {
 };
 
 /** Manages Obsidian workspace event handling */
-export class ObsidianEventManager implements Manager {
+export class ObsidianEventManager implements IManager {
 	private debouncedEmitLayoutChange: () => void;
 
 	constructor(

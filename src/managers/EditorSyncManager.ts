@@ -5,7 +5,7 @@ import { uniqBy } from "src/utils";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import type { AppOrchestrator } from "./AppOrchestrator";
-import type { Manager } from "./Manager";
+import type { IManager } from "./IManager";
 import type { ViewManager } from "./ViewManager";
 import type { CacheManager } from "./CacheManager";
 
@@ -20,7 +20,7 @@ type Context = {
 };
 
 /** Manages shared content synchronization across views */
-export class EditorSyncManager implements Manager {
+export class EditorSyncManager implements IManager {
 	// --- For new HotSandboxNoteView ---
 	private viewMasterIdMap = new WeakMap<HotSandboxNoteView, string>();
 

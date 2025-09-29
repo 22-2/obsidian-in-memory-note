@@ -2,7 +2,7 @@ import log from "loglevel";
 import { debounce, type Debouncer } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
 import type { DatabaseAPI } from "src/managers/DatabaseAPI";
-import type { Manager } from "src/managers/Manager";
+import type { IManager } from "src/managers/IManager";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import type { AbstractNoteView } from "src/views/internal/AbstractNoteView";
@@ -10,7 +10,7 @@ import type { CacheManager } from "./CacheManager";
 
 const logger = log.getLogger("DatabaseController");
 
-export class DatabaseController implements Manager {
+export class DatabaseController implements IManager {
 	private debouncedSaveFns = new Map<
 		string,
 		Debouncer<[string, string], void>

@@ -3,7 +3,7 @@ import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import { activateView } from "src/utils/obsidian";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
-import type { Manager } from "./Manager";
+import type { IManager } from "./IManager";
 import type { Plugin, Workspace, WorkspaceLeaf } from "obsidian";
 import { uniqBy } from "src/utils";
 import type { CacheManager } from "./CacheManager";
@@ -21,7 +21,7 @@ type Context = {
 };
 
 /** Manages registration and activation of custom views */
-export class ViewManager implements Manager {
+export class ViewManager implements IManager {
 	constructor(private context: Context) {}
 
 	/** Register custom view types with Obsidian */

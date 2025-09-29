@@ -1,7 +1,7 @@
 import type { AppEvents } from "src/events/AppEvents";
 import type { DatabaseController } from "src/managers/DatabaseController";
 import type { EditorPluginConnector } from "src/managers/EditorPluginConnector";
-import type { Manager } from "src/managers/Manager";
+import type { IManager } from "src/managers/IManager";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import type { CacheManager } from "./CacheManager";
@@ -20,7 +20,7 @@ type Context = {
 	connectEditorPluginToView: EditorPluginConnector["connectEditorPluginToView"];
 };
 
-export class PluginEventManager implements Manager {
+export class PluginEventManager implements IManager {
 	constructor(private context: Context) {}
 
 	load(): void {

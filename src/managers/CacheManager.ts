@@ -3,7 +3,7 @@ import { debounce, type Debouncer } from "obsidian";
 import type { HotSandboxNoteData } from "src/settings";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
-import type { Manager } from "./Manager";
+import type { IManager } from "./IManager";
 
 const logger = log.getLogger("HotSandboxManager");
 
@@ -11,7 +11,7 @@ type MinimalDBAPI = {
 	getAllNotes: () => Promise<HotSandboxNoteData[]>;
 };
 
-export class CacheManager implements Manager {
+export class CacheManager implements IManager {
 	private emitter: EventEmitter<AppEvents>;
 	private sandboxNotes = new Map<string, HotSandboxNoteData>();
 

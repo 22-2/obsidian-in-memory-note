@@ -11,7 +11,7 @@ import {
 	syncEditorPlugin,
 	SyncEditorPlugin,
 } from "src/views/internal/SyncEditorPlugin";
-import type { Manager } from "./Manager";
+import type { IManager } from "./IManager";
 import type { ViewManager } from "./ViewManager";
 
 type Context = {
@@ -21,7 +21,7 @@ type Context = {
 };
 
 /** Manages editor extensions and plugin connections */
-export class EditorPluginConnector implements Manager {
+export class EditorPluginConnector implements IManager {
 	constructor(private context: Context) {}
 
 	/** Register editor extension and set up event listeners */

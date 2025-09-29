@@ -10,7 +10,7 @@ import { DatabaseAPI } from "./DatabaseAPI";
 import { EditorPluginConnector } from "./EditorPluginConnector";
 import { EditorSyncManager } from "./EditorSyncManager";
 import { CacheManager } from "./CacheManager";
-import type { Manager } from "./Manager";
+import type { IManager } from "./IManager";
 import { ObsidianEventManager } from "./ObsidianEventManager";
 import { SettingsManager } from "./SettingsManager";
 import { ViewManager } from "./ViewManager";
@@ -21,7 +21,7 @@ const logger = log.getLogger("AppOrchestrator");
 /**
  * Manages the lifecycle and coordination of all sub-managers.
  */
-export class AppOrchestrator implements Manager {
+export class AppOrchestrator implements IManager {
 	protected plugin: SandboxNotePlugin;
 	protected emitter: EventEmitter<AppEvents>;
 
@@ -36,7 +36,7 @@ export class AppOrchestrator implements Manager {
 	protected databaseAPI!: DatabaseAPI;
 	protected dbController!: DatabaseController;
 
-	private subManagers: Manager[] = [];
+	private subManagers: IManager[] = [];
 
 	constructor(plugin: SandboxNotePlugin, emitter: EventEmitter<AppEvents>) {
 		this.plugin = plugin;

@@ -1,4 +1,4 @@
-export interface Manager {
+export interface IManager {
 	load(): void;
 	unload(): void;
 }

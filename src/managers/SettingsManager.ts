@@ -3,10 +3,10 @@ import type SandboxNotePlugin from "src/main";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AppEvents } from "src/events/AppEvents";
 import { DEFAULT_PLUGIN_DATA } from "src/utils/constants";
-import type { Manager } from "./Manager";
+import type { IManager } from "./IManager";
 import { type SandboxNotePluginData } from "src/settings";
 
-export class SettingsManager implements Manager {
+export class SettingsManager implements IManager {
 	private data!: SandboxNotePluginData;
 	constructor(
 		private emitter: EventEmitter<AppEvents>,

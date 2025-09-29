@@ -26,7 +26,7 @@ export const runCommand = async (
 	required = true
 ) => {
 	logger.debug("runCommand", commandName);
-	const success = await page.evaluate(() => {
+	const success = await page.evaluate((commandName) => {
 		const command = app.commands
 			.listCommands()
 			.find((c) => c.name === commandName);
@@ -34,7 +34,7 @@ export const runCommand = async (
 			app.commands.executeCommandById(command.id);
 			return true;
 		}
-	}, [commandName]);
+	}, commandName);
 	expect(success).toBe(true);
 	await delay(1000);
 };

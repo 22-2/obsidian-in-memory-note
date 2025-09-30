@@ -1,6 +1,5 @@
 import log from "loglevel";
 import type { Workspace } from "obsidian";
-import { debounce } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { IManager } from "./IManager";
@@ -17,30 +16,19 @@ type Context = {
 
 /** Manages Obsidian workspace event handling */
 export class ObsidianEventManager implements IManager {
-	private debouncedEmitLayoutChange: () => void;
-
 	constructor(
 		private context: Context,
 		private emitter: EventEmitter<AppEvents>
-	) {
-		this.debouncedEmitLayoutChange = debounce(
-			this.emitLayoutChange.bind(this),
-			50
-		);
-	}
+	) {}
 
 	/** Set up all workspace event listeners */
 	public load(): void {
 		this.context.workspaceEvents.onLayoutReady(() =>
-			this.emitter.emit("obsidian-layout-ready", {})
+			this.emitter.emit("obsidian-layout-ready", undefined)
 		);
 		this.context.workspaceEvents.on(
 			"active-leaf-change",
 			this.handleActiveLeafChange
-		);
-		this.context.workspaceEvents.on(
-			"layout-change",
-			this.debouncedEmitLayoutChange
 		);
 	}
 
@@ -49,16 +37,6 @@ export class ObsidianEventManager implements IManager {
 			"active-leaf-change",
 			this.handleActiveLeafChange
 		);
-		this.context.workspaceEvents.off(
-			"layout-change",
-			this.debouncedEmitLayoutChange
-		);
-	}
-
-	/** Emits an event to notify other managers about a layout change. */
-	private emitLayoutChange(): void {
-		log.debug("Workspace layout ready/changed, emitting event.");
-		this.emitter.emit("obsidian-layout-changed", undefined);
 	}
 
 	/**

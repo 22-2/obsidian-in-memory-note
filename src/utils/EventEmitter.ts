@@ -4,6 +4,8 @@ import log from "loglevel";
 
 type Listener<T> = (payload: T) => void;
 
+const logger = log.getLogger("EventEmitter");
+
 export class EventEmitter<Events extends object> {
 	private listeners: {
 		[K in keyof Events]?: Array<Listener<Events[K]>>;
@@ -39,7 +41,7 @@ export class EventEmitter<Events extends object> {
 	}
 
 	emit<K extends keyof Events>(event: K, payload: Events[K]): void {
-		log.debug(`Emitting event: ${event.toString()}`, payload);
+		logger.debug(`Emitting event: ${event.toString()}`, payload);
 		this.listeners[event]?.forEach((l) => l(payload));
 	}
 }

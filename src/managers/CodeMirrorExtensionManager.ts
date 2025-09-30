@@ -29,10 +29,6 @@ export class CodeMirrorExtensionManager implements IManager {
 		);
 
 		this.context.emitter.on(
-			"obsidian-layout-changed",
-			this.handleLayoutChange
-		);
-		this.context.emitter.on(
 			"obsidian-active-leaf-changed",
 			this.handleActiveLeafChange
 		);
@@ -40,10 +36,6 @@ export class CodeMirrorExtensionManager implements IManager {
 
 	/** Unload event listeners. */
 	public unload() {
-		this.context.emitter.off(
-			"obsidian-layout-changed",
-			this.handleLayoutChange
-		);
 		this.context.emitter.off(
 			"obsidian-active-leaf-changed",
 			this.handleActiveLeafChange

@@ -125,28 +125,27 @@ export abstract class AbstractNoteView extends ItemView {
 			logger.debug(`Restored masterId: ${this.masterId}`);
 		}
 
+		const editMode = this.wrapper.virtualEditor?.editMode;
+
 		// sourceModeの更新
-		if (typeof state.source === "boolean") {
-			this.isSourceMode = state.source;
+		if (
+			typeof state.source === "boolean" &&
+			editMode.sourceMode !== state.source
+		) {
+			editMode.toggleSource();
+			state.layout = true;
 		}
 
 		// 初期state保存
 		this.stateManager.setInitialState(state);
 
-		// コンテンツ設定
-		if (this.editor && state.state?.content != null) {
-			this.setContent(state.state.content);
-			await this.wrapper.virtualEditor.setState(state, result);
-			// @ts-ignore
-			result.close = false;
-		}
+		await super.setState(state, result);
 
 		logger.debug("setState completed", {
 			masterId: this.masterId,
 			state,
 			result,
 		});
-		await super.setState(state, result);
 	}
 
 	public override onPaneMenu(

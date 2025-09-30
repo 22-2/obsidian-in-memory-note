@@ -36,7 +36,7 @@ export class EditorSyncManager implements IManager {
 		this.context.emitter.on("view-opened", this.handleViewOpened);
 		this.context.emitter.on("settings-changed", this.handleSettingsChanged);
 		this.context.emitter.on(
-			"obsidian-layout-changed",
+			"obsidian-active-leaf-changed",
 			this.syncActiveEditorState
 		);
 	}

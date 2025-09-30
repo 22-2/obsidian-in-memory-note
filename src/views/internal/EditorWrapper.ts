@@ -6,6 +6,8 @@ import type { AbstractNoteView } from "./AbstractNoteView";
 import { VirtualMarkdownView } from "./VirtualMarkdownView";
 import type { AbstractNoteViewState } from "./types";
 
+const logger = log.getLogger("EditorWrapper");
+
 /** Manages inline MarkdownView without physical file. */
 export class EditorWrapper {
 	public virtualEditor!: VirtualMarkdownView;
@@ -125,14 +127,19 @@ export class EditorWrapper {
 			containerEl: this.containerEl,
 			getState: () => {
 				const state = this.parentView.getState();
-				log.debug("getState", state);
+				logger.debug("getState", state);
 				return state;
 			},
 			setViewState: async (state: any, result: ViewStateResult) => {
 				if (state.type === "markdown") {
 					state.type = this.parentView.getViewType();
 				}
-				log.debug("setViewState", state);
+				logger.debug(
+					"setViewState",
+					state,
+					"state.state.source",
+					state?.state?.source
+				);
 				this.parentView.leaf.setViewState(
 					state,
 					result || { history: false }
@@ -140,6 +147,7 @@ export class EditorWrapper {
 			},
 			__FAKE_LEAF__: true,
 		} as unknown as WorkspaceLeaf;
+		fakeLeaf.working = false;
 		return fakeLeaf;
 	}
 }

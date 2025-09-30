@@ -24,6 +24,8 @@ export type CopyPluginOptions = {
 const mode = process.argv[2];
 const prod = mode === "production";
 
+console.log(mode);
+
 const copyOpts = {
 	opts: [
 		{
@@ -98,7 +100,7 @@ const context = await esbuild.context({
 	outfile: "main.js",
 });
 
-if (!prod) {
+if (prod) {
 	await context.rebuild();
 	process.exit(0);
 } else {

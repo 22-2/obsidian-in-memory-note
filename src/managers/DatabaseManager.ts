@@ -6,6 +6,7 @@ import type { IManager } from "src/managers/IManager";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import type { AbstractNoteView } from "src/views/internal/AbstractNoteView";
+import invariant from "tiny-invariant";
 import type { CacheManager } from "./CacheManager";
 import type { ViewManager } from "./ViewManager";
 
@@ -93,8 +94,9 @@ export class DatabaseManager implements IManager {
 		}
 	}
 
-	async deleteFromAll(masterId: string): Promise<void> {
+	async deleteFromAll(masterId: string | null): Promise<void> {
 		try {
+			invariant(masterId, "Invalid masterId");
 			await this.context.dbAPI.deleteSandbox(masterId);
 			this.context.cache.delete(masterId);
 			this.debouncedSaveFns.delete(masterId);

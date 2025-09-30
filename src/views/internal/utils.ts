@@ -6,8 +6,6 @@ import type { AbstractNoteView } from "./AbstractNoteView";
 
 const logger = log.getLogger("Utils");
 
-// --- Modal for Path Confirmation ---
-
 // --- Main Conversion Utility ---
 export async function extractToFileInteraction<T extends AbstractNoteView>(
 	view: T
@@ -16,7 +14,7 @@ export async function extractToFileInteraction<T extends AbstractNoteView>(
 
 	try {
 		const content = view.getContent();
-		const baseTitle = view.getBaseTitle();
+		const baseTitle = "Untitled";
 
 		const sanitizedBasename = sanitizeFilename(baseTitle);
 		const suggestedPath = buildSuggestedPath(
@@ -38,8 +36,10 @@ export async function extractToFileInteraction<T extends AbstractNoteView>(
 
 		view.setContent("");
 		await createAndOpenFile(view, finalFilePath, content, baseTitle);
+		return true;
 	} catch (error) {
 		handleConversionError(error);
+		return false;
 	}
 }
 
@@ -76,10 +76,9 @@ async function createAndOpenFile<T extends AbstractNoteView>(
 	baseTitle: string
 ): Promise<void> {
 	const availablePath = view.app.vault.getAvailablePath(filePath, "md");
-	const newFile = await view.app.vault.create(availablePath, content);
-	await view.leaf.openFile(newFile);
-
-	new Notice(`${baseTitle} converted to file: ${newFile.path}`);
+	await view.app.fileManager.createAndOpenMarkdownFile(availablePath, "tab");
+	view.app.workspace.activeEditor?.editor?.setValue(content);
+	new Notice(`${baseTitle} converted to file: ${availablePath}`);
 }
 
 function handleConversionError(error: unknown): void {

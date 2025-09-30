@@ -129,6 +129,10 @@ export class AppOrchestrator implements IManager {
 							viewManager.indexOfMasterId(id),
 						isLastHotView: (id: string) =>
 							viewManager.isLastHotView(id),
+						deleteFromAll: (id: string) =>
+							this.get<DatabaseManager>(
+								"dbManager"
+							).deleteFromAll(id),
 					}),
 				getLeaf: (type) => this.plugin.app.workspace.getLeaf(type),
 				detachLeavesOfType: (type) =>

@@ -2,6 +2,7 @@
 import log from "loglevel";
 import { WorkspaceLeaf } from "obsidian";
 import { showConfirmModal } from "src/helpers/interaction";
+import type { DatabaseManager } from "src/managers/DatabaseManager";
 import type { ViewManager } from "src/managers/ViewManager";
 import {
 	HOT_SANDBOX_NOTE_ICON,
@@ -17,6 +18,7 @@ const logger = log.getLogger("HotSandboxNoteView");
 
 type Context = AbstractNoteViewContext & {
 	indexOfMasterId: ViewManager["indexOfMasterId"];
+	deleteFromAll: DatabaseManager["deleteFromAll"];
 };
 
 export class HotSandboxNoteView extends AbstractNoteView {
@@ -113,6 +115,8 @@ export class HotSandboxNoteView extends AbstractNoteView {
 			return;
 		}
 
-		await extractToFileInteraction(this);
+		if (await extractToFileInteraction(this)) {
+			this.context.deleteFromAll(this.masterId);
+		}
 	}
 }

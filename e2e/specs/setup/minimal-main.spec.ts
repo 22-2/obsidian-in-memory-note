@@ -4,8 +4,9 @@ import "../../log-setup";
 
 import type { Page } from "@playwright/test";
 import { DIST_DIR, PLUGIN_ID } from "e2e/config";
-import type SandboxNotePlugin from "src/main";
+import SandboxNotePlugin from "src/main";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
+import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import {
 	CONVERT_HOT_SANDBOX_TO_FILE,
 	OPEN_HOT_SANDBOX,
@@ -14,12 +15,13 @@ import {
 import { expect, test } from "../../test-fixtures";
 
 // --- Constants Definition ---
-const DATA_TYPE = `[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`;
-const ACTIVE_SANDBOX_VIEW_SELECTOR = `.workspace-leaf.mod-active > .workspace-leaf-content${DATA_TYPE}`;
+const DATA_TYPE_HOT_SANDBOX = `[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`;
+const DATA_TYPE_MARKDOWN = `[data-type="markdown"]`;
+const ACTIVE_SANDBOX_VIEW_SELECTOR = `.workspace-leaf.mod-active > .workspace-leaf-content${DATA_TYPE_HOT_SANDBOX}`;
 const ACTIVE_LEAF_SELECTOR = ".workspace-leaf.mod-active";
 const ACTIVE_EDITOR_SELECTOR = `${ACTIVE_LEAF_SELECTOR} .cm-content`;
 // const ACTIVE_TITLE_SELECTOR = `${ACTIVE_LEAF_SELECTOR} > .workspace-leaf-content > .view-header .view-header-title`;
-const ACTIVE_TITLE_SELECTOR = `.workspace-tab-header.mod-active${DATA_TYPE}`;
+const ACTIVE_TITLE_SELECTOR = `.workspace-tab-header.mod-active${DATA_TYPE_HOT_SANDBOX}`;
 // const ACTIVE_SANDBOX_TITLE_SELECTOR = `${ACTIVE_SANDBOX_VIEW_SELECTOR} > .view-header`;
 
 // --- Test Configuration ---
@@ -64,9 +66,9 @@ async function createNewSandboxNote(page: Page, content?: string) {
 async function getActiveEditorContent(page: Page): Promise<string> {
 	return await page.evaluate(
 		([VIEW_TYPE_HOT_SANDBOX]) => {
-			const activeView = (window as any).app.workspace.activeLeaf.view;
-			if (activeView.getViewType() === VIEW_TYPE_HOT_SANDBOX) {
-				return activeView.editor.getValue();
+			const activeView = app.workspace.activeLeaf?.view;
+			if (activeView instanceof HotSandboxNoteView) {
+				return activeView.getContent();
 			}
 			throw new Error("failed to get active editor");
 		},
@@ -138,7 +140,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		// await page.pause();
 		// 5. Verify the content of the left pane is also synchronized and updated
 		const leftPaneEditor = page.locator(
-			`.workspace-leaf.mod-active ${DATA_TYPE}  [data-type="markdown"] .cm-content`
+			`.workspace-leaf.mod-active ${DATA_TYPE_HOT_SANDBOX}  ${DATA_TYPE_MARKDOWN} .cm-content`
 		);
 		await expect(leftPaneEditor).toHaveText(updatedContent);
 	});
@@ -184,7 +186,8 @@ test.describe("HotSandboxNoteView Main Features", () => {
 	test("4. Converting Note to File", async ({ vault }) => {
 		const { window: page } = vault;
 		const noteContent = "This note will be converted to a file.";
-		const expectedFileName = "Hot Sandbox-1.md";
+		const expectedFileName = "Untitled";
+		const expectedPath = "Notes/Daily";
 
 		// 1. Create the note to be converted
 		await createNewSandboxNote(page, noteContent);
@@ -197,20 +200,66 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			page.locator(ACTIVE_SANDBOX_VIEW_SELECTOR)
 		).not.toBeVisible();
 
+		await page
+			.getByPlaceholder(`e.g., My Scratchpad`, {
+				exact: true,
+			})
+			.fill(expectedFileName);
+
+		await page
+			.getByPlaceholder(`e.g., Notes/Daily`, {
+				exact: true,
+			})
+			.fill(expectedPath);
+
+		await page.keyboard.press("Enter");
+
 		// 4. Verify a new Markdown file tab is opened
 		await expect(
-			page.locator(`${ACTIVE_LEAF_SELECTOR} [data-type="markdown"]`)
+			page.locator(`${ACTIVE_LEAF_SELECTOR} ${DATA_TYPE_MARKDOWN}`)
 		).toBeVisible();
 
 		// 5. Verify the newly opened file name and content are correct
 		await expect(
-			page.locator(ACTIVE_TITLE_SELECTOR.replace(DATA_TYPE, ""))
-		).toContainText(expectedFileName.replace(".md", ""));
+			page.locator(
+				ACTIVE_TITLE_SELECTOR.replace(DATA_TYPE_HOT_SANDBOX, "")
+			)
+		).toContainText(expectedFileName);
+
+		const expectedFile = `${expectedPath}/${expectedFileName}.md`;
+
+		expect(
+			await page.evaluate((expectedFile) => {
+				app.vault.adapter.exists(expectedFile);
+			}, expectedFile)
+		);
+
 		// Assuming the active view is now a standard Markdown editor
 		const fileContent = await page.evaluate(() =>
-			(window as any).app.workspace.activeEditor.editor.getValue()
+			app.workspace.activeEditor?.editor?.getValue()
 		);
 		expect(fileContent).toBe(noteContent);
+
+		await page.evaluate(() => app.workspace.activeLeaf?.history.back());
+
+		await expect(
+			page.locator(`${ACTIVE_LEAF_SELECTOR} ${DATA_TYPE_MARKDOWN}`)
+		).toBeVisible();
+
+		const sandboxNoteContent = await page.evaluate(() =>
+			app.workspace.activeEditor?.editor?.getValue()
+		);
+
+		expect(sandboxNoteContent).toBe("");
+
+		await createNewSandboxNote(page, noteContent);
+
+		expect(
+			await page.evaluate(
+				() =>
+					app.workspace.activeLeaf?.tabHeaderInnerTitleEl.textContent
+			)
+		).toBe("Hot Sandbox-1");
 	});
 
 	/*

@@ -5,7 +5,6 @@ import {
 	Notice,
 	Setting,
 	TAbstractFile,
-	TFile,
 	TFolder,
 } from "obsidian";
 
@@ -125,138 +124,139 @@ export class FolderSuggest extends PathSuggest<TFolder> {
 /**
  * Suggests existing file paths within the vault
  */
-export class FileSuggest extends PathSuggest<TFile> {
-	constructor(
-		app: App,
-		inputEl: HTMLInputElement,
-		private fileExtension?: string
-	) {
-		super(app, inputEl);
-	}
+// export class FileSuggest extends PathSuggest<TFile> {
+// 	constructor(
+// 		app: App,
+// 		inputEl: HTMLInputElement,
+// 		private fileExtension?: string
+// 	) {
+// 		super(app, inputEl);
+// 	}
 
-	getSuggestions(query: string): TFile[] {
-		const allFiles = this.app.vault.getFiles();
-		const normalizedQuery = this.normalizeQuery(query);
+// 	getSuggestions(query: string): TFile[] {
+// 		const allFiles = this.app.vault.getFiles();
+// 		const normalizedQuery = this.normalizeQuery(query);
 
-		return allFiles.filter((file) => {
-			// Filter by extension if specified
-			if (this.fileExtension && !file.path.endsWith(this.fileExtension)) {
-				return false;
-			}
+// 		return allFiles.filter((file) => {
+// 			// Filter by extension if specified
+// 			if (this.fileExtension && !file.path.endsWith(this.fileExtension)) {
+// 				return false;
+// 			}
 
-			return file.path.toLowerCase().includes(normalizedQuery);
-		});
-	}
+// 			return file.path.toLowerCase().includes(normalizedQuery);
+// 		});
+// 	}
 
-	renderSuggestion(file: TFile, el: HTMLElement): void {
-		el.createEl("div", { text: file.path });
-		el.addClass("mod-file");
-	}
+// 	renderSuggestion(file: TFile, el: HTMLElement): void {
+// 		el.createEl("div", { text: file.path });
+// 		el.addClass("mod-file");
+// 	}
 
-	protected formatSelectedPath(path: string): string {
-		return path; // Files don't need trailing slash
-	}
-}
+// 	protected formatSelectedPath(path: string): string {
+// 		return path; // Files don't need trailing slash
+// 	}
+// }
 
 /**
  * Combined folder and file suggestion utility
  */
-export class FileChooserSuggest extends AbstractInputSuggest<TAbstractFile> {
-	constructor(
-		app: App,
-		protected inputEl: HTMLInputElement,
-		private options: {
-			showFolders?: boolean;
-			showFiles?: boolean;
-			fileExtension?: string;
-		} = {}
-	) {
-		super(app, inputEl);
-		this.options = {
-			showFolders: true,
-			showFiles: true,
-			...options,
-		};
-	}
+// export class FileChooserSuggest extends AbstractInputSuggest<TAbstractFile> {
+// 	constructor(
+// 		app: App,
+// 		protected inputEl: HTMLInputElement,
+// 		private options: {
+// 			showFolders?: boolean;
+// 			showFiles?: boolean;
+// 			fileExtension?: string;
+// 		} = {}
+// 	) {
+// 		super(app, inputEl);
+// 		this.options = {
+// 			showFolders: true,
+// 			showFiles: true,
+// 			...options,
+// 		};
+// 	}
 
-	getSuggestions(query: string): TAbstractFile[] {
-		const items: TAbstractFile[] = [];
-		const normalizedQuery = query
-			.toLowerCase()
-			.replace(/^\//, "")
-			.replace(/\/$/, "");
+// 	getSuggestions(query: string): TAbstractFile[] {
+// 		const items: TAbstractFile[] = [];
+// 		const normalizedQuery = query
+// 			.toLowerCase()
+// 			.replace(/^\//, "")
+// 			.replace(/\/$/, "");
 
-		// Add folders if enabled
-		if (this.options.showFolders) {
-			const folders: TFolder[] = [
-				// @ts-expect-error - Creating root folder instance
-				new TFolder(this.app.vault, "/"),
-			].concat(this.app.vault.getAllFolders());
+// 		// Add folders if enabled
+// 		if (this.options.showFolders) {
+// 			const folders: TFolder[] = [
+// 				// @ts-expect-error - Creating root folder instance
+// 				new TFolder(this.app.vault, "/"),
+// 			].concat(this.app.vault.getAllFolders());
 
-			items.push(
-				...folders.filter((f) => {
-					const displayPath = f.path === "" ? "Vault Root /" : f.path;
-					return displayPath.toLowerCase().includes(normalizedQuery);
-				})
-			);
-		}
+// 			items.push(
+// 				...folders.filter((f) => {
+// 					const displayPath = f.path === "" ? "Vault Root /" : f.path;
+// 					return displayPath.toLowerCase().includes(normalizedQuery);
+// 				})
+// 			);
+// 		}
 
-		// Add files if enabled
-		if (this.options.showFiles) {
-			const files = this.app.vault.getFiles().filter((file) => {
-				// Filter by extension if specified
-				if (
-					this.options.fileExtension &&
-					!file.path.endsWith(this.options.fileExtension)
-				) {
-					return false;
-				}
+// 		// Add files if enabled
+// 		if (this.options.showFiles) {
+// 			const files = this.app.vault.getFiles().filter((file) => {
+// 				// Filter by extension if specified
+// 				if (
+// 					this.options.fileExtension &&
+// 					!file.path.endsWith(this.options.fileExtension)
+// 				) {
+// 					return false;
+// 				}
 
-				return file.path.toLowerCase().includes(normalizedQuery);
-			});
+// 				return file.path.toLowerCase().includes(normalizedQuery);
+// 			});
 
-			items.push(...files);
-		}
+// 			items.push(...files);
+// 		}
 
-		// Sort: folders first, then files
-		return items.sort((a, b) => {
-			if (a instanceof TFolder && b instanceof TFile) return -1;
-			if (a instanceof TFile && b instanceof TFolder) return 1;
-			return a.path.localeCompare(b.path);
-		});
-	}
+// 		// Sort: folders first, then files
+// 		return items.sort((a, b) => {
+// 			if (a instanceof TFolder && b instanceof TFile) return -1;
+// 			if (a instanceof TFile && b instanceof TFolder) return 1;
+// 			return a.path.localeCompare(b.path);
+// 		});
+// 	}
 
-	renderSuggestion(item: TAbstractFile, el: HTMLElement): void {
-		if (item instanceof TFolder) {
-			const pathText = item.path === "" ? "Vault Root /" : item.path;
-			el.createEl("div", { text: pathText });
-			el.addClass("mod-folder");
-		} else if (item instanceof TFile) {
-			el.createEl("div", { text: item.path });
-			el.addClass("mod-file");
-		}
-	}
+// 	renderSuggestion(item: TAbstractFile, el: HTMLElement): void {
+// 		if (item instanceof TFolder) {
+// 			const pathText = item.path === "" ? "Vault Root /" : item.path;
+// 			el.createEl("div", { text: pathText });
+// 			el.addClass("mod-folder");
+// 		} else if (item instanceof TFile) {
+// 			el.createEl("div", { text: item.path });
+// 			el.addClass("mod-file");
+// 		}
+// 	}
 
-	selectSuggestion(item: TAbstractFile): void {
-		let selectedPath: string;
+// 	selectSuggestion(item: TAbstractFile): void {
+// 		let selectedPath: string;
 
-		if (item instanceof TFolder) {
-			// Folders: ensure trailing slash (empty for root)
-			selectedPath = item.path
-				? item.path.endsWith("/")
-					? item.path
-					: `${item.path}/`
-				: "";
-		} else {
-			// Files: no trailing slash
-			selectedPath = item.path;
-		}
+// 		if (item instanceof TFolder) {
+// 			// Folders: ensure trailing slash (empty for root)
+// 			selectedPath = item.path
+// 				? item.path.endsWith("/")
+// 					? item.path
+// 					: `${item.path}/`
+// 				: "";
+// 		} else {
+// 			// Files: no trailing slash
+// 			selectedPath = item.path;
+// 		}
 
-		this.inputEl.value = selectedPath;
-		this.inputEl.trigger("change");
-		this.close();
-	}
-}
+// 		this.inputEl.value = selectedPath;
+// 		this.inputEl.trigger("input");
+// 		this.inputEl.trigger("change");
+// 		this.close();
+// 	}
+// }
 
 type FilePathPromptModalOptions = {
 	baseFileName: string;
@@ -295,6 +295,36 @@ class FilePathPromptModal extends Modal {
 		}
 	}
 
+	submit() {
+		// If the filename is empty, prevent saving
+		if (!this.fileName) {
+			new Notice("File name cannot be empty.");
+			return;
+		}
+
+		this.resolved = true;
+		this.close();
+
+		// Combine folder path and file name to create the full path
+		// Remove trailing slash from folderPath to be safe
+		const cleanFolderPath = this.folderPath.replace(/\/$/, "");
+		const resultPath = cleanFolderPath
+			? `${cleanFolderPath}/${this.fileName}`
+			: this.fileName;
+
+		this.resolve({
+			fullPath: resultPath,
+			baseFileName: this.baseFileName,
+			resolved: true,
+		});
+	}
+
+	onKeydown(e: KeyboardEvent) {
+		if (e.key === "Enter") {
+			this.submit();
+		}
+	}
+
 	onOpen() {
 		const { contentEl, titleEl } = this;
 		titleEl.setText("Confirm Save Location");
@@ -315,6 +345,9 @@ class FilePathPromptModal extends Modal {
 					.onChange((value) => {
 						this.fileName = value.trim();
 					});
+				text.inputEl.addEventListener("keydown", (e) =>
+					this.onKeydown(e)
+				);
 			});
 
 		// Setting for the destination folder
@@ -330,6 +363,9 @@ class FilePathPromptModal extends Modal {
 					.onChange((value) => {
 						this.folderPath = value.trim();
 					});
+				search.inputEl.addEventListener("keydown", (e) =>
+					this.onKeydown(e)
+				);
 				new FolderSuggest(this.app, search.inputEl);
 			});
 
@@ -339,32 +375,7 @@ class FilePathPromptModal extends Modal {
 				btn
 					.setButtonText("Save")
 					.setCta()
-					.onClick(() => {
-						// If the filename is empty, prevent saving
-						if (!this.fileName) {
-							new Notice("File name cannot be empty.");
-							return;
-						}
-
-						this.resolved = true;
-						this.close();
-
-						// Combine folder path and file name to create the full path
-						// Remove trailing slash from folderPath to be safe
-						const cleanFolderPath = this.folderPath.replace(
-							/\/$/,
-							""
-						);
-						const resultPath = cleanFolderPath
-							? `${cleanFolderPath}/${this.fileName}`
-							: this.fileName;
-
-						this.resolve({
-							fullPath: resultPath,
-							baseFileName: this.baseFileName,
-							resolved: true,
-						});
-					})
+					.onClick(() => this.submit())
 			)
 			.addButton((btn) =>
 				btn.setButtonText("Cancel").onClick(() => {

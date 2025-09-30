@@ -218,7 +218,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await folderInputEl.fill(expectedPath);
 		await folderInputEl.blur();
 
-		await page.keyboard.press("Enter");
+		await page.getByText("Save", { exact: true }).click();
 
 		// 3. Verify the sandbox note view is closed
 		await expect(

@@ -10,6 +10,7 @@ import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import {
 	CONVERT_HOT_SANDBOX_TO_FILE,
 	OPEN_HOT_SANDBOX,
+	delay,
 	runCommand,
 } from "../../obsidian-commands/run-command";
 import { expect, test } from "../../test-fixtures";
@@ -69,6 +70,10 @@ function getSandboxPlugin(
 		},
 		[PLUGIN_ID]
 	);
+}
+
+function getActiveViewType(page: Page) {
+	return page.evaluate(() => app.workspace.activeLeaf?.view.getViewType());
 }
 
 /**
@@ -202,8 +207,20 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		const expectedFileName = "Untitled";
 		const expectedPath = "Adventurer";
 
+		/* ========================================================================== */
+		//
+		//  Sandbox view
+		//
+		/* ========================================================================== */
+
 		// 1. Create the note to be converted
 		await createNewSandboxNote(page, noteContent);
+
+		/* ========================================================================== */
+		//
+		//  Sandbox convertion modal
+		//
+		/* ========================================================================== */
 
 		// 2. Execute the "Convert to file" command
 		await runCommand(page, CONVERT_HOT_SANDBOX_TO_FILE);
@@ -223,13 +240,16 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		await page.getByText("Save", { exact: true }).click();
 
-		// 3. Verify the sandbox note view is closed
-		await expect(
-			page.locator(ACTIVE_SANDBOX_VIEW_SELECTOR)
-		).not.toBeVisible();
+		/* ========================================================================== */
+		//
+		//  Markdown view
+		//
+		/* ========================================================================== */
 
-		// 4. Verify a new Markdown file tab is opened
-		await expect(page.locator(ACTIVE_MARKDOWN_VIEW_SELECTR)).toBeVisible();
+		await delay(500);
+
+		// 3. Verify the sandbox note view is closed
+		expect(await getActiveViewType(page)).toBe("markdown");
 
 		// 5. Verify the newly opened file name and content are correct
 		await expect(
@@ -240,6 +260,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		const expectedFile = `${expectedPath}/${expectedFileName}.md`;
 
+		// check converted file exists
 		expect(
 			await page.evaluate((expectedFile) => {
 				app.vault.adapter.exists(expectedFile);
@@ -256,13 +277,20 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			page.locator(`${ACTIVE_LEAF_SELECTOR} ${DATA_TYPE_MARKDOWN}`)
 		).toBeVisible();
 
+		// back to sandbox view
 		await page.evaluate(async () => {
 			await app.workspace.activeLeaf?.history.back();
 		});
 
-		await expect(
-			page.locator(`${ACTIVE_LEAF_SELECTOR} ${DATA_TYPE_HOT_SANDBOX}`)
-		).toBeVisible();
+		await delay(500);
+
+		/* ========================================================================== */
+		//
+		//  Sandbox view
+		//
+		/* ========================================================================== */
+
+		expect(await getActiveViewType(page)).toBe(VIEW_TYPE_HOT_SANDBOX);
 
 		const sandboxNoteContent = await page.evaluate(() =>
 			app.workspace.activeEditor?.editor?.getValue()

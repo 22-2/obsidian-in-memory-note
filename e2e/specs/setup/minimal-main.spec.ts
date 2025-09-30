@@ -4,9 +4,9 @@ import "../../log-setup";
 
 import type { Page } from "@playwright/test";
 import { DIST_DIR, PLUGIN_ID } from "e2e/config";
+import type { VaultPageTextContext } from "e2e/obsidian-setup/setup";
 import SandboxNotePlugin from "src/main";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
-import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import {
 	CONVERT_HOT_SANDBOX_TO_FILE,
 	OPEN_HOT_SANDBOX,
@@ -58,22 +58,31 @@ async function createNewSandboxNote(page: Page, content?: string) {
 	}
 }
 
+function getSandboxPlugin(
+	pluginHandleMap: VaultPageTextContext["pluginHandleMap"]
+) {
+	return pluginHandleMap.evaluateHandle(
+		(pluginHandleMap, [PLUGIN_ID]) => {
+			return pluginHandleMap.get(PLUGIN_ID) as SandboxNotePlugin;
+		},
+		[PLUGIN_ID]
+	);
+}
+
 /**
  * Retrieves the content of the currently active editor.
- * @param page Playwright Page object
+ * @param pluginHandleMap Playwright Page object
  * @returns The editor content string
  */
-async function getActiveEditorContent(page: Page): Promise<string> {
-	return await page.evaluate(
-		([VIEW_TYPE_HOT_SANDBOX]) => {
-			const activeView = app.workspace.activeLeaf?.view;
-			if (activeView instanceof HotSandboxNoteView) {
-				return activeView.getContent();
-			}
-			throw new Error("failed to get active editor");
-		},
-		[VIEW_TYPE_HOT_SANDBOX]
-	);
+async function getActiveEditorContent(
+	pluginHandleMap: VaultPageTextContext["pluginHandleMap"]
+): Promise<string> {
+	const pluginHandle = await getSandboxPlugin(pluginHandleMap);
+	return pluginHandle.evaluate((plugin) => {
+		const activeView = plugin.orchestrator.getActiveView();
+		if (activeView) return activeView.getContent();
+		throw new Error("failed to get active editor");
+	});
 }
 
 // --- Test Suite ---
@@ -168,7 +177,9 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		).toHaveCount(2);
 
 		// 3. Verify the content of the second note is correct (currently active)
-		expect(await getActiveEditorContent(page)).toBe(note2Content);
+		expect(await getActiveEditorContent(vault.pluginHandleMap)).toBe(
+			note2Content
+		);
 
 		// 4. Verify the content of the first note has not changed (inactive leaf)
 		const firstNoteContent = await page

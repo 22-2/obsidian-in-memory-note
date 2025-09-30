@@ -1,4 +1,4 @@
-// src/views/internal/AbstractNoteView.ts
+// src/views/internal/AbstractNoteView.ts (修正版)
 import {
 	ItemView,
 	Menu,
@@ -10,10 +10,9 @@ import {
 import log from "loglevel";
 import { nanoid } from "nanoid";
 import type { AppEvents } from "src/events/AppEvents";
-import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
 import type { SettingsManager } from "src/managers/SettingsManager";
 import type { ViewManager } from "src/managers/ViewManager";
-import type { PluginSettings } from "src/settings"; // Import PluginSettings
+import type { PluginSettings } from "src/settings";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
 import { issue2Logger } from "../../special-loggers";
@@ -21,38 +20,41 @@ import { EditorWrapper } from "./EditorWrapper";
 import type { AbstractNoteViewState, ObsidianViewState } from "./types";
 import { extractToFileInteraction } from "./utils";
 
+import type { Editor, MarkdownEditView } from "obsidian";
+import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
+
 const logger = log.getLogger("AbstractNoteView");
-
-export type Context = {
-	getSettings: SettingsManager["getSettings"];
-	isLastHotView: ViewManager["isLastHotView"];
-	emitter: EventEmitter<AppEvents>;
-};
-
-export type { Context as AbstractNoteViewContext };
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
-	private initialState: AbstractNoteViewState | null = null;
 	public isSourceMode = true;
-	public masterId: string | null = null;
+	public masterId: string;
 	public scope: Scope;
 	public wrapper: EditorWrapper;
-
 	public navigation = true;
 
-	// NEW: Getter for plugin settings
+	private stateManager: ViewStateManager;
+	private saveManager: SaveManager;
+	private eventHandler: ViewEventHandler;
+
 	public get pluginSettings(): PluginSettings {
 		return this.context.getSettings();
 	}
 
-	constructor(
-		leaf: WorkspaceLeaf,
-		protected context: Context // protected emitter: EventEmitter<AppEvents>, // protected orchestrator: AppOrchestrator, // protected funcs: AbstractNoteViewFuncs
-	) {
+	constructor(leaf: WorkspaceLeaf, protected context: Context) {
 		super(leaf);
+		// 確実にmasterIdを初期化
+		this.masterId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
 		this.wrapper = new EditorWrapper(this);
 		this.scope = new Scope(this.app.scope);
+
+		this.stateManager = new ViewStateManager();
+		this.saveManager = new SaveManager(this.context.emitter, () => this);
+		this.eventHandler = new ViewEventHandler(
+			this.context.emitter,
+			() => this.editor,
+			() => this.wrapper.virtualEditor?.editMode
+		);
 	}
 
 	public get editor() {
@@ -60,7 +62,11 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	protected get hasUnsavedChanges(): boolean {
-		return this.getContent() != "";
+		return this.getContent() !== "";
+	}
+
+	public get saving(): Promise<void> | null {
+		return this.saveManager.saving;
 	}
 
 	public abstract getBaseTitle(): string;
@@ -69,24 +75,8 @@ export abstract class AbstractNoteView extends ItemView {
 	public abstract getViewType(): string;
 
 	save(): void {
-		if (!this.masterId) return;
-		const { promise, resolve, reject } = Promise.withResolvers<void>();
-		this.saving = promise;
-
-		this.context.emitter.emit("save-requested", {
-			view: this,
-		});
-
-		this.context.emitter.once("save-result", (payload) => {
-			if (payload.view === this) {
-				logger.debug("Save completed for view", this.masterId);
-				payload.success ? resolve() : reject();
-				this.saving = null;
-			}
-		});
+		this.saveManager.save(this.masterId);
 	}
-
-	saving: null | Promise<void> = null;
 
 	public override getDisplayText(): string {
 		const baseTitle = this.getBaseTitle();
@@ -95,36 +85,23 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	public override getState(): AbstractNoteViewState {
-		const state: AbstractNoteViewState = {
-			...(super.getState() as ObsidianViewState),
-			type: this.getViewType(),
-			state: {
-				masterId: "",
-				content: "",
-			},
-		};
-		logger.debug("AbstractNoteView.getState", state);
-
-		state.state.content = (this.editor && this.editor.getValue()) ?? "";
-		state.state.masterId = this.masterId ?? "";
-		state.source = this.isSourceMode;
-		return state;
+		const baseState = super.getState() as ObsidianViewState;
+		const content = this.editor?.getValue() ?? "";
+		return this.stateManager.buildState(
+			this.getViewType(),
+			content,
+			this.masterId,
+			this.isSourceMode,
+			baseState
+		);
 	}
 
 	public override async onOpen() {
-		logger.debug("AbstractNoteView.onOpen");
+		logger.debug("AbstractNoteView.onOpen", { masterId: this.masterId });
 		try {
-			if (!this.masterId) {
-				logger.debug("masterId not set, creating a new one in onOpen.");
-				this.masterId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
-			}
-			logger.debug("masterId", this.masterId);
-
-			await this.wrapper.initialize(this.contentEl, this.initialState);
-			this.initialState = null;
+			await this.initializeEditor();
 			this.setupEventHandlers();
-			this.context.emitter.emit("connect-editor-plugin", { view: this });
-			this.context.emitter.emit("view-opened", { view: this });
+			this.emitOpenEvents();
 		} catch (error) {
 			this.handleInitializationError(error);
 		}
@@ -141,27 +118,34 @@ export abstract class AbstractNoteView extends ItemView {
 		result: ViewStateResult
 	): Promise<void> {
 		issue2Logger.debug("AbstractNoteView.setState", state);
-		const masterIdFromState = state?.state?.masterId;
-		if (masterIdFromState) {
-			this.masterId = masterIdFromState;
-			logger.debug(`Restored note group ID: ${this.masterId}`);
-		} else if (!this.masterId) {
-			return logger.error("masterId not found in state.");
+
+		// stateからmasterIdを復元する場合のみ更新
+		if (state?.state?.masterId) {
+			this.masterId = state.state.masterId;
+			logger.debug(`Restored masterId: ${this.masterId}`);
 		}
 
+		// sourceModeの更新
 		if (typeof state.source === "boolean") {
 			this.isSourceMode = state.source;
 		}
 
-		this.initialState = state;
+		// 初期state保存
+		this.stateManager.setInitialState(state);
+
+		// コンテンツ設定
 		if (this.editor && state.state?.content != null) {
 			this.setContent(state.state.content);
 			await this.wrapper.virtualEditor.setState(state, result);
 			// @ts-ignore
 			result.close = false;
 		}
-		logger.debug("setState.state", state);
-		logger.debug("setState.result", result);
+
+		logger.debug("setState completed", {
+			masterId: this.masterId,
+			state,
+			result,
+		});
 		await super.setState(state, result);
 	}
 
@@ -169,22 +153,8 @@ export abstract class AbstractNoteView extends ItemView {
 		menu: Menu,
 		source: "more-options" | "tab-header" | string
 	) {
-		menu.addItem((item) =>
-			item
-				.setTitle("Convert to file")
-				.setIcon("file-pen-line")
-				.onClick(async () => {
-					await extractToFileInteraction(this);
-				})
-		).addItem((item) =>
-			item
-				.setTitle("Clear content")
-				.setIcon("trash")
-				.setWarning(true)
-				.onClick(() => {
-					this.setContent("");
-				})
-		);
+		this.addConvertToFileMenuItem(menu);
+		this.addClearContentMenuItem(menu);
 		super.onPaneMenu(menu, source);
 	}
 
@@ -192,6 +162,17 @@ export abstract class AbstractNoteView extends ItemView {
 		if (this.editor && this.editor.getValue() !== content) {
 			this.editor.setValue(content);
 		}
+	}
+
+	private async initializeEditor() {
+		const initialState = this.stateManager.getInitialState();
+		await this.wrapper.initialize(this.contentEl, initialState);
+		this.stateManager.clearInitialState();
+	}
+
+	private emitOpenEvents() {
+		this.context.emitter.emit("connect-editor-plugin", { view: this });
+		this.context.emitter.emit("view-opened", { view: this });
 	}
 
 	private handleInitializationError(error: unknown) {
@@ -205,20 +186,186 @@ export abstract class AbstractNoteView extends ItemView {
 			cls: "sandbox-error-message",
 		});
 	}
+
 	protected setupEventHandlers() {
-		if (!this.editor) return logger.error("Editor not found");
+		if (!this.editor) {
+			logger.error("Editor not found");
+			return;
+		}
 
-		this.context.emitter.on("obsidian-active-leaf-changed", (payload) => {
-			if (payload?.view?.leaf?.id === this.leaf.id) {
-				this.editor?.focus();
-			}
-		});
-
-		this.registerDomEvent(this.contentEl, "mousedown", (e) =>
-			handleClick(e, this.editor)
+		this.eventHandler.setupObsidianLeafListener(this.leaf.id, (cleanup) =>
+			this.register(cleanup)
 		);
-		this.registerDomEvent(this.contentEl, "contextmenu", (e) =>
-			handleContextMenu(e, this.wrapper.virtualEditor.editMode)
+
+		this.eventHandler.setupDomEventListeners(
+			this.contentEl,
+			(el, type, callback) =>
+				this.registerDomEvent(
+					el,
+					type as keyof HTMLElementEventMap,
+					callback
+				)
+		);
+	}
+
+	private addConvertToFileMenuItem(menu: Menu) {
+		menu.addItem((item) =>
+			item
+				.setTitle("Convert to file")
+				.setIcon("file-pen-line")
+				.onClick(async () => {
+					await extractToFileInteraction(this);
+				})
+		);
+	}
+
+	private addClearContentMenuItem(menu: Menu) {
+		menu.addItem((item) =>
+			item
+				.setTitle("Clear content")
+				.setIcon("trash")
+				.setWarning(true)
+				.onClick(() => {
+					this.setContent("");
+				})
 		);
 	}
 }
+
+export class ViewStateManager {
+	private initialState: AbstractNoteViewState | null = null;
+
+	setInitialState(state: AbstractNoteViewState | null) {
+		this.initialState = state;
+	}
+
+	getInitialState(): AbstractNoteViewState | null {
+		return this.initialState;
+	}
+
+	clearInitialState() {
+		this.initialState = null;
+	}
+
+	buildState(
+		viewType: string,
+		content: string,
+		masterId: string,
+		isSourceMode: boolean,
+		baseState: any
+	): AbstractNoteViewState {
+		const state: AbstractNoteViewState = {
+			...baseState,
+			type: viewType,
+			state: {
+				masterId,
+				content,
+			},
+			source: isSourceMode,
+		};
+		logger.debug("ViewStateManager.buildState", state);
+		return state;
+	}
+}
+
+export class SaveManager {
+	private savingPromise: Promise<void> | null = null;
+
+	constructor(
+		private emitter: EventEmitter<AppEvents>,
+		private getView: () => any
+	) {}
+
+	get isSaving(): boolean {
+		return this.savingPromise !== null;
+	}
+
+	get saving(): Promise<void> | null {
+		return this.savingPromise;
+	}
+
+	async save(masterId: string): Promise<void> {
+		if (this.savingPromise) {
+			logger.debug("Save already in progress");
+			return this.savingPromise;
+		}
+
+		const { promise, resolve, reject } = Promise.withResolvers<void>();
+		this.savingPromise = promise;
+
+		const view = this.getView();
+		this.emitter.emit("save-requested", { view });
+
+		this.emitter.once("save-result", (payload) => {
+			if (payload.view === view) {
+				logger.debug("Save completed for view", masterId);
+				if (payload.success) {
+					resolve();
+				} else {
+					reject();
+				}
+				this.savingPromise = null;
+			}
+		});
+
+		return promise;
+	}
+}
+
+export class ViewEventHandler {
+	constructor(
+		private emitter: EventEmitter<AppEvents>,
+		private getEditor: () => Editor | undefined,
+		private getEditMode: () => MarkdownEditView | undefined
+	) {}
+
+	setupObsidianLeafListener(
+		leafId: string,
+		registerCallback: (cleanup: () => void) => void
+	) {
+		const handler = (payload: any) => {
+			if (payload?.view?.leaf?.id === leafId) {
+				this.getEditor()?.focus();
+			}
+		};
+
+		this.emitter.on("obsidian-active-leaf-changed", handler);
+		registerCallback(() => {
+			this.emitter.off("obsidian-active-leaf-changed", handler);
+		});
+	}
+
+	setupDomEventListeners(
+		contentEl: HTMLElement,
+		registerDomEvent: (
+			el: HTMLElement,
+			type: string,
+			callback: (e: Event) => void
+		) => void
+	) {
+		const editor = this.getEditor();
+		if (!editor) {
+			logger.error("Editor not found");
+			return;
+		}
+
+		registerDomEvent(contentEl, "mousedown", (e) =>
+			handleClick(e as PointerEvent, editor)
+		);
+
+		registerDomEvent(contentEl, "contextmenu", (e) => {
+			const editMode = this.getEditMode();
+			if (editMode) {
+				handleContextMenu(e as PointerEvent, editMode);
+			}
+		});
+	}
+}
+
+export type Context = {
+	getSettings: SettingsManager["getSettings"];
+	isLastHotView: ViewManager["isLastHotView"];
+	emitter: EventEmitter<AppEvents>;
+};
+
+export type { Context as AbstractNoteViewContext };

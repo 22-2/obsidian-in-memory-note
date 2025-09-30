@@ -126,11 +126,13 @@ export class AppOrchestrator implements IManager {
 						emitter: this.emitter,
 						getSettings: () => settingsManager.getSettings(),
 						getDisplayIndex: (masterId: string) => {
-							let groupCount = viewManager.indexOfMasterId(
-								masterId ?? ""
-							);
+							invariant(masterId, "masterId should not be null");
+
+							const groupCount =
+								viewManager.indexOfMasterId(masterId);
+							logger.debug("groupCount", groupCount);
 							if (groupCount === -1) {
-								groupCount = 0;
+								return 0;
 							}
 							return groupCount + 1;
 						},

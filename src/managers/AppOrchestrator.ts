@@ -14,6 +14,7 @@ import type { IManager } from "./IManager";
 import { ObsidianEventManager } from "./ObsidianEventManager";
 import { PluginEventManager } from "./PluginEventManager";
 import { SettingsManager } from "./SettingsManager";
+import { URIManager } from "./URIManager";
 import { ViewManager } from "./ViewManager";
 
 const logger = log.getLogger("AppOrchestrator");
@@ -27,6 +28,7 @@ type ManagerName =
 	| "cmExtensionManager"
 	| "viewManager"
 	| "obsidianEventManager"
+	| "uriManager"
 	| "dbManager";
 
 const managerNames: ManagerName[] = [
@@ -39,6 +41,7 @@ const managerNames: ManagerName[] = [
 	"cmExtensionManager",
 	"pluginEventManager",
 	"obsidianEventManager",
+	"uriManager",
 ];
 
 /**
@@ -195,7 +198,6 @@ export class AppOrchestrator implements IManager {
 					dbManager.debouncedSaveSandboxes(...args),
 				clearAllDeadSandboxes: () => dbManager.clearAllDeadSandboxes(),
 				getAllViews: () => viewManager.getAllViews(),
-				// 変更点：新しい依存関係を注入
 				isLastHotView: (masterId: string) =>
 					viewManager.isLastHotView(masterId),
 				deleteFromAll: (masterId: string | null) =>
@@ -212,6 +214,19 @@ export class AppOrchestrator implements IManager {
 				},
 				this.emitter
 			);
+		});
+
+		this.factories.set("uriManager", () => {
+			return new URIManager({
+				registerObsidianProtocolHandler:
+					this.plugin.registerObsidianProtocolHandler.bind(
+						this.plugin
+					),
+				createAndOpenSandbox: (content) =>
+					this.get<ViewManager>("viewManager").createAndOpenSandbox(
+						content
+					),
+			});
 		});
 	}
 
@@ -238,7 +253,6 @@ export class AppOrchestrator implements IManager {
 	}
 
 	// --- Delegated Methods ---
-	// 外部に公開したい機能は、コンテナ経由で取得して呼び出す
 	getActiveView() {
 		return this.get<ViewManager>("viewManager").getActiveView();
 	}

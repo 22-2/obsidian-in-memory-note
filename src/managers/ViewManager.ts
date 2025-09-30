@@ -78,4 +78,9 @@ export class ViewManager implements IManager {
 		logger.debug("uniqueMasterIds", uniqueMasterIds);
 		return uniqueMasterIds.findIndex((id) => id === masterId);
 	}
+
+	public async createAndOpenSandbox(content: string) {
+		const view = await this.activateView();
+		view.setContent(content);
+	}
 }

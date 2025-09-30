@@ -1,6 +1,7 @@
 // src/views/HotSandboxNoteView.ts
 import log from "loglevel";
-import { WorkspaceLeaf } from "obsidian";
+import { around } from "monkey-around";
+import { Plugin, WorkspaceLeaf } from "obsidian";
 import { showConfirmModal } from "src/helpers/interaction";
 import type { DatabaseManager } from "src/managers/DatabaseManager";
 import {
@@ -18,6 +19,7 @@ const logger = log.getLogger("HotSandboxNoteView");
 type Context = AbstractNoteViewContext & {
 	getDisplayIndex(masterId: string): number;
 	deleteFromAll: DatabaseManager["deleteFromAll"];
+	register: Plugin["register"];
 };
 
 export class HotSandboxNoteView extends AbstractNoteView {
@@ -44,33 +46,73 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	protected override setupEventHandlers() {
 		super.setupEventHandlers();
 
-		// Ctrl+W: Close with confirmation if unsaved
-		this.scope.register(["Mod"], "w", async () => {
-			await this.handleCloseRequest();
-		});
+		this.context.register(
+			around(WorkspaceLeaf.prototype, {
+				detach: (orig) =>
+					async function (this: WorkspaceLeaf) {
+						if (!(this.view instanceof HotSandboxNoteView)) {
+							// 通常のViewは普通に閉じる
+							return orig.call(this);
+						}
+
+						// HotSandboxNoteViewの場合
+						let shouldClose = false;
+
+						try {
+							shouldClose = await (
+								this.view as HotSandboxNoteView
+							).shouldClose();
+						} catch (error) {
+							logger.error("Failed to check shouldClose:", error);
+							// エラー時はユーザーに確認を求めることも可能
+							// shouldClose = confirm("エラーが発生しました。閉じますか?");
+							shouldClose = false; // 安全側に倒す
+						}
+
+						if (shouldClose) {
+							return orig.call(this);
+						}
+
+						// 閉じない場合は何も返さない(undefined)
+						console.log("View close prevented by user");
+					},
+			})
+		);
 
 		// Ctrl+S: Save to file
-		this.scope.register(["Mod"], "s", async () => {
-			await this.handleSaveRequest();
-		});
+		this.context.register(
+			around(WorkspaceLeaf.prototype, {
+				save: (orig) =>
+					async function (this: WorkspaceLeaf) {
+						if (!(this.view instanceof HotSandboxNoteView)) {
+							// 通常のViewは普通に保存
+							return orig.call(this);
+						}
+						// HotSandboxNoteViewの場合
+						await (
+							this.view as HotSandboxNoteView
+						).handleSaveRequest();
+					},
+			})
+		);
 	}
 
 	/**
 	 * Handle close request (Ctrl+W)
 	 */
-	private async handleCloseRequest(): Promise<void> {
+	private async shouldClose(): Promise<boolean> {
 		if (!this.masterId) {
 			logger.error(
 				"Invalid masterId. Aborting HotSandboxNoteView closing process."
 			);
-			return;
+			return false;
 		}
 
 		if (
 			!this.hasUnsavedChanges ||
 			!this.context.isLastHotView(this.masterId)
 		) {
-			return this.leaf.detach();
+			return true;
 		}
 
 		const confirmed = await showConfirmModal(
@@ -85,12 +127,12 @@ export class HotSandboxNoteView extends AbstractNoteView {
 				`Hot sandbox content deletion requested (Group: ${this.masterId})`
 			);
 			this.setContent("");
-			this.leaf.detach();
-		} else {
-			logger.debug(
-				`User cancelled deletion (Group: ${this.masterId}). Data will be retained.`
-			);
+			return true;
 		}
+		logger.debug(
+			`User cancelled deletion (Group: ${this.masterId}). Data will be retained.`
+		);
+		return false;
 	}
 
 	/**

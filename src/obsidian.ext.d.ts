@@ -17,4 +17,8 @@ declare module "obsidian" {
 		// setViewState(state: UViewState, result: ViewStateResult): Promise<void>;
 		_activeEditor: MarkdownView | null;
 	}
+
+	interface WorkspaceLeaf {
+		save(): Promise<void>;
+	}
 }

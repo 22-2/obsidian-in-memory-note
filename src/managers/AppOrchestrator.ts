@@ -127,6 +127,7 @@ export class AppOrchestrator implements IManager {
 				createView: (leaf: WorkspaceLeaf): HotSandboxNoteView =>
 					new HotSandboxNoteView(leaf, {
 						emitter: this.emitter,
+						register: this.plugin.register.bind(this.plugin),
 						getSettings: () => settingsManager.getSettings(),
 						getDisplayIndex: (masterId: string) => {
 							invariant(masterId, "masterId should not be null");

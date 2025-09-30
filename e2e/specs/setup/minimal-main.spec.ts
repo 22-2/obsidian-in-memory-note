@@ -383,8 +383,8 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		expect(await getActiveViewType(page)).toBe(VIEW_TYPE_HOT_SANDBOX);
 
 		// Simulate closing the last tab
-		// await runCommand(page, CMD_CLOSE_CURRENT_TAB);
-		await page.keyboard.press("Control+W");
+		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
+		// await page.keyboard.press("Control+W");
 
 		// Check if the confirmation dialog is shown
 		await expect(
@@ -398,7 +398,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		expect(await getActiveViewType(page)).toBe(VIEW_TYPE_HOT_SANDBOX);
 
 		// Simulate closing the last tab again
-		await page.keyboard.press("Control+W");
+		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
 
 		await page.getByText("Yes", { exact: true }).click();
 		console.log("yes clicked");
@@ -406,7 +406,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		// Check if the tab is closed
 		expect(await getActiveViewType(page)).toBe("empty");
 
-		await page.keyboard.press("Control+W");
+		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
 
 		await runCommand(page, CMD_UNDO_CLOSE_TAB);
 

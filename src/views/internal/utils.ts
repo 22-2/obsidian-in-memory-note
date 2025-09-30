@@ -73,11 +73,20 @@ async function createAndOpenFile<T extends AbstractNoteView>(
 	view: T,
 	filePath: string,
 	content: string,
-	baseTitle: string
+	baseTitle: string,
+	newTab = false
 ): Promise<void> {
 	const availablePath = view.app.vault.getAvailablePath(filePath, "md");
-	await view.app.fileManager.createAndOpenMarkdownFile(availablePath, "tab");
-	view.app.workspace.activeEditor?.editor?.setValue(content);
+	if (newTab) {
+		await view.app.fileManager.createAndOpenMarkdownFile(
+			availablePath,
+			"tab"
+		);
+		view.app.workspace.activeEditor?.editor?.setValue(content);
+	} else {
+		const newFile = await view.app.vault.create(availablePath, content);
+		await view.leaf.openFile(newFile);
+	}
 	new Notice(`${baseTitle} converted to file: ${availablePath}`);
 }
 

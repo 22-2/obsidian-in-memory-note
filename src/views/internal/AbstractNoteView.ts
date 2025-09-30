@@ -13,12 +13,13 @@ import type { AppEvents } from "src/events/AppEvents";
 import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
 import type { SettingsManager } from "src/managers/SettingsManager";
 import type { ViewManager } from "src/managers/ViewManager";
+import type { PluginSettings } from "src/settings"; // Import PluginSettings
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
 import { issue2Logger } from "../../special-loggers";
 import { EditorWrapper } from "./EditorWrapper";
 import type { AbstractNoteViewState, ObsidianViewState } from "./types";
-import { convertToFileAndClear } from "./utils";
+import { extractToFileInteraction } from "./utils";
 
 const logger = log.getLogger("AbstractNoteView");
 
@@ -40,6 +41,11 @@ export abstract class AbstractNoteView extends ItemView {
 	public wrapper: EditorWrapper;
 
 	public navigation = true;
+
+	// NEW: Getter for plugin settings
+	public get pluginSettings(): PluginSettings {
+		return this.context.getSettings();
+	}
 
 	constructor(
 		leaf: WorkspaceLeaf,
@@ -169,7 +175,7 @@ export abstract class AbstractNoteView extends ItemView {
 				.setTitle("Convert to file")
 				.setIcon("file-pen-line")
 				.onClick(async () => {
-					await convertToFileAndClear(this);
+					await extractToFileInteraction(this);
 				})
 		).addItem((item) =>
 			item

@@ -7,7 +7,7 @@ import { EventEmitter } from "./utils/EventEmitter";
 import { DEBUG_MODE, HOT_SANDBOX_NOTE_ICON } from "./utils/constants";
 import "./utils/setup-logger";
 import { overwriteLogLevel } from "./utils/setup-logger";
-import { convertToFileAndClear } from "./views/internal/utils";
+import { extractToFileInteraction } from "./views/internal/utils";
 
 const logger = log.getLogger("SandboxNotePlugin");
 
@@ -67,7 +67,7 @@ export default class SandboxNotePlugin extends Plugin {
 				const view = this.orchestrator.getActiveView();
 				if (view) {
 					if (!checking) {
-						convertToFileAndClear(view);
+						extractToFileInteraction(view);
 					}
 					return true;
 				}

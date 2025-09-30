@@ -1,11 +1,13 @@
-import { PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab, Setting } from "obsidian";
 import type SandboxNotePlugin from "./main";
+import { FolderSuggest } from "./helpers/interaction";
+
+// --- Plugin Data & Settings Interfaces ---
 
 export interface HotSandboxNoteData {
 	id: string;
 	content: string;
 	mtime: number;
-	// deleted: boolean;
 }
 
 export interface SandboxNotePluginData {
@@ -15,35 +17,34 @@ export interface SandboxNotePluginData {
 	};
 }
 
-/** Plugin settings interface. */
 export interface PluginSettings {
 	enableLogger: boolean;
 	enableAutoSave: boolean;
 	autoSaveDebounceMs: number;
+	defaultSavePath: string;
+	confirmBeforeSaving: boolean;
 }
-/** Settings tab for the plugin. */
+
 export class SandboxNoteSettingTab extends PluginSettingTab {
 	constructor(public plugin: SandboxNotePlugin) {
 		super(plugin.app, plugin);
 	}
 
-	/** Render settings interface. */
 	display(): void {
-		this.containerEl.empty();
+		const { containerEl } = this;
+		containerEl.empty();
 
 		this.addDebugLoggingSetting();
-		// this.addAutoSaveSetting();
-		this.addAutoSaveDebounceSetting();
-		// this.addCtrlSSetting();
+		this.addFileConversionSection();
 	}
 
-	/** Add debug logging toggle. */
-	private addDebugLoggingSetting() {
+	private addDebugLoggingSetting(): void {
+		const settings = this.plugin.orchestrator.getSettings();
+
 		new Setting(this.containerEl)
 			.setName("Show debug messages")
 			.setDesc("Enable or disable debug messages in the console.")
 			.addToggle((toggle) => {
-				const settings = this.plugin.orchestrator.getSettings();
 				toggle
 					.setValue(settings.enableLogger)
 					.onChange(async (enabled) => {
@@ -55,35 +56,54 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			});
 	}
 
-	/** Add auto-save debounce delay setting. */
-	private addAutoSaveDebounceSetting() {
-		const settings = this.plugin.orchestrator.getSettings();
-		if (!settings.enableAutoSave) {
-			return;
-		}
+	private addFileConversionSection(): void {
+		new Setting(this.containerEl).setHeading().setName("File Conversion");
 
-		const options: Record<string, string> = {
-			"3000": "3 seconds",
-			"5000": "5 seconds",
-			"10000": "10 seconds",
-			"30000": "30 seconds",
-			"60000": "1 minute",
-			"300000": "5 minutes",
-		};
+		this.addDefaultSavePathSetting();
+		this.addConfirmBeforeSavingSetting();
+	}
+
+	private addDefaultSavePathSetting(): void {
+		const settings = this.plugin.orchestrator.getSettings();
 
 		new Setting(this.containerEl)
-			.setName("Auto-save delay")
+			.setName("Default Save Location")
 			.setDesc(
-				"The delay after you stop typing before the note is saved."
+				"The default folder path where converted notes will be saved. Must end with a slash (/) for a folder."
 			)
-			.addDropdown((dropdown) => {
-				dropdown
-					.addOptions(options)
-					.setValue(String(settings.autoSaveDebounceMs))
+			.addSearch((search) => {
+				search
+					.setValue(settings.defaultSavePath)
+					.setPlaceholder("e.g. Sandbox Notes/")
+					.onChange(async (value) => {
+						const normalizedValue =
+							value && !value.endsWith("/") ? `${value}/` : value;
+
+						await this.plugin.orchestrator.updateSettings({
+							...settings,
+							defaultSavePath: normalizedValue,
+						});
+					});
+
+				new FolderSuggest(this.app, search.inputEl);
+			});
+	}
+
+	private addConfirmBeforeSavingSetting(): void {
+		const settings = this.plugin.orchestrator.getSettings();
+
+		new Setting(this.containerEl)
+			.setName("Confirm Save Location Before Converting")
+			.setDesc(
+				"If enabled, a modal will appear to choose the file path every time you convert a sandbox note."
+			)
+			.addToggle((toggle) => {
+				toggle
+					.setValue(settings.confirmBeforeSaving)
 					.onChange(async (value) => {
 						await this.plugin.orchestrator.updateSettings({
 							...settings,
-							autoSaveDebounceMs: Number.parseInt(value, 10),
+							confirmBeforeSaving: value,
 						});
 					});
 			});

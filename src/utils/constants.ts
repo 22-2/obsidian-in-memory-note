@@ -1,3 +1,4 @@
+// src/utils/constants.ts
 import log from "loglevel";
 import { type PluginSettings, type SandboxNotePluginData } from "../settings";
 
@@ -10,6 +11,8 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	enableLogger: DEBUG_MODE,
 	enableAutoSave: true,
 	autoSaveDebounceMs: 3000,
+	defaultSavePath: "./",
+	confirmBeforeSaving: true,
 };
 
 export const DEFAULT_PLUGIN_DATA: SandboxNotePluginData = {

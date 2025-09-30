@@ -34,7 +34,12 @@ test("sandbox test", async ({ vault }) => {
 test.use({
 	vaultOptions: {
 		useSandbox: true,
-		plugins: [DIST_DIR],
+		plugins: [
+			{
+				path: DIST_DIR,
+				pluginId: PLUGIN_ID,
+			},
+		],
 		enablePlugins: true,
 	},
 });

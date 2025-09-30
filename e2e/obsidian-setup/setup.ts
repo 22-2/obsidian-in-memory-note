@@ -2,20 +2,24 @@
 // setup.mts - メインのセットアップクラス
 // ===================================================================
 
-import { _electron as electron } from "playwright/test";
-import type { ElectronApplication, Page } from "playwright";
-import { VaultManager, type VaultOptions } from "./vault-manager";
-import { PageManager } from "./page-manager";
-import log from "loglevel";
-import { LAUNCH_OPTIONS } from "../config";
 import fs from "fs/promises";
-import path from "path";
+import log from "loglevel";
+import type { Plugin } from "obsidian";
 import os from "os";
+import path from "path";
+import type { ElectronApplication, JSHandle, Page } from "playwright";
+import { _electron as electron } from "playwright/test";
+import { LAUNCH_OPTIONS } from "../config";
+import { PageManager } from "./page-manager";
+import { VaultManager, type VaultOptions } from "./vault-manager";
 
 export interface TestContext {
 	electronApp: ElectronApplication;
 	window: Page;
 	vaultName?: string;
+}
+export interface VaultPageTextContext extends TestContext {
+	pluginHandleMap: JSHandle<Map<string, Plugin>>;
 }
 
 const logger = log.getLogger("ObsidianTestSetup");
@@ -60,25 +64,34 @@ export class ObsidianTestSetup {
 		);
 	}
 
-	async openVault(options: VaultOptions = {}): Promise<TestContext> {
+	async openVault(options: VaultOptions = {}): Promise<VaultPageTextContext> {
 		if (!this.electronApp || !this.vaultManager) {
 			throw new Error("Setup not initialized. Call launch() first.");
 		}
 
 		const page = await this.vaultManager.openVault(options);
 
-		const vaultName = await page.evaluate(() =>
-			(window as any).app?.vault?.getName()
-		);
+		const vaultName = await page.evaluate(() => app?.vault?.getName());
+
+		const pluginHandleMap = await page.evaluateHandle((plugins) => {
+			const map = new Map<string, Plugin>();
+			plugins.forEach((p) => {
+				map.set(p.pluginId, app?.plugins.getPlugin(p.pluginId)!);
+			});
+			return map;
+		}, options.plugins || []);
 
 		return {
 			electronApp: this.electronApp,
 			window: page,
+			pluginHandleMap,
 			vaultName,
 		};
 	}
 
-	async openSandbox(options: VaultOptions = {}): Promise<TestContext> {
+	async openSandbox(
+		options: VaultOptions = {}
+	): Promise<VaultPageTextContext> {
 		return this.openVault({
 			...options,
 			useSandbox: true,

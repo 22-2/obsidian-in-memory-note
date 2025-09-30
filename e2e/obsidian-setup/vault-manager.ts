@@ -4,7 +4,8 @@
 // ===================================================================
 
 import chalk from "chalk";
-import { existsSync, readFileSync, rmSync } from "fs";
+import type { WebContents } from "electron";
+import { existsSync, rmSync } from "fs";
 import log from "loglevel";
 import path from "path";
 import type { ElectronApplication, Page } from "playwright";
@@ -12,14 +13,18 @@ import { SANDBOX_VAULT_NAME } from "../config";
 import { IPCBridge } from "./ipc-bridge";
 import { PageManager } from "./page-manager";
 import { PluginManager } from "./plugin-manager";
-import type { BrowserWindow, WebContents } from "electron";
+
+export interface TestPlugin {
+	path: string;
+	pluginId: string;
+}
 
 export interface VaultOptions {
 	name?: string;
 	path?: string;
 	createNew?: boolean;
 	useSandbox?: boolean;
-	plugins?: string[];
+	plugins?: TestPlugin[];
 	enablePlugins?: boolean;
 }
 
@@ -100,7 +105,7 @@ export class VaultManager {
 			await this.pluginManager.enablePlugins(
 				this.app,
 				newPage,
-				options.plugins
+				options.plugins.map((p) => p.pluginId)
 			);
 			shouldReload = true; // Reload is needed after enabling
 			logger.debug("Plugins enabled.");

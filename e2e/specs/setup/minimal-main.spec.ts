@@ -3,8 +3,9 @@ import "../../log-setup";
 // src/e2e/specs/main-features.spec.ts
 
 import type { Page } from "@playwright/test";
+import { DIST_DIR, PLUGIN_ID } from "e2e/config";
+import type SandboxNotePlugin from "src/main";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
-import { DIST_DIR } from "../../config";
 import {
 	CONVERT_HOT_SANDBOX_TO_FILE,
 	OPEN_HOT_SANDBOX,
@@ -26,7 +27,12 @@ const ACTIVE_TITLE_SELECTOR = `.workspace-tab-header.mod-active${DATA_TYPE}`;
 test.use({
 	vaultOptions: {
 		useSandbox: true,
-		plugins: [DIST_DIR], // Path to the built plugin
+		plugins: [
+			{
+				pluginId: PLUGIN_ID,
+				path: DIST_DIR,
+			},
+		], // Path to the built plugin
 		enablePlugins: true,
 	},
 });
@@ -97,7 +103,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 	test("2. Content Synchronization Across Multiple Views", async ({
 		vault,
 	}) => {
-		const { window: page } = vault;
+		const { window: page, pluginHandleMap } = vault;
 		const initialContent = "Initial content.";
 		const updatedContent = "Updated and synced!";
 
@@ -121,8 +127,13 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		// 4. Update the content of the right pane
 		await rightPaneEditor.focus();
-		await page.keyboard.press("Control+A"); // Select all
-		await page.keyboard.type(updatedContent);
+		await pluginHandleMap.evaluate(
+			(map, [content, id]) => {
+				const plugin = map.get(id) as SandboxNotePlugin;
+				plugin.orchestrator.getActiveView()?.setContent(content);
+			},
+			[updatedContent, PLUGIN_ID]
+		);
 
 		// await page.pause();
 		// 5. Verify the content of the left pane is also synchronized and updated

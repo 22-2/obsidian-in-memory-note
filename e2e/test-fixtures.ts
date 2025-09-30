@@ -4,12 +4,15 @@
 
 import { test as base } from "@playwright/test";
 import log from "loglevel";
-import { ObsidianTestSetup, type TestContext } from "./obsidian-setup/setup";
+import {
+	ObsidianTestSetup,
+	type VaultPageTextContext,
+} from "./obsidian-setup/setup";
 import type { VaultOptions } from "./obsidian-setup/vault-manager";
 
 type TestFixtures = {
 	obsidianSetup: ObsidianTestSetup;
-	vault: TestContext;
+	vault: VaultPageTextContext;
 	vaultOptions: VaultOptions;
 };
 const logger = log.getLogger("obsidianSetup");

@@ -2,25 +2,26 @@
 // plugin-manager.mts - プラグイン管理
 // ===================================================================
 
+import { expect } from "@playwright/test";
 import {
 	copyFileSync,
-	mkdirSync,
 	existsSync,
+	mkdirSync,
+	readFileSync,
 	readdirSync,
 	writeFileSync,
-	readFileSync,
 } from "fs";
+import log from "loglevel";
 import path from "path";
 import type { ElectronApplication, Page } from "playwright";
-import { expect } from "@playwright/test";
-import log from "loglevel";
+import type { TestPlugin } from "./vault-manager";
 
 const logger = log.getLogger("PluginManager");
 
 export class PluginManager {
 	async installPlugins(
 		vaultPath: string,
-		pluginPaths: string[]
+		pluginPaths: TestPlugin[]
 	): Promise<void> {
 		const obsidianDir = path.join(vaultPath, ".obsidian");
 		const pluginsDir = path.join(obsidianDir, "plugins");
@@ -38,25 +39,18 @@ export class PluginManager {
 
 		const installedIds: string[] = [];
 
-		for (const pluginPath of pluginPaths) {
+		for (const { path: pluginPath, pluginId } of pluginPaths) {
 			if (!existsSync(pluginPath)) {
 				console.warn(`Plugin path not found: ${pluginPath}`);
 				continue;
 			}
 
-			// --- 修正箇所 START ---
-			// manifest.jsonからプラグインIDを読み込む
-			const manifestPath = path.join(pluginPath, "manifest.json");
-			if (!existsSync(manifestPath)) {
+			if (!existsSync(path.join(pluginPath, "manifest.json"))) {
 				console.warn(`manifest.json not found in: ${pluginPath}`);
 				continue;
 			}
-			const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
-			const pluginId = manifest.id; // これが本当のプラグインID
 
-			// const pluginId = path.basename(pluginPath); // <-- 古いコードを削除
 			const destDir = path.join(pluginsDir, pluginId);
-			// --- 修正箇所 END ---
 
 			if (!existsSync(destDir)) {
 				mkdirSync(destDir, { recursive: true });
@@ -86,21 +80,21 @@ export class PluginManager {
 	public async enablePlugins(
 		app: ElectronApplication,
 		page: Page,
-		pluginPaths: string[]
+		pluginIds: string[]
 	): Promise<void> {
 		const pluginManager = new PluginManager();
 
 		// Restricted Mode を無効化
 		await pluginManager.disableRestrictedMode(page, app);
 
-		const pluginIds = pluginPaths.map((p) => {
-			const manifestPath = path.join(p, "manifest.json");
-			if (!existsSync(manifestPath)) {
-				throw new Error(`manifest.json not found in ${p}`);
-			}
-			const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
-			return manifest.id;
-		});
+		// const pluginIds = plugins.map((p) => {
+		// 	const manifestPath = path.join(p, "manifest.json");
+		// 	if (!existsSync(manifestPath)) {
+		// 		throw new Error(`manifest.json not found in ${p}`);
+		// 	}
+		// 	const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+		// 	return manifest.id;
+		// });
 
 		const enabledIds = await page.evaluate(async (ids) => {
 			const app = (window as any).app;

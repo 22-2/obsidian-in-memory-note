@@ -206,11 +206,6 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		// 2. Execute the "Convert to file" command
 		await runCommand(page, CONVERT_HOT_SANDBOX_TO_FILE);
 
-		// 3. Verify the sandbox note view is closed
-		await expect(
-			page.locator(ACTIVE_SANDBOX_VIEW_SELECTOR)
-		).not.toBeVisible();
-
 		await page
 			.getByPlaceholder(`e.g., My Scratchpad`, {
 				exact: true,
@@ -224,6 +219,11 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			.fill(expectedPath);
 
 		await page.keyboard.press("Enter");
+
+		// 3. Verify the sandbox note view is closed
+		await expect(
+			page.locator(ACTIVE_SANDBOX_VIEW_SELECTOR)
+		).not.toBeVisible();
 
 		// 4. Verify a new Markdown file tab is opened
 		await expect(

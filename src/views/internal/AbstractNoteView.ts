@@ -136,6 +136,13 @@ export abstract class AbstractNoteView extends ItemView {
 			state.layout = true;
 		}
 
+		if (this.editor && state.state?.content != null) {
+			this.setContent(state.state.content);
+			await this.wrapper.virtualEditor.setState(state, result);
+			// @ts-ignore
+			result.close = false;
+		}
+
 		// 初期state保存
 		this.stateManager.setInitialState(state);
 

@@ -171,6 +171,7 @@ export class AppOrchestrator implements IManager {
 
 		this.factories.set("pluginEventManager", () => {
 			const dbManager = this.get<DatabaseManager>("dbManager");
+			const viewManager = this.get<ViewManager>("viewManager"); // 変更点：viewManagerを取得
 			return new PluginEventManager({
 				applyLogger: this.plugin.applyLogger.bind(this.plugin),
 				cache: this.get<CacheManager>("cacheManager"),
@@ -184,8 +185,12 @@ export class AppOrchestrator implements IManager {
 				saveSandbox: (...args) =>
 					dbManager.debouncedSaveSandboxes(...args),
 				clearAllDeadSandboxes: () => dbManager.clearAllDeadSandboxes(),
-				getAllViews: () =>
-					this.get<ViewManager>("viewManager").getAllViews(),
+				getAllViews: () => viewManager.getAllViews(),
+				// 変更点：新しい依存関係を注入
+				isLastHotView: (masterId: string) =>
+					viewManager.isLastHotView(masterId),
+				deleteFromAll: (masterId: string | null) =>
+					dbManager.deleteFromAll(masterId),
 			});
 		});
 

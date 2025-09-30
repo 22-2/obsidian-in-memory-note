@@ -1,5 +1,5 @@
+import log from "loglevel";
 import type { Plugin, Workspace } from "obsidian";
-import { uniqBy } from "src/utils";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import { activateView } from "src/utils/obsidian";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
@@ -16,6 +16,8 @@ type Context = {
 	getAllNotes: CacheManager["getAllSandboxes"];
 	createView: Parameters<Plugin["registerView"]>[1];
 };
+
+const logger = log.getLogger("ViewManager");
 
 /** Manages registration and activation of custom views */
 export class ViewManager implements IManager {
@@ -66,7 +68,14 @@ export class ViewManager implements IManager {
 	}
 
 	public indexOfMasterId(masterId: string): number {
-		const masterNotes = uniqBy(this.context.getAllNotes(), (n) => n.id);
-		return masterNotes.findIndex((note) => note.id === masterId);
+		// 変更点：キャッシュ(getAllNotes)ではなく、現在開いているビュー(getAllViews)を基準にする
+		const allViews = this.getAllViews();
+		// 開いているビューから、重複しないmasterIdのリストを作成
+		const uniqueMasterIds = [
+			...new Set(allViews.map((v) => v.masterId).filter(Boolean)),
+		] as string[];
+		// そのリスト内でのインデックスを返す
+		logger.debug("uniqueMasterIds", uniqueMasterIds);
+		return uniqueMasterIds.findIndex((id) => id === masterId);
 	}
 }

@@ -2,11 +2,13 @@ import log from "loglevel";
 import { Plugin } from "obsidian";
 import type { AppEvents } from "./events/AppEvents";
 import { AppOrchestrator } from "./managers/AppOrchestrator";
+import { DatabaseManager } from "./managers/DatabaseManager";
 import { SandboxNoteSettingTab } from "./settings";
 import { EventEmitter } from "./utils/EventEmitter";
 import { DEBUG_MODE, HOT_SANDBOX_NOTE_ICON } from "./utils/constants";
 import "./utils/setup-logger";
 import { overwriteLogLevel } from "./utils/setup-logger";
+import { HotSandboxNoteView } from "./views/HotSandboxNoteView";
 import { extractToFileInteraction } from "./views/internal/utils";
 
 export const logger = log.getLogger("SandboxNote");
@@ -65,9 +67,15 @@ export default class SandboxNotePlugin extends Plugin {
 			icon: "file-pen-line",
 			checkCallback: (checking) => {
 				const view = this.orchestrator.getActiveView();
-				if (view) {
+				if (view instanceof HotSandboxNoteView) {
 					if (!checking) {
-						extractToFileInteraction(view);
+						extractToFileInteraction(view).then((success) => {
+							if (success && view.masterId) {
+								this.orchestrator
+									.get<DatabaseManager>("dbManager")
+									.deleteFromAll(view.masterId);
+							}
+						});
 					}
 					return true;
 				}

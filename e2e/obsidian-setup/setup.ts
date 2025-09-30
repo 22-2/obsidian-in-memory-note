@@ -47,12 +47,6 @@ export class ObsidianTestSetup {
 		this.electronApp = await electron.launch(launchOptions);
 		let page = await this.electronApp.waitForEvent("window");
 		this.pageManager = new PageManager(this.electronApp);
-		page = await this.pageManager.executeActionAndWaitForNewWindow(
-			async () => {
-				const page = await this.pageManager?.ensureSingleWindow();
-				page?.evaluate(() => app.debugMode(true));
-			}
-		);
 		logger.debug("enable obsidian debug mode");
 		await this.pageManager.waitForPage(page);
 		logger.debug("starter ready");
@@ -75,7 +69,7 @@ export class ObsidianTestSetup {
 			throw new Error("Setup not initialized. Call launch() first.");
 		}
 
-		const page = await this.vaultManager.openVault(options);
+		let page = await this.vaultManager.openVault(options);
 
 		const vaultName = await page.evaluate(() => app?.vault?.getName());
 
@@ -86,6 +80,13 @@ export class ObsidianTestSetup {
 			});
 			return map;
 		}, options.plugins || []);
+
+		// page = await this.pageManager!.executeActionAndWaitForNewWindow(
+		// 	async () => {
+		// 		const page = await this.pageManager!.ensureSingleWindow();
+		// 		await page?.evaluate(() => app.debugMode(true));
+		// 	}
+		// );
 
 		return {
 			electronApp: this.electronApp,

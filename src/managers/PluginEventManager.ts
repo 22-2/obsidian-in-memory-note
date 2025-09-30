@@ -21,6 +21,9 @@ type Context = {
 	connectEditorPluginToView: CodeMirrorExtensionManager["connectEditorPluginToView"];
 	clearAllDeadSandboxes: DatabaseManager["clearAllDeadSandboxes"];
 	getAllViews: ViewManager["getAllViews"];
+	// 変更点：新しい依存関係を追加
+	isLastHotView: ViewManager["isLastHotView"];
+	deleteFromAll: DatabaseManager["deleteFromAll"];
 };
 
 export class PluginEventManager implements IManager {
@@ -65,9 +68,18 @@ export class PluginEventManager implements IManager {
 
 	private handleViewClosed = (payload: AppEvents["view-closed"]) => {
 		const { view } = payload;
+		// 変更点：タブが閉じられたときのロジックを明確化
 		if (view instanceof HotSandboxNoteView && view.masterId) {
-			this.context.cache.delete(view.masterId);
+			// このタブが、特定のノートグループを表示している最後のタブであるかを確認
+			if (this.context.isLastHotView(view.masterId)) {
+				// 最後のタブであれば、DBとキャッシュから完全にデータを削除する
+				this.context.deleteFromAll(view.masterId);
+				logger.debug(
+					`Last view for group ${view.masterId} closed. Deleting all related data.`
+				);
+			}
 		}
+		// 念のため、アクティブなビューを持たないデッドデータをクリーンアップする
 		this.context.clearAllDeadSandboxes();
 	};
 

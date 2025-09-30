@@ -8,6 +8,7 @@ import type { VaultPageTextContext } from "e2e/obsidian-setup/setup";
 import SandboxNotePlugin from "src/main";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import {
+	CMD_CLOSE_CURRENT_TAB,
 	CONVERT_HOT_SANDBOX_TO_FILE,
 	OPEN_HOT_SANDBOX,
 	delay,
@@ -209,7 +210,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		/* ========================================================================== */
 		//
-		//  Sandbox view
+		//  HotSandbox view
 		//
 		/* ========================================================================== */
 
@@ -239,6 +240,29 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await folderInputEl.blur();
 
 		await page.getByText("Save", { exact: true }).click();
+
+		// ポーリングしてデータが削除されるのを待つ
+		// await expect
+		// 	.poll(
+		// 		async () => {
+		// 			const pluginHandle = await getSandboxPlugin(
+		// 				vault.pluginHandleMap
+		// 			);
+		// 			const cacheSize = await pluginHandle.evaluate((plugin) => {
+		// 				const cache = (plugin as any).orchestrator.get(
+		// 					"cacheManager"
+		// 				);
+		// 				return cache.getAllSandboxes().length;
+		// 			});
+		// 			return cacheSize;
+		// 		},
+		// 		{
+		// 			message:
+		// 				"Cache should be cleared after file conversion, but it was not.",
+		// 			timeout: 5000, // タイムアウトを5秒に設定
+		// 		}
+		// 	)
+		// 	.toBe(0);
 
 		/* ========================================================================== */
 		//
@@ -286,7 +310,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		/* ========================================================================== */
 		//
-		//  Sandbox view
+		//  HotSandbox view
 		//
 		/* ========================================================================== */
 
@@ -298,6 +322,19 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		expect(sandboxNoteContent).toBe("");
 
+		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
+		await delay(100);
+		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
+		await delay(100);
+
+		expect(await getActiveViewType(page)).toBe("empty");
+
+		/* ========================================================================== */
+		//
+		//  Hotsandbox view
+		//
+		/* ========================================================================== */
+
 		await createNewSandboxNote(page, noteContent);
 
 		expect(
@@ -305,7 +342,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 				() =>
 					app.workspace.activeLeaf?.tabHeaderInnerTitleEl.textContent
 			)
-		).toBe("Hot Sandbox-1");
+		).toBe("*Hot Sandbox-1");
 	});
 
 	/*

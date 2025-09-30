@@ -37,7 +37,7 @@ export async function extractToFileInteraction<T extends AbstractNoteView>(
 		view.setContent("");
 		await createAndOpenFile(view, finalFilePath, content, baseTitle);
 		return true;
-	} catch (error) {
+	} catch (error: any) {
 		handleConversionError(error);
 		return false;
 	}
@@ -90,10 +90,15 @@ async function createAndOpenFile<T extends AbstractNoteView>(
 	new Notice(`${baseTitle} converted to file: ${availablePath}`);
 }
 
-function handleConversionError(error: unknown): void {
-	logger.error("Sandbox Note: Failed to convert to file.", error);
+function handleConversionError(error: Error): void {
+	if (error.message.includes("ENOENT")) {
+		new Notice("Failed to convert sandbox: no such file or directory");
+		throw error;
+	}
+
 	new Notice(
 		"Failed to convert sandbox note to file. See console for details.",
 		5000
 	);
+	throw error;
 }

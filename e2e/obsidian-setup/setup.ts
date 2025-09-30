@@ -127,4 +127,8 @@ export class ObsidianTestSetup {
 		}
 		logger.debug("[ObsidianTestSetup] cleaned All");
 	}
+
+	getCurrentPage() {
+		return this.electronApp?.windows()[0];
+	}
 }

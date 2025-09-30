@@ -200,7 +200,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		const { window: page } = vault;
 		const noteContent = "This note will be converted to a file.";
 		const expectedFileName = "Untitled";
-		const expectedPath = "Notes/Daily";
+		const expectedPath = "Adventurer";
 
 		// 1. Create the note to be converted
 		await createNewSandboxNote(page, noteContent);
@@ -217,6 +217,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		const folderInputEl = await page.getByPlaceholder(`e.g., Notes/Daily`, {
 			exact: true,
 		});
+
 		await folderInputEl.fill(expectedPath);
 		await folderInputEl.blur();
 
@@ -224,7 +225,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		// 3. Verify the sandbox note view is closed
 		await expect(
-			page.locator(ACTIVE_MARKDOWN_VIEW_SELECTR)
+			page.locator(ACTIVE_SANDBOX_VIEW_SELECTOR)
 		).not.toBeVisible();
 
 		// 4. Verify a new Markdown file tab is opened

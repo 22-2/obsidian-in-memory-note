@@ -9,7 +9,7 @@ import "./utils/setup-logger";
 import { overwriteLogLevel } from "./utils/setup-logger";
 import { extractToFileInteraction } from "./views/internal/utils";
 
-const logger = log.getLogger("SandboxNotePlugin");
+export const logger = log.getLogger("SandboxNote");
 
 /** Main plugin class for Sandbox Note functionality. */
 export default class SandboxNotePlugin extends Plugin {
@@ -104,9 +104,9 @@ export default class SandboxNotePlugin extends Plugin {
 	applyLogger(): void {
 		const settings = this.orchestrator?.getSettings();
 		if (settings) {
-			settings.enableLogger
-				? logger.setLevel("debug")
-				: logger.setLevel("warn");
+			Object.values(log.getLoggers()).forEach((logger) => {
+				logger.setLevel(settings.enableLogger ? "debug" : "warn");
+			});
 		} else {
 			logger.setLevel("warn");
 		}

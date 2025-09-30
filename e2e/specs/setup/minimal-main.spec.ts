@@ -9,6 +9,7 @@ import SandboxNotePlugin from "src/main";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import {
 	CMD_CLOSE_CURRENT_TAB,
+	CMD_UNDO_CLOSE_TAB,
 	CONVERT_HOT_SANDBOX_TO_FILE,
 	OPEN_HOT_SANDBOX,
 	delay,
@@ -92,6 +93,33 @@ async function getActiveEditorContent(
 		throw new Error("failed to get active editor");
 	});
 }
+
+function closeAllTabs(page: Page) {
+	return page.waitForFunction(
+		async ([cmd]) => {
+			app.commands.executeCommandById(cmd);
+			let i = 0;
+			app.workspace.iterateRootLeaves(() => {
+				i++;
+			});
+			return (
+				i === 1 &&
+				app.workspace.activeLeaf?.view.getViewType() === "empty"
+			);
+		},
+		[CMD_CLOSE_CURRENT_TAB]
+	);
+}
+
+// async function countTabs(page: Page) {
+// 	return page.evaluate(() => {
+// 		let i = 0;
+// 		app.workspace.iterateRootLeaves(() => {
+// 				i++;
+// 		})
+// 		return i;
+// 	})
+// }
 
 // --- Test Suite ---
 
@@ -322,12 +350,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		expect(sandboxNoteContent).toBe("");
 
-		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
-		await delay(100);
-		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
-		await delay(100);
-
-		expect(await getActiveViewType(page)).toBe("empty");
+		await closeAllTabs(page);
 
 		/* ========================================================================== */
 		//
@@ -345,13 +368,49 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		).toBe("*Hot Sandbox-1");
 	});
 
-	/*
-    // --- Feature specified but not yet implemented ---
-    test.skip("5. Confirmation before closing the last tab", async () => {
-        // This feature is mentioned in the specifications, but the current codebase
-        // does not implement the logic to show a confirmation dialog when closing
-        // the last tab of a Hot Sandbox group.
-        // Therefore, this test is skipped.
-    });
-    */
+	// 閉じるまえに確認ダイアログを出す機能
+	test("5. Confirmation before closing the last tab", async ({ vault }) => {
+		const { window: page } = vault;
+		// close initial markdown page
+		await page.keyboard.press("Control+W");
+
+		await createNewSandboxNote(page, "test");
+
+		expect(await getActiveEditorContent(vault.pluginHandleMap)).toBe(
+			"test"
+		);
+
+		expect(await getActiveViewType(page)).toBe(VIEW_TYPE_HOT_SANDBOX);
+
+		// Simulate closing the last tab
+		// await runCommand(page, CMD_CLOSE_CURRENT_TAB);
+		await page.keyboard.press("Control+W");
+
+		// Check if the confirmation dialog is shown
+		await expect(
+			page.getByText("Delete Sandbox", { exact: true })
+		).toBeVisible();
+
+		// Simulate confirming the closure
+		await page.getByText("No", { exact: true }).click();
+		console.log("no clicked");
+
+		expect(await getActiveViewType(page)).toBe(VIEW_TYPE_HOT_SANDBOX);
+
+		// Simulate closing the last tab again
+		await page.keyboard.press("Control+W");
+
+		await page.getByText("Yes", { exact: true }).click();
+		console.log("yes clicked");
+
+		// Check if the tab is closed
+		expect(await getActiveViewType(page)).toBe("empty");
+
+		await page.keyboard.press("Control+W");
+
+		await runCommand(page, CMD_UNDO_CLOSE_TAB);
+
+		expect(await getActiveEditorContent(vault.pluginHandleMap)).toBe("");
+	});
+	// FIXME Only reacts when closed with a hotkey.
 });

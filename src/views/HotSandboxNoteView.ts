@@ -84,14 +84,13 @@ export class HotSandboxNoteView extends AbstractNoteView {
 			logger.debug(
 				`Hot sandbox content deletion requested (Group: ${this.masterId})`
 			);
+			this.setContent("");
+			this.leaf.detach();
 		} else {
 			logger.debug(
 				`User cancelled deletion (Group: ${this.masterId}). Data will be retained.`
 			);
 		}
-
-		this.setContent("");
-		this.leaf.detach();
 	}
 
 	/**

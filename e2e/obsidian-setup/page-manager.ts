@@ -2,10 +2,10 @@
 // page-manager.mts - ページ遷移の管理
 // ===================================================================
 
+import chalk from "chalk";
+import log from "loglevel";
 import type { ElectronApplication, Page } from "playwright";
 import invariant from "tiny-invariant";
-import log from "loglevel";
-import chalk from "chalk";
 const logger = log.getLogger("PageManager");
 
 export class PageManager {
@@ -40,7 +40,7 @@ export class PageManager {
 
 	async executeActionAndWaitForNewWindow(
 		action: () => Promise<void>,
-		wait: (page: Page) => Promise<void>
+		wait: (page: Page) => Promise<void> = this.waitForPage
 	): Promise<Page> {
 		const currentWindows = this.app.windows();
 
@@ -81,6 +81,9 @@ export class PageManager {
 		}
 	}
 
+	/**
+	 * @deprecated use waitForPage
+	 */
 	async waitForVaultReady(page: Page): Promise<void> {
 		await page.waitForLoadState("domcontentloaded");
 
@@ -101,6 +104,9 @@ export class PageManager {
 		await page.waitForTimeout(500);
 	}
 
+	/**
+	 * @deprecated use waitForPage
+	 */
 	async waitForStarterReady(page: Page): Promise<void> {
 		await page.waitForSelector(".mod-change-language", {
 			state: "visible",

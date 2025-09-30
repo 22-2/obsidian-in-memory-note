@@ -45,9 +45,15 @@ export class ObsidianTestSetup {
 			],
 		};
 		this.electronApp = await electron.launch(launchOptions);
-		const page = await this.electronApp.waitForEvent("window");
+		let page = await this.electronApp.waitForEvent("window");
 		this.pageManager = new PageManager(this.electronApp);
-		logger.debug("page manager");
+		page = await this.pageManager.executeActionAndWaitForNewWindow(
+			async () => {
+				const page = await this.pageManager?.ensureSingleWindow();
+				page?.evaluate(() => app.debugMode(true));
+			}
+		);
+		logger.debug("enable obsidian debug mode");
 		await this.pageManager.waitForPage(page);
 		logger.debug("starter ready");
 		await VaultManager.clearData(this.electronApp);

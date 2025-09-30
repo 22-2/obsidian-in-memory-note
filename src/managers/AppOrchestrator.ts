@@ -125,8 +125,15 @@ export class AppOrchestrator implements IManager {
 					new HotSandboxNoteView(leaf, {
 						emitter: this.emitter,
 						getSettings: () => settingsManager.getSettings(),
-						indexOfMasterId: (id: string) =>
-							viewManager.indexOfMasterId(id),
+						getDisplayIndex: (masterId: string) => {
+							let groupCount = viewManager.indexOfMasterId(
+								masterId ?? ""
+							);
+							if (groupCount === -1) {
+								groupCount = 0;
+							}
+							return groupCount + 1;
+						},
 						isLastHotView: (id: string) =>
 							viewManager.isLastHotView(id),
 						deleteFromAll: (id: string) =>

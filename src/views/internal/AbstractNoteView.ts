@@ -34,7 +34,6 @@ export type { Context as AbstractNoteViewContext };
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
 	private initialState: AbstractNoteViewState | null = null;
-	private saveActionEl!: HTMLElement;
 	public isSourceMode = true;
 	public masterId: string | null = null;
 	public scope: Scope;

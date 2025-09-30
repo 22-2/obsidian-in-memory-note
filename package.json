@@ -7,8 +7,6 @@
 	"scripts": {
 		"dev": "pnpm dlx tsx esbuild.config.mts",
 		"build": "pnpm dlx tsx esbuild.config.mts production",
-		"build:e2e": "pnpm dlx tsx esbuild.config.mts e2e",
-		"dev:e2e": "pnpm dlx tsx esbuild.config.mts e2e-dev",
 		"check-types": "tsc -noEmit -skipLibCheck",
 		"repomix": "pnpm dlx repomix && code ./repomix-output.md",
 		"test": "vitest",
@@ -18,10 +16,7 @@
 		"test:e2e:minimal-main": "pnpm playwright test e2e/specs/setup/minimal-main.spec.ts --project=chromium",
 		"test:e2e:report": "playwright show-report",
 		"test:e2e:ui": "playwright test --ui",
-		"test:e2e:debug": "cross-env DEBUG=pw:api playwright test",
-		"check-os": "pnpm dlx tsx scripts/check-os.ts",
-		"e2e:run-and-log": "pnpm dlx tsx scripts/run-test-and-log.mts",
-		"precommit:windows-only": "pnpm run check-os && pnpm run e2e:run-and-log"
+		"test:e2e:debug": "cross-env DEBUG=pw:api playwright test"
 	},
 	"keywords": [],
 	"author": "22-2",

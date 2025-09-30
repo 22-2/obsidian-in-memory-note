@@ -3,7 +3,6 @@ import log from "loglevel";
 import { WorkspaceLeaf } from "obsidian";
 import { showConfirmModal } from "src/helpers/interaction";
 import type { DatabaseManager } from "src/managers/DatabaseManager";
-import type { ViewManager } from "src/managers/ViewManager";
 import {
 	HOT_SANDBOX_NOTE_ICON,
 	VIEW_TYPE_HOT_SANDBOX,
@@ -17,7 +16,7 @@ import { extractToFileInteraction } from "./internal/utils";
 const logger = log.getLogger("HotSandboxNoteView");
 
 type Context = AbstractNoteViewContext & {
-	indexOfMasterId: ViewManager["indexOfMasterId"];
+	getDisplayIndex(masterId: string): number;
 	deleteFromAll: DatabaseManager["deleteFromAll"];
 };
 
@@ -31,12 +30,7 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	getBaseTitle(): string {
-		let groupCount = this.context.indexOfMasterId(this.masterId ?? "");
-		if (groupCount === -1) {
-			groupCount = 0;
-		}
-		const displayNumber = groupCount + 1;
-		return `Hot Sandbox-${displayNumber}`;
+		return `Hot Sandbox-${this.context.getDisplayIndex(this.masterId!)}`;
 	}
 
 	getIcon(): string {

@@ -23,7 +23,6 @@ export type CopyPluginOptions = {
 
 const mode = process.argv[2];
 const prod = mode === "production";
-const e2e = mode === "e2e";
 
 const copyOpts = {
 	opts: [
@@ -99,7 +98,7 @@ const context = await esbuild.context({
 	outfile: "main.js",
 });
 
-if (prod || e2e) {
+if (!prod) {
 	await context.rebuild();
 	process.exit(0);
 } else {

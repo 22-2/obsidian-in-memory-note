@@ -22,6 +22,8 @@ const ACTIVE_LEAF_SELECTOR = ".workspace-leaf.mod-active";
 const ACTIVE_EDITOR_SELECTOR = `${ACTIVE_LEAF_SELECTOR} .cm-content`;
 // const ACTIVE_TITLE_SELECTOR = `${ACTIVE_LEAF_SELECTOR} > .workspace-leaf-content > .view-header .view-header-title`;
 const ACTIVE_TITLE_SELECTOR = `.workspace-tab-header.mod-active${DATA_TYPE_HOT_SANDBOX}`;
+const ACTIVE_MARKDOWN_VIEW_SELECTR = `${ACTIVE_LEAF_SELECTOR} > .workspace-leaf-content${DATA_TYPE_MARKDOWN}`;
+
 // const ACTIVE_SANDBOX_TITLE_SELECTOR = `${ACTIVE_SANDBOX_VIEW_SELECTOR} > .view-header`;
 
 // --- Test Configuration ---
@@ -222,13 +224,11 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		// 3. Verify the sandbox note view is closed
 		await expect(
-			page.locator(ACTIVE_SANDBOX_VIEW_SELECTOR)
+			page.locator(ACTIVE_MARKDOWN_VIEW_SELECTR)
 		).not.toBeVisible();
 
 		// 4. Verify a new Markdown file tab is opened
-		await expect(
-			page.locator(`${ACTIVE_LEAF_SELECTOR} ${DATA_TYPE_MARKDOWN}`)
-		).toBeVisible();
+		await expect(page.locator(ACTIVE_MARKDOWN_VIEW_SELECTR)).toBeVisible();
 
 		// 5. Verify the newly opened file name and content are correct
 		await expect(

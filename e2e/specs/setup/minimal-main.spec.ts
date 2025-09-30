@@ -251,10 +251,16 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		);
 		expect(fileContent).toBe(noteContent);
 
-		await page.evaluate(() => app.workspace.activeLeaf?.history.back());
-
 		await expect(
 			page.locator(`${ACTIVE_LEAF_SELECTOR} ${DATA_TYPE_MARKDOWN}`)
+		).toBeVisible();
+
+		await page.evaluate(async () => {
+			await app.workspace.activeLeaf?.history.back();
+		});
+
+		await expect(
+			page.locator(`${ACTIVE_LEAF_SELECTOR} ${DATA_TYPE_HOT_SANDBOX}`)
 		).toBeVisible();
 
 		const sandboxNoteContent = await page.evaluate(() =>

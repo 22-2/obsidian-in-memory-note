@@ -212,11 +212,11 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			})
 			.fill(expectedFileName);
 
-		await page
-			.getByPlaceholder(`e.g., Notes/Daily`, {
-				exact: true,
-			})
-			.fill(expectedPath);
+		const folderInputEl = await page.getByPlaceholder(`e.g., Notes/Daily`, {
+			exact: true,
+		});
+		await folderInputEl.fill(expectedPath);
+		await folderInputEl.blur();
 
 		await page.keyboard.press("Enter");
 

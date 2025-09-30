@@ -105,30 +105,10 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await createNewSandboxNote(page, initialContent);
 
 		// 2. Split the screen vertically
-		console.log(
-			await page
-				.locator(
-					`.workspace-leaf.mod-active > div > div > .view-actions button[aria-label="More options"]`
-				)
-				.isVisible()
+		await page.evaluate(() =>
+			app.workspace.duplicateLeaf(app.workspace.activeLeaf!, "vertical")
 		);
-		console.log(
-			await page
-				.locator(
-					`.workspace-leaf.mod-active > div > div > .view-actions button[aria-label="More options"]`
-				)
-				.click()
-		);
-		// await page.pause();
 
-		// await page.evaluate(() =>
-		// 	// @ts-expect-error
-		// 	app.workspace.activeLeaf.view.moreOptionsButtonEl.click()
-		// );
-		await page
-			.locator(`.menu`)
-			.getByText("Split right", { exact: true })
-			.click();
 		await expect(
 			page.locator(
 				ACTIVE_SANDBOX_VIEW_SELECTOR.replace(".mod-active", "")

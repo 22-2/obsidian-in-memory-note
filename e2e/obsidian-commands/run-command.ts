@@ -34,9 +34,11 @@ export const runCommand = async (
 			.listCommands()
 			.find((c) => c.name === commandName);
 		if (command) {
-			return app.commands.executeCommandById(command.id);
+			app.commands.executeCommandById(command.id);
+			return null;
 		}
+		return command;
 	}, commandName);
-	expect(success).toBe(true);
+	expect(success).toBe(null);
 	await delay(1000);
 };

@@ -316,12 +316,21 @@ class FilePathPromptModal extends Modal {
 			baseFileName: this.baseFileName,
 			resolved: true,
 		});
-		this.contentEl.empty();
+	}
+
+	doClose({ submit } = { submit: false }) {
+		if (submit) {
+			this.submit();
+		}
+		this.close();
+		this.resolved = true;
 	}
 
 	onKeydown(e: KeyboardEvent) {
 		if (e.key === "Enter") {
-			this.submit();
+			this.doClose({ submit: true });
+		} else if (e.key === "Escape") {
+			this.doClose({ submit: false });
 		}
 	}
 
@@ -379,13 +388,7 @@ class FilePathPromptModal extends Modal {
 			)
 			.addButton((btn) =>
 				btn.setButtonText("Cancel").onClick(() => {
-					this.resolved = true;
-					this.close();
-					this.resolve({
-						fullPath: null,
-						baseFileName: null,
-						resolved: false,
-					});
+					this.doClose({ submit: false });
 				})
 			);
 	}

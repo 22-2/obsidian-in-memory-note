@@ -12,6 +12,7 @@ import {
 	CMD_UNDO_CLOSE_TAB,
 	CONVERT_HOT_SANDBOX_TO_FILE,
 	OPEN_HOT_SANDBOX,
+	delay,
 	runCommand,
 } from "../../obsidian-commands/run-command";
 import { expect, test } from "../../test-fixtures";
@@ -391,10 +392,12 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await page.getByText("Yes", { exact: true }).click();
 		console.log("yes clicked");
 
+		await delay(100);
 		// Check if the tab is closed
 		await expect(
 			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
 		).toHaveAttribute("data-type", "empty");
+		await page.pause();
 
 		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
 

@@ -270,11 +270,11 @@ type FilePathPromptModalResult = {
 };
 
 class FilePathPromptModal extends Modal {
-	folderPath: string; // The destination folder path
-	fileName: string; // The file name (without extension)
-	baseFileName: string; // The original note name (for display)
-	resolve: (path: FilePathPromptModalResult) => void = () => {};
-	private resolved: boolean = false; // Flag to track if the promise has been resolved
+	private folderPath: string; // Destination folder path (without leading/trailing slashes)
+	private fileName: string; // File name without extension
+	private baseFileName: string; // Original note name for display
+	private resolve: (result: FilePathPromptModalResult) => void = () => {};
+	private isResolved: boolean = false; // Prevents double resolution
 
 	constructor(
 		app: App,
@@ -283,58 +283,92 @@ class FilePathPromptModal extends Modal {
 		super(app);
 		this.baseFileName = baseFileName;
 
-		// Split initialPath into folderPath and fileName
-		const lastSlashIndex = initialPath.lastIndexOf("/");
-		if (lastSlashIndex === -1) {
-			// If there's no slash, assume the path is just a filename
-			this.folderPath = "";
-			this.fileName = initialPath;
-		} else {
-			this.folderPath = initialPath.substring(0, lastSlashIndex);
-			this.fileName = initialPath.substring(lastSlashIndex + 1);
-		}
+		// Parse initial path into folder and filename
+		const { folder, file } = this.parseFullPath(initialPath);
+		this.folderPath = folder;
+		this.fileName = file;
 	}
 
-	submit() {
-		// If the filename is empty, prevent saving
-		if (!this.fileName) {
+	/**
+	 * Splits a full path into folder and filename components
+	 * Examples:
+	 *   "folder/subfolder/file" -> { folder: "folder/subfolder", file: "file" }
+	 *   "file" -> { folder: "", file: "file" }
+	 *   "/folder/file" -> { folder: "folder", file: "file" }
+	 */
+	private parseFullPath(path: string): { folder: string; file: string } {
+		const normalized = path.replace(/^\/+|\/+$/g, ""); // Remove leading/trailing slashes
+		const lastSlashIndex = normalized.lastIndexOf("/");
+
+		if (lastSlashIndex === -1) {
+			return { folder: "", file: normalized };
+		}
+
+		return {
+			folder: normalized.substring(0, lastSlashIndex),
+			file: normalized.substring(lastSlashIndex + 1),
+		};
+	}
+
+	/**
+	 * Combines folder path and filename into a full path
+	 * Handles empty folder paths correctly
+	 */
+	private buildFullPath(): string {
+		const cleanFolder = this.folderPath.replace(/^\/+|\/+$/g, "");
+		const cleanFile = this.fileName.trim();
+
+		if (!cleanFolder) {
+			return cleanFile;
+		}
+
+		return `${cleanFolder}/${cleanFile}`;
+	}
+
+	/**
+	 * Validates and submits the form
+	 */
+	private submit(): void {
+		if (!this.fileName.trim()) {
 			new Notice("File name cannot be empty.");
 			return;
 		}
 
-		this.resolved = true;
-
-		// Combine folder path and file name to create the full path
-		// Remove trailing slash from folderPath to be safe
-		const cleanFolderPath = this.folderPath.replace(/\/$/, "");
-		const resultPath = cleanFolderPath
-			? `${cleanFolderPath}/${this.fileName}`
-			: this.fileName;
-
-		this.resolve({
-			fullPath: resultPath,
+		this.resolveAndClose({
+			fullPath: this.buildFullPath(),
 			baseFileName: this.baseFileName,
 			resolved: true,
 		});
 	}
 
-	doClose({ submit } = { submit: false }) {
-		if (submit) {
-			this.submit();
+	/**
+	 * Resolves the promise and closes the modal
+	 * Ensures resolution happens only once
+	 */
+	private resolveAndClose(result: FilePathPromptModalResult): void {
+		if (!this.isResolved) {
+			this.isResolved = true;
+			this.resolve(result);
+			this.close();
 		}
-		this.close();
-		this.resolved = true;
 	}
 
-	onKeydown(e: KeyboardEvent) {
+	/**
+	 * Handles keyboard shortcuts
+	 */
+	private onKeydown(e: KeyboardEvent): void {
 		if (e.key === "Enter") {
-			this.doClose({ submit: true });
+			this.submit();
 		} else if (e.key === "Escape") {
-			this.doClose({ submit: false });
+			this.resolveAndClose({
+				fullPath: null,
+				baseFileName: null,
+				resolved: false,
+			});
 		}
 	}
 
-	onOpen() {
+	onOpen(): void {
 		const { contentEl, titleEl } = this;
 		titleEl.setText("Confirm Save Location");
 
@@ -342,35 +376,33 @@ class FilePathPromptModal extends Modal {
 			text: `Converting note: "${this.baseFileName}"`,
 		});
 
-		// Setting for the file name
+		// File name input
 		new Setting(contentEl)
 			.setName("File Name")
 			.setDesc(
-				"Enter the file name. The .md extension will be added automatically."
+				"Enter the file name (extension will be added automatically)"
 			)
 			.addText((text) => {
 				text.setPlaceholder("e.g., My Scratchpad")
 					.setValue(this.fileName)
 					.onChange((value) => {
-						this.fileName = value.trim();
+						this.fileName = value;
 					});
 				text.inputEl.addEventListener("keydown", (e) =>
 					this.onKeydown(e)
 				);
 			});
 
-		// Setting for the destination folder
+		// Folder path input with autocomplete
 		new Setting(contentEl)
 			.setName("Folder Path")
-			.setDesc(
-				"Enter the desired folder path. Leave empty to save in the vault root."
-			)
+			.setDesc("Enter folder path (leave empty for vault root)")
 			.addSearch((search) => {
 				search
 					.setPlaceholder("e.g., Notes/Daily")
 					.setValue(this.folderPath)
 					.onChange((value) => {
-						this.folderPath = value.trim();
+						this.folderPath = value;
 					});
 				search.inputEl.addEventListener("keydown", (e) =>
 					this.onKeydown(e)
@@ -378,7 +410,7 @@ class FilePathPromptModal extends Modal {
 				new FolderSuggest(this.app, search.inputEl);
 			});
 
-		// Add buttons
+		// Action buttons
 		new Setting(contentEl)
 			.addButton((btn) =>
 				btn
@@ -387,19 +419,22 @@ class FilePathPromptModal extends Modal {
 					.onClick(() => this.submit())
 			)
 			.addButton((btn) =>
-				btn.setButtonText("Cancel").onClick(() => {
-					this.doClose({ submit: false });
-				})
+				btn.setButtonText("Cancel").onClick(() =>
+					this.resolveAndClose({
+						fullPath: null,
+						baseFileName: null,
+						resolved: false,
+					})
+				)
 			);
 	}
 
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
+	onClose(): void {
+		this.contentEl.empty();
 
-		// If the modal is closed via ESC key or the close button,
-		// resolve with 'false' if it hasn't been resolved yet
-		if (!this.resolved) {
+		// Handle cancellation if not already resolved
+		if (!this.isResolved) {
+			this.isResolved = true;
 			this.resolve({
 				fullPath: null,
 				baseFileName: null,
@@ -408,6 +443,9 @@ class FilePathPromptModal extends Modal {
 		}
 	}
 
+	/**
+	 * Opens the modal and returns a promise that resolves with the user's input
+	 */
 	public async waitForResult(): Promise<FilePathPromptModalResult> {
 		return new Promise((resolve) => {
 			this.resolve = resolve;

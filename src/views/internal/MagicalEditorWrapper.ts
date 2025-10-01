@@ -8,7 +8,7 @@ import type { AbstractNoteView } from "./AbstractNoteView";
 // import { VirtualMarkdownView } from "./VirtualMarkdownView";
 import type { AbstractNoteViewState } from "./types";
 
-const logger = log.getLogger("EditorWrapper");
+const logger = log.getLogger("MagicalEditorWrapper");
 
 interface VirtualMarkdownView extends MarkdownView {
 	__setViewData__: MarkdownView["setViewData"];
@@ -67,6 +67,7 @@ export class MagicalEditorWrapper {
 				history: false,
 			});
 		}
+		this.syncActiveEditorState();
 	}
 
 	getContent() {
@@ -193,14 +194,17 @@ export class MagicalEditorWrapper {
 	private syncActiveEditorState = (): void => {
 		const activeView = this.context.getActiveView();
 		const workspace = this.context.workspace;
+		logger.debug("syncActiveEditorState", activeView?.constructor.name);
 
 		if (activeView?.editor) {
+			logger.debug("active view editr true");
 			// @ts-expect-error
 			workspace._activeEditor = activeView.wrapper.virtualEditor;
 		} else if (
 			// @ts-expect-error
 			workspace._activeEditor?.leaf?.__FAKE_LEAF__
 		) {
+			logger.debug("active view editr false");
 			// @ts-expect-error
 			workspace._activeEditor = null;
 		}

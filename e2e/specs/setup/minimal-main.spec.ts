@@ -397,9 +397,6 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await expect(
 			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
 		).toHaveAttribute("data-type", "empty");
-		await page.pause();
-
-		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
 
 		await runCommand(page, CMD_UNDO_CLOSE_TAB);
 

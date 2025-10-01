@@ -435,26 +435,26 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		await page.locator(ACTIVE_EDITOR_SELECTOR).focus();
 
-		expect(
-			await page.evaluate(() => {
-				return app.workspace.activeLeaf?.view.getState().source;
-			})
-		).toBe(true);
+		await expect(
+			page.locator(
+				`${ACTIVE_SANDBOX_VIEW_SELECTOR} ${DATA_TYPE_MARKDOWN} > .view-content > .markdown-source-view`
+			)
+		).toHaveClass(/is-live-preview/);
 
 		// Toggle to source mode
 		await runCommandById(page, CMD_TOGGLE_SOURCE);
-		expect(
-			await page.evaluate(() => {
-				return app.workspace.activeLeaf?.view.getState().source;
-			})
-		).toBe(false);
+		await expect(
+			page.locator(
+				`${ACTIVE_SANDBOX_VIEW_SELECTOR} ${DATA_TYPE_MARKDOWN} > .view-content > .markdown-source-view`
+			)
+		).not.toHaveClass(/is-live-preview/);
 
 		// Toggle back to WYSIWYG mode
 		await runCommandById(page, CMD_TOGGLE_SOURCE);
-		expect(
-			await page.evaluate(() => {
-				return app.workspace.activeLeaf?.view.getState().source;
-			})
-		).toBe(true);
+		await expect(
+			page.locator(
+				`${ACTIVE_SANDBOX_VIEW_SELECTOR} ${DATA_TYPE_MARKDOWN} > .view-content > .markdown-source-view`
+			)
+		).toHaveClass(/is-live-preview/);
 	});
 });

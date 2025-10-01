@@ -69,6 +69,8 @@ async function resolveFinalPath(
 	return suggestedPath;
 }
 
+type Path = { path: { basename: (path: string) => string } };
+
 async function createAndOpenFile<T extends AbstractNoteView>(
 	view: T,
 	filePath: string,
@@ -76,7 +78,10 @@ async function createAndOpenFile<T extends AbstractNoteView>(
 	baseTitle: string,
 	newTab = false
 ): Promise<void> {
-	const availablePath = view.app.vault.getAvailablePath(filePath, "md");
+	const availablePath = view.app.vault.getAvailablePath(
+		(view.app.vault.adapter as unknown as Path).path.basename(filePath),
+		"md"
+	);
 	if (newTab) {
 		await view.app.fileManager.createAndOpenMarkdownFile(
 			availablePath,

@@ -269,6 +269,10 @@ export class AppOrchestrator implements IManager {
 		this.factories.set("viewPatchManager", () => {
 			return new ViewPatchManager({
 				register: this.plugin.register.bind(this.plugin),
+				getActiveView: () => this.get("viewManager").getActiveView(),
+				findCommand: this.plugin.app.commands.findCommand.bind(
+					this.plugin.app.commands
+				),
 			});
 		});
 	}

@@ -2,14 +2,18 @@
 import log from "loglevel";
 import { around } from "monkey-around";
 import { Platform, WorkspaceLeaf, type Plugin } from "obsidian";
+import type { Commands } from "obsidian-typings";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import { getSandboxVaultPath } from "src/views/internal/utils";
+import type { AppOrchestrator } from "./AppOrchestrator";
 import type { IManager } from "./IManager";
 
 const logger = log.getLogger("ViewPatchManager");
 
 type Context = {
 	register: Plugin["register"];
+	getActiveView: AppOrchestrator["getActiveView"];
+	findCommand: Commands["findCommand"];
 };
 
 /**
@@ -83,18 +87,28 @@ export class ViewPatchManager implements IManager {
 	 * and execute HotSandboxNoteView's save logic (conversion to file).
 	 */
 	private applyLeafSavePatch(): void {
-		const cleanup = around(WorkspaceLeaf.prototype, {
-			save: (orig) =>
-				async function (this: WorkspaceLeaf) {
-					if (!(this.view instanceof HotSandboxNoteView)) {
-						return orig.call(this);
-					}
-					// HotSandboxNoteViewの場合、専用の保存ロジックを実行
-					await (this.view as HotSandboxNoteView).handleSaveRequest();
-					// 通常のsave処理はスキップ（HotSandboxNoteはファイルを持たないため）
-				},
+		const saveCommandDefinition =
+			this.context.findCommand("editor:save-file");
+		if (!saveCommandDefinition?.checkCallback) {
+			logger.debug("saveCommandDefinition.checkCallback not found");
+			return;
+		}
+
+		const cleanup = around(saveCommandDefinition, {
+			checkCallback: (orig) => (checking: boolean) => {
+				const activeView = this.context.getActiveView();
+				if (!activeView) {
+					return orig?.call(this, checking) || false;
+				}
+				if (!checking) {
+					activeView.handleSaveRequest();
+					return true; // Indicate that the command was handled.
+				}
+				return false;
+			},
 		});
 		this.patchCleanupFns.push(cleanup);
 		this.context.register(cleanup);
+		logger.debug("Applied WorkspaceLeaf.prototype.save patch");
 	}
 }

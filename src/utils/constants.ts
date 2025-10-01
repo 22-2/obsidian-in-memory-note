@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	autoSaveDebounceMs: 3000,
 	defaultSavePath: "./",
 	confirmBeforeSaving: true,
+	firstLineAsTitle: false,
 };
 
 export const DEFAULT_PLUGIN_DATA: SandboxNotePluginData = {

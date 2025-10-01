@@ -30,7 +30,25 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	}
 
 	getBaseTitle(): string {
-		return `Hot Sandbox-${this.context.getDisplayIndex(this.masterId!)}`;
+		const defaultTitle = `Hot Sandbox-${this.context.getDisplayIndex(
+			this.masterId!
+		)}`;
+
+		if (!this.context.getSettings().firstLineAsTitle) {
+			return defaultTitle;
+		}
+
+		const content = this.getContent();
+
+		// Get the first line of content and trim whitespace.
+		const firstLine = content.split("\n")[0].trim();
+
+		// Return the first line as the title if it contains content.
+		if (firstLine.length > 0) {
+			return firstLine;
+		}
+
+		return defaultTitle;
 	}
 
 	getIcon(): string {

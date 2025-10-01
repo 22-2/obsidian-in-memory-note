@@ -1,6 +1,6 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
-import type SandboxNotePlugin from "./main";
+import { PluginSettingTab, Setting } from "obsidian";
 import { FolderSuggest } from "./helpers/interaction";
+import type SandboxNotePlugin from "./main";
 
 // --- Plugin Data & Settings Interfaces ---
 
@@ -23,6 +23,7 @@ export interface PluginSettings {
 	autoSaveDebounceMs: number;
 	defaultSavePath: string;
 	confirmBeforeSaving: boolean;
+	firstLineAsTitle: boolean;
 }
 
 export class SandboxNoteSettingTab extends PluginSettingTab {
@@ -34,12 +35,14 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
-		this.addDebugLoggingSetting();
+		this.addAppearanceSection();
 		this.addFileConversionSection();
+		this.addDebugLoggingSetting();
 	}
 
 	private addDebugLoggingSetting(): void {
 		const settings = this.plugin.orchestrator.getSettings();
+		new Setting(this.containerEl).setHeading().setName("Advanced");
 
 		new Setting(this.containerEl)
 			.setName("Show debug messages")
@@ -56,6 +59,12 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			});
 	}
 
+	private addAppearanceSection(): void {
+		new Setting(this.containerEl).setHeading().setName("Appearance");
+
+		this.addFirstLineAsTitleSetting();
+	}
+
 	private addFileConversionSection(): void {
 		new Setting(this.containerEl).setHeading().setName("File Conversion");
 
@@ -67,7 +76,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 		const settings = this.plugin.orchestrator.getSettings();
 
 		new Setting(this.containerEl)
-			.setName("Default Save Location")
+			.setName("Default save location")
 			.setDesc(
 				"The default folder path where converted notes will be saved. Must end with a slash (/) for a folder."
 			)
@@ -93,7 +102,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 		const settings = this.plugin.orchestrator.getSettings();
 
 		new Setting(this.containerEl)
-			.setName("Confirm Save Location Before Converting")
+			.setName("Confirm save location before converting")
 			.setDesc(
 				"If enabled, a modal will appear to choose the file path every time you convert a sandbox note."
 			)
@@ -104,6 +113,24 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 						await this.plugin.orchestrator.updateSettings({
 							...settings,
 							confirmBeforeSaving: value,
+						});
+					});
+			});
+	}
+
+	private addFirstLineAsTitleSetting(): void {
+		const settings = this.plugin.orchestrator.getSettings();
+
+		new Setting(this.containerEl)
+			.setName("First line as title")
+			.setDesc("Use the first line of the note as the title.")
+			.addToggle((toggle) => {
+				toggle
+					.setValue(settings.firstLineAsTitle)
+					.onChange(async (value) => {
+						await this.plugin.orchestrator.updateSettings({
+							...settings,
+							firstLineAsTitle: value,
 						});
 					});
 			});

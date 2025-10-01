@@ -5,6 +5,7 @@ import "../../log-setup";
 import type { Page } from "@playwright/test";
 import { DIST_DIR, PLUGIN_ID } from "e2e/config";
 import type { VaultPageTextContext } from "e2e/obsidian-setup/setup";
+import type { MarkdownEditView } from "obsidian";
 import SandboxNotePlugin from "src/main";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import {
@@ -401,5 +402,40 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await runCommand(page, CMD_UNDO_CLOSE_TAB);
 
 		expect(await getActiveEditorContent(vault.pluginHandleMap)).toBe("");
+	});
+
+	// ソースモードのtoggleのテスト
+	test("6. Toggle Source Mode", async ({ vault }) => {
+		const { window: page } = vault;
+		const CMD_TOGGLE_SOURCE = "editor:toggle-source";
+		await createNewSandboxNote(page, "test");
+		await expect(
+			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
+		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
+
+		expect(
+			await page.evaluate(() => {
+				(app.workspace.activeEditor as any)
+					?.editMode as MarkdownEditView;
+			})
+		).toBe(true);
+
+		// Toggle to source mode
+		await runCommand(page, CMD_TOGGLE_SOURCE);
+		expect(
+			await page.evaluate(() => {
+				(app.workspace.activeEditor as any)
+					?.editMode as MarkdownEditView;
+			})
+		).toBe(false);
+
+		// Toggle back to WYSIWYG mode
+		await runCommand(page, CMD_TOGGLE_SOURCE);
+		expect(
+			await page.evaluate(() => {
+				(app.workspace.activeEditor as any)
+					?.editMode as MarkdownEditView;
+			})
+		).toBe(true);
 	});
 });

@@ -16,6 +16,19 @@ export interface PluginSettings {
 	firstLineAsTitle: boolean;
 }
 
+export const DEFAULT_SETTINGS: PluginSettings = {
+	enableLogger: DEBUG_MODE,
+	enableAutoSave: true,
+	autoSaveDebounceMs: 3000,
+	defaultSavePath: "./",
+	confirmBeforeSaving: true,
+	firstLineAsTitle: false,
+};
+
+export const DEFAULT_PLUGIN_DATA: SandboxNotePluginData = {
+	settings: DEFAULT_SETTINGS,
+};
+
 export class SandboxNoteSettingTab extends PluginSettingTab {
 	constructor(public plugin: SandboxNotePlugin) {
 		super(plugin.app, plugin);
@@ -126,15 +139,3 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			});
 	}
 }
-export const DEFAULT_SETTINGS: PluginSettings = {
-	enableLogger: DEBUG_MODE,
-	enableAutoSave: true,
-	autoSaveDebounceMs: 3000,
-	defaultSavePath: "./",
-	confirmBeforeSaving: true,
-	firstLineAsTitle: false,
-};
-
-export const DEFAULT_PLUGIN_DATA: SandboxNotePluginData = {
-	settings: DEFAULT_SETTINGS,
-};

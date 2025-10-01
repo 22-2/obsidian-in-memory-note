@@ -8,26 +8,27 @@ export interface SandboxNotePluginData {
 }
 
 export interface PluginSettings {
-	enableLogger: boolean;
-	defaultSavePath: string;
-	confirmBeforeSaving: boolean;
-	firstLineAsTitle: boolean;
-	saveToVaultOnCommandExecuted: boolean;
+	"advanced.enableLogger": boolean;
+	"appearance.firstLineAsTitle": boolean;
+	"fileOperation.confirmBeforeSaving": boolean;
+	"fileOperation.defaultSavePath": string;
+	"fileOperation.saveToVaultOnCommandExecuted": boolean;
+	"fileOperation.useObsidianDefaultLocation": boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
-	enableLogger: DEBUG_MODE,
-	defaultSavePath: "",
-	confirmBeforeSaving: true,
-	firstLineAsTitle: false,
-	saveToVaultOnCommandExecuted: false,
+	"advanced.enableLogger": DEBUG_MODE,
+	"appearance.firstLineAsTitle": false,
+	"fileOperation.confirmBeforeSaving": true,
+	"fileOperation.defaultSavePath": "",
+	"fileOperation.saveToVaultOnCommandExecuted": false,
+	"fileOperation.useObsidianDefaultLocation": false,
 };
 
-// export const DEFAULT_PLUGIN_DATA: SandboxNotePluginData = {
-// 	settings: DEFAULT_SETTINGS,
-// };
-
 export class SandboxNoteSettingTab extends PluginSettingTab {
+	// Store a reference to the DOM element for the custom default save path setting
+	private defaultSavePathSettingEl!: HTMLElement;
+
 	constructor(public plugin: SandboxNotePlugin) {
 		super(plugin.app, plugin);
 	}
@@ -37,7 +38,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		this.addAppearanceSection();
-		this.addFileConversionSection();
+		this.addFileOperationSection();
 		this.addDebugLoggingSetting();
 	}
 
@@ -50,11 +51,11 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			.setDesc("Enable or disable debug messages in the console.")
 			.addToggle((toggle) => {
 				toggle
-					.setValue(settings.enableLogger)
+					.setValue(settings["advanced.enableLogger"])
 					.onChange(async (enabled) => {
 						await this.plugin.orchestrator.updateSettings({
 							...settings,
-							enableLogger: enabled,
+							"advanced.enableLogger": enabled,
 						});
 					});
 			});
@@ -66,25 +67,68 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 		this.addFirstLineAsTitleSetting();
 	}
 
-	private addFileConversionSection(): void {
+	/**
+	 * Groups all settings related to file saving, location, and conversion behavior.
+	 */
+	private addFileOperationSection(): void {
 		new Setting(this.containerEl).setHeading().setName("File Operation");
 
+		this.addUseObsidianDefaultLocationSetting();
 		this.addDefaultSavePathSetting();
 		this.addConfirmBeforeSavingSetting();
 		this.addSaveToVaultSetting();
 	}
 
-	private addDefaultSavePathSetting(): void {
+	/**
+	 * Toggles the visibility of the Custom Default Save Path setting based on
+	 * whether 'Use Obsidian Default Location' is enabled.
+	 */
+	private toggleDefaultSavePathVisibility(useObsidianDefault: boolean): void {
+		if (this.defaultSavePathSettingEl) {
+			// Setting items usually use flex display
+			this.defaultSavePathSettingEl.setCssProps({
+				display: useObsidianDefault ? "none" : "flex",
+			});
+		}
+	}
+
+	private addUseObsidianDefaultLocationSetting(): void {
 		const settings = this.plugin.orchestrator.getSettings();
 
 		new Setting(this.containerEl)
-			.setName("Default save location")
+			.setName("Use Obsidian default location")
 			.setDesc(
-				"The default folder path where converted notes will be saved. Must end with a slash (/) for a folder."
+				"If enabled, converted notes will respect the 'Default location for new notes' setting defined in Obsidian's Files & Links preferences."
+			)
+			.addToggle((toggle) => {
+				toggle
+					.setValue(
+						settings["fileOperation.useObsidianDefaultLocation"]
+					)
+					.onChange(async (value) => {
+						const newSettings: PluginSettings = {
+							...settings,
+							"fileOperation.useObsidianDefaultLocation": value,
+						};
+						await this.plugin.orchestrator.updateSettings(
+							newSettings
+						);
+						this.toggleDefaultSavePathVisibility(value);
+					});
+			});
+	}
+
+	private addDefaultSavePathSetting(): void {
+		const settings = this.plugin.orchestrator.getSettings();
+
+		const settingItem = new Setting(this.containerEl)
+			.setName("Custom default save location")
+			.setDesc(
+				"The default folder path where converted notes will be saved. Must end with a slash (/) for a folder. (Ignored if 'Use Obsidian default location' is enabled)."
 			)
 			.addSearch((search) => {
 				search
-					.setValue(settings.defaultSavePath)
+					.setValue(settings["fileOperation.defaultSavePath"])
 					.setPlaceholder("e.g. Sandbox Notes/")
 					.onChange(async (value) => {
 						const normalizedValue =
@@ -92,12 +136,20 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 
 						await this.plugin.orchestrator.updateSettings({
 							...settings,
-							defaultSavePath: normalizedValue,
+							"fileOperation.defaultSavePath": normalizedValue,
 						});
 					});
 
 				new FolderSuggest(this.app, search.inputEl);
 			});
+
+		// Store the reference to the created setting element for toggling visibility
+		this.defaultSavePathSettingEl = settingItem.settingEl;
+
+		// Initial state check
+		this.toggleDefaultSavePathVisibility(
+			settings["fileOperation.useObsidianDefaultLocation"]
+		);
 	}
 
 	private addConfirmBeforeSavingSetting(): void {
@@ -110,11 +162,11 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			)
 			.addToggle((toggle) => {
 				toggle
-					.setValue(settings.confirmBeforeSaving)
+					.setValue(settings["fileOperation.confirmBeforeSaving"])
 					.onChange(async (value) => {
 						await this.plugin.orchestrator.updateSettings({
 							...settings,
-							confirmBeforeSaving: value,
+							"fileOperation.confirmBeforeSaving": value,
 						});
 					});
 			});
@@ -128,11 +180,11 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			.setDesc("Use the first line of the note as the title.")
 			.addToggle((toggle) => {
 				toggle
-					.setValue(settings.firstLineAsTitle)
+					.setValue(settings["appearance.firstLineAsTitle"])
 					.onChange(async (value) => {
 						await this.plugin.orchestrator.updateSettings({
 							...settings,
-							firstLineAsTitle: value,
+							"appearance.firstLineAsTitle": value,
 						});
 					});
 			});
@@ -148,11 +200,13 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			)
 			.addToggle((toggle) => {
 				toggle
-					.setValue(settings.saveToVaultOnCommandExecuted)
+					.setValue(
+						settings["fileOperation.saveToVaultOnCommandExecuted"]
+					)
 					.onChange(async (value) => {
 						await this.plugin.orchestrator.updateSettings({
 							...settings,
-							saveToVaultOnCommandExecuted: value,
+							"fileOperation.saveToVaultOnCommandExecuted": value,
 						});
 					});
 			});

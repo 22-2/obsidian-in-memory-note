@@ -4,6 +4,7 @@ import type { CodeMirrorExtensionManager } from "src/managers/CodeMirrorExtensio
 import type { DatabaseManager } from "src/managers/DatabaseManager";
 import type { IManager } from "src/managers/IManager";
 import type { EventEmitter } from "src/utils/EventEmitter";
+import { DEBOUNCE_MS } from "src/utils/constants";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import SandboxPlugin from "../main";
 import type { CacheManager } from "./CacheManager";
@@ -109,7 +110,7 @@ export class PluginEventManager implements IManager {
 		payload: AppEvents["settings-changed"]
 	) => {
 		this.context.togglLoggersBy(
-			payload.newSettings.enableLogger ? "debug" : "warn"
+			payload.newSettings["advanced.enableLogger"] ? "debug" : "warn"
 		);
 		logger.debug("Logger initialized");
 	};
@@ -126,16 +127,7 @@ export class PluginEventManager implements IManager {
 				content
 			);
 
-			// 自動保存が有効な場合はデバウンス保存
-			if (this.context.settings.getSettings().enableAutoSave) {
-				const debounceMs =
-					this.context.settings.getSettings().autoSaveDebounceMs;
-				this.context.saveSandbox(
-					sourceView.masterId,
-					content,
-					debounceMs
-				);
-			}
+			this.context.saveSandbox(sourceView.masterId, content, DEBOUNCE_MS);
 		}
 	};
 }

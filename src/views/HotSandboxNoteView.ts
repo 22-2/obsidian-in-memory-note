@@ -55,7 +55,10 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	onSettingsChanged({ newSettings }: AppEvents["settings-changed"]) {
 		const saveEl = this.saveActionButtonEl;
 		if (!saveEl) return;
-		setDisabled(saveEl, !newSettings.saveToVaultOnCommandExecuted);
+		setDisabled(
+			saveEl,
+			!newSettings["fileOperation.saveToVaultOnCommandExecuted"]
+		);
 	}
 
 	getViewType(): string {
@@ -67,7 +70,7 @@ export class HotSandboxNoteView extends AbstractNoteView {
 			this.masterId!
 		)}`;
 
-		if (!this.context.getSettings().firstLineAsTitle) {
+		if (!this.context.getSettings()["appearance.firstLineAsTitle"]) {
 			return defaultTitle;
 		}
 

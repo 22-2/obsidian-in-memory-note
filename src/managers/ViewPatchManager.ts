@@ -98,7 +98,7 @@ export class ViewPatchManager implements IManager {
 		const cleanup = around(saveCommandDefinition, {
 			checkCallback: (orig) => (checking: boolean) => {
 				const settings = this.context.getSettings();
-				if (!settings.saveToVaultOnCommandExecuted)
+				if (!settings["fileOperation.saveToVaultOnCommandExecuted"])
 					return orig?.call(this, checking) || false;
 				const activeView = this.context.getActiveView();
 				if (!activeView) {

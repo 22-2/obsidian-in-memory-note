@@ -18,7 +18,7 @@ export async function extractToFileInteraction<T extends AbstractNoteView>(
 
 		const sanitizedBasename = sanitizeFilename(baseTitle);
 		const suggestedPath = buildSuggestedPath(
-			settings.defaultSavePath,
+			settings["fileOperation.defaultSavePath"],
 			sanitizedBasename
 		);
 
@@ -59,7 +59,7 @@ async function resolveFinalPath(
 	suggestedPath: string,
 	basename: string
 ): Promise<string | null> {
-	if (settings.confirmBeforeSaving) {
+	if (settings["fileOperation.confirmBeforeSaving"]) {
 		const result = await showFilePathPrompt(app, {
 			baseFileName: basename,
 			initialPath: suggestedPath,

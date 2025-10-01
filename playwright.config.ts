@@ -5,8 +5,8 @@ export default defineConfig({
 	testDir: "./e2e",
 	outputDir: "./test-results",
 	reporter: [["html", { outputFolder: "../playwright-report" }]],
-	fullyParallel: false,
-	workers: 1,
+	fullyParallel: true,
+	workers: 4,
 	use: {
 		trace: "on-first-retry",
 		video: "on",

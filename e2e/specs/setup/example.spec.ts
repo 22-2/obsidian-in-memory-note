@@ -1,36 +1,43 @@
-import type SandboxPlugin from "src/main";
+// E:\Desktop\coding\pub\obsidian-sandbox-note\e2e\specs\setup\example.spec.ts
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import "../../log-setup";
 // ===================================================================
-// 8. Example Test (example.test.mts)
+// Example Test (example.test.mts)
 // ===================================================================
 
 import { DIST_DIR, PLUGIN_ID, SANDBOX_VAULT_NAME } from "../../config";
 import { expect, test } from "../../test-fixtures";
+import { HotSandboxPage } from "./HotSandboxPage"; // Import HotSandboxPage
 
-test("sandbox test", async ({ vault }) => {
+test("sandbox test: plugin activation and view creation via command", async ({
+	vault,
+}) => {
+	// Instantiate HotSandboxPage
+	const hsPage = new HotSandboxPage(vault.window, vault.pluginHandleMap);
+
+	// 1. Initial setup verification
+	// Verify Vault name
 	const vaultName = await vault.window.evaluate(() => app.vault.getName());
 	expect(vaultName).toBe(SANDBOX_VAULT_NAME);
-	expect(await vault.window.evaluate(() => app.plugins.isEnabled())).toBe(
-		true
-	);
-	const pluginHandle = await vault.window.evaluateHandle(
-		(pluginId) => {
-			return app.plugins.plugins[pluginId as any] as SandboxPlugin;
-		},
-		[PLUGIN_ID]
-	);
 
-	expect(pluginHandle).toBeTruthy();
-	await pluginHandle.evaluate((plugin) => plugin.activateNewHotSandboxView());
-	await expect(
-		vault.window.locator(
-			`.workspace-leaf-content[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`
+	// Verify plugin activation
+	expect(
+		await vault.window.evaluate(
+			(pluginId) => app.plugins.getPlugin(pluginId),
+			PLUGIN_ID
 		)
-	).toBeVisible();
+	).toBeTruthy();
+
+	// 2. Create a new sandbox view (via command)
+	// Use HotSandboxPage method
+	await hsPage.createNewSandboxNote();
+
+	// 3. Verify the view opened correctly
+	await hsPage.expectSandboxViewCount(1);
+	await hsPage.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
 });
 
-// カスタム設定
+// Custom settings are maintained
 test.use({
 	vaultOptions: {
 		useSandbox: true,
@@ -40,6 +47,5 @@ test.use({
 				pluginId: PLUGIN_ID,
 			},
 		],
-		enablePlugins: true,
 	},
 });

@@ -1,0 +1,87 @@
+// File: src/managers/ViewPatchManager.ts (New File)
+import log from "loglevel";
+import { around } from "monkey-around";
+import { WorkspaceLeaf, type Plugin } from "obsidian";
+import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
+import type { IManager } from "./IManager";
+
+const logger = log.getLogger("ViewPatchManager");
+
+type Context = {
+	register: Plugin["register"];
+};
+
+/**
+ * Manages monkey-patches for core Obsidian view functionality,
+ * specifically for HotSandboxNoteView lifecycle methods (close, save).
+ */
+export class ViewPatchManager implements IManager {
+	private patchCleanupFns: (() => void)[] = [];
+
+	constructor(private context: Context) {}
+
+	load(): void {
+		logger.debug("Applying WorkspaceLeaf patches...");
+		this.applyLeafDetachPatch();
+		this.applyLeafSavePatch();
+	}
+
+	unload(): void {
+		logger.debug("Cleaning up WorkspaceLeaf patches...");
+		this.patchCleanupFns.forEach((fn) => fn());
+		this.patchCleanupFns = [];
+	}
+
+	/**
+	 * Patches WorkspaceLeaf.prototype.detach to intercept the closing event
+	 * and execute HotSandboxNoteView's shouldClose logic (confirmation dialog).
+	 */
+	private applyLeafDetachPatch(): void {
+		const cleanup = around(WorkspaceLeaf.prototype, {
+			detach: (orig) =>
+				async function (this: WorkspaceLeaf) {
+					if (!(this.view instanceof HotSandboxNoteView)) {
+						return orig.call(this);
+					}
+
+					// HotSandboxNoteViewの場合、閉じる前に確認を行う
+					let shouldClose = false;
+					try {
+						shouldClose = await (
+							this.view as HotSandboxNoteView
+						).shouldClose();
+					} catch (error) {
+						logger.error("Error during shouldClose check:", error);
+						shouldClose = true; // エラー時は閉じるのを許可（安全のため）
+					}
+
+					if (shouldClose) {
+						return orig.call(this);
+					}
+					// 閉じない場合はorig.call()を実行しないことで処理を中断
+				},
+		});
+		this.patchCleanupFns.push(cleanup);
+		this.context.register(cleanup);
+	}
+
+	/**
+	 * Patches WorkspaceLeaf.prototype.save to intercept Ctrl+S events
+	 * and execute HotSandboxNoteView's save logic (conversion to file).
+	 */
+	private applyLeafSavePatch(): void {
+		const cleanup = around(WorkspaceLeaf.prototype, {
+			save: (orig) =>
+				async function (this: WorkspaceLeaf) {
+					if (!(this.view instanceof HotSandboxNoteView)) {
+						return orig.call(this);
+					}
+					// HotSandboxNoteViewの場合、専用の保存ロジックを実行
+					await (this.view as HotSandboxNoteView).handleSaveRequest();
+					// 通常のsave処理はスキップ（HotSandboxNoteはファイルを持たないため）
+				},
+		});
+		this.patchCleanupFns.push(cleanup);
+		this.context.register(cleanup);
+	}
+}

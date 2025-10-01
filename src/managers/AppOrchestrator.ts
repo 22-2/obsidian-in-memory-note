@@ -16,32 +16,34 @@ import { PluginEventManager } from "./PluginEventManager";
 import { SettingsManager } from "./SettingsManager";
 import { URIManager } from "./URIManager";
 import { ViewManager } from "./ViewManager";
+import { ViewPatchManager } from "./ViewPatchManager";
 
 const logger = log.getLogger("AppOrchestrator");
 
 // 型名を短くするためのエイリアス
 type ManagerName =
-	| "settingsManager"
 	| "cacheManager"
-	| "pluginEventManager"
-	| "editorSyncManager"
 	| "cmExtensionManager"
-	| "viewManager"
+	| "dbManager"
+	| "editorSyncManager"
 	| "obsidianEventManager"
+	| "pluginEventManager"
+	| "settingsManager"
 	| "uriManager"
-	| "dbManager";
+	| "viewManager"
+	| "viewPatchManager";
 
 const managerNames: ManagerName[] = [
-	// ロード順序が重要な場合はここにその順序で並べる
-	"settingsManager",
 	"cacheManager",
-	"dbManager",
-	"viewManager",
-	"editorSyncManager",
 	"cmExtensionManager",
-	"pluginEventManager",
+	"dbManager",
+	"editorSyncManager",
 	"obsidianEventManager",
+	"pluginEventManager",
+	"settingsManager",
 	"uriManager",
+	"viewManager",
+	"viewPatchManager",
 ];
 
 /**
@@ -127,7 +129,6 @@ export class AppOrchestrator implements IManager {
 				createView: (leaf: WorkspaceLeaf): HotSandboxNoteView =>
 					new HotSandboxNoteView(leaf, {
 						emitter: this.emitter,
-						register: this.plugin.register.bind(this.plugin),
 						getSettings: () => settingsManager.getSettings(),
 						getDisplayIndex: (masterId: string) => {
 							invariant(masterId, "masterId should not be null");
@@ -227,6 +228,12 @@ export class AppOrchestrator implements IManager {
 					this.get<ViewManager>("viewManager").createAndOpenSandbox(
 						content
 					),
+			});
+		});
+
+		this.factories.set("viewPatchManager", () => {
+			return new ViewPatchManager({
+				register: this.plugin.register.bind(this.plugin),
 			});
 		});
 	}

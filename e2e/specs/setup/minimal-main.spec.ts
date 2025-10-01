@@ -28,6 +28,12 @@ const ACTIVE_MARKDOWN_VIEW_SELECTR = `${ACTIVE_LEAF_SELECTOR} > .workspace-leaf-
 
 // const ACTIVE_SANDBOX_TITLE_SELECTOR = `${ACTIVE_SANDBOX_VIEW_SELECTOR} > .view-header`;
 
+// --- FIX for macOS strict mode violation: Use the highly specific active tab header locator ---
+// The active tab header should reliably possess both mod-active and is-active classes,
+// ensuring only one element matches in a single leaf/pane context.
+const ACTIVE_TAB_HEADER_GENERIC_SELECTOR =
+	".workspace-tab-header.mod-active.is-active";
+
 // --- Test Configuration ---
 // For this test suite, we use a sandbox Vault with the plugin enabled.
 test.use({
@@ -208,7 +214,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			page.locator(".mod-root .workspace-tab-header-container-inner")
 		).toHaveCount(1);
 		await expect(
-			page.locator(".workspace-tab-header-container-inner > .mod-active")
+			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
 		).toHaveAttribute("data-type", "empty");
 
 		/* ========================================================================== */
@@ -223,7 +229,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			page.locator(".mod-root .workspace-tab-header-container-inner")
 		).toHaveCount(1);
 		await expect(
-			page.locator(".workspace-tab-header-container-inner > .mod-active")
+			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
 		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
 
 		/* ========================================================================== */
@@ -251,7 +257,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await page.getByText("Save", { exact: true }).click();
 
 		await expect(
-			page.locator(".workspace-tab-header-container-inner > .mod-active")
+			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
 		).toHaveAttribute("data-type", "markdown");
 		await expect(
 			page.locator(".mod-root .workspace-tab-header-container-inner")
@@ -265,7 +271,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		// 3. Verify the sandbox note view is closed
 		await expect(
-			page.locator(".workspace-tab-header-container-inner > .mod-active")
+			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
 		).toHaveAttribute("data-type", "markdown");
 		await expect(
 			page.locator(".mod-root .workspace-tab-header-container-inner")
@@ -297,7 +303,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			page.locator(".mod-root .workspace-tab-header-container-inner")
 		).toHaveCount(1);
 		await expect(
-			page.locator(".workspace-tab-header-container-inner > .mod-active")
+			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
 		).toHaveAttribute("data-type", "markdown");
 
 		// back to sandbox view
@@ -312,7 +318,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		/* ========================================================================== */
 
 		await expect(
-			page.locator(".workspace-tab-header-container-inner > .mod-active")
+			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
 		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
 
 		const sandboxNoteContent = await page.evaluate(() =>
@@ -330,7 +336,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		/* ========================================================================== */
 
 		await expect(
-			page.locator(".workspace-tab-header-container-inner > .mod-active")
+			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
 		).toHaveAttribute("data-type", "empty");
 		await expect(
 			page.locator(".mod-root .workspace-tab-header-container-inner")
@@ -359,7 +365,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		);
 
 		await expect(
-			page.locator(".workspace-tab-header-container-inner > .mod-active")
+			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
 		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
 
 		// Simulate closing the last tab
@@ -376,7 +382,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		console.log("no clicked");
 
 		await expect(
-			page.locator(".workspace-tab-header-container-inner > .mod-active")
+			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
 		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
 
 		// Simulate closing the last tab again
@@ -387,7 +393,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		// Check if the tab is closed
 		await expect(
-			page.locator(".workspace-tab-header-container-inner > .mod-active")
+			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
 		).toHaveAttribute("data-type", "empty");
 
 		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
@@ -396,5 +402,4 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		expect(await getActiveEditorContent(vault.pluginHandleMap)).toBe("");
 	});
-	// FIXME Only reacts when closed with a hotkey.
 });

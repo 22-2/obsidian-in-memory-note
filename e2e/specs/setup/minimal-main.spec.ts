@@ -290,7 +290,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		// check converted file exists
 		expect(
 			await page.evaluate((expectedFile) => {
-				app.vault.adapter.exists(expectedFile);
+				return app.vault.adapter.exists(expectedFile);
 			}, expectedFile)
 		);
 
@@ -356,8 +356,8 @@ test.describe("HotSandboxNoteView Main Features", () => {
 	// 閉じるまえに確認ダイアログを出す機能
 	test("5. Confirmation before closing the last tab", async ({ vault }) => {
 		const { window: page } = vault;
-		// close initial markdown page
-		await page.keyboard.press("Control+W");
+		// close initial markdown page using the platform-agnostic command
+		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
 
 		await createNewSandboxNote(page, "test");
 

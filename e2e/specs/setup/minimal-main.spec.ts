@@ -8,6 +8,7 @@ import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import { delay, runCommandById } from "../../obsidian-commands/run-command";
 import { expect, test } from "../../test-fixtures";
 import { HotSandboxPage } from "./HotSandboxPage";
+import { CMD_ID_TOGGLE_SOURCE } from "./constants";
 
 const vaultOptions: VaultOptions = {
 	useSandbox: true,
@@ -176,6 +177,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 			// Undo close
 			await hotSandbox.undoCloseTab();
+			await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
 			expect(await hotSandbox.getActiveEditorContent()).toBe("");
 		});
 	});
@@ -188,7 +190,6 @@ test.describe("HotSandboxNoteView Main Features", () => {
 				vault.window,
 				vault.pluginHandleMap
 			);
-			const CMD_TOGGLE_SOURCE = "editor:toggle-source";
 
 			// Setup debug command
 			const pluginHandle = await vault.pluginHandleMap.evaluateHandle(
@@ -205,7 +206,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 						callback: () => app.commands.executeCommandById(cmdId),
 					});
 				},
-				[CMD_TOGGLE_SOURCE]
+				[CMD_ID_TOGGLE_SOURCE]
 			);
 
 			await hotSandbox.createNewSandboxNote("## test");
@@ -216,11 +217,11 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			await hotSandbox.expectSourceMode(true);
 
 			// Toggle to source mode
-			await runCommandById(vault.window, CMD_TOGGLE_SOURCE);
+			await runCommandById(vault.window, CMD_ID_TOGGLE_SOURCE);
 			await hotSandbox.expectSourceMode(false);
 
 			// Toggle back to live preview
-			await runCommandById(vault.window, CMD_TOGGLE_SOURCE);
+			await runCommandById(vault.window, CMD_ID_TOGGLE_SOURCE);
 			await hotSandbox.expectSourceMode(true);
 		});
 	});
@@ -244,6 +245,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 			// Create sandbox note with content
 			await hotSandbox.createNewSandboxNote(persistentContent);
+			await hotSandbox.expectActiveTitle("*Hot Sandbox-1");
 			await hotSandbox.expectActiveTitle("*Hot Sandbox-1");
 			expect(await hotSandbox.getActiveEditorContent()).toBe(
 				persistentContent

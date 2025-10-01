@@ -1,11 +1,5 @@
 import { PLUGIN_ID } from "e2e/config";
-import {
-	CMD_CLOSE_CURRENT_TAB,
-	CMD_UNDO_CLOSE_TAB,
-	CONVERT_HOT_SANDBOX_TO_FILE,
-	OPEN_HOT_SANDBOX,
-	runCommand,
-} from "e2e/obsidian-commands/run-command";
+import { runCommandById } from "e2e/obsidian-commands/run-command";
 import { getPluginHandleMap } from "e2e/obsidian-setup/helpers";
 import type { VaultPageTextContext } from "e2e/obsidian-setup/setup";
 import type { VaultOptions } from "e2e/obsidian-setup/vault-manager";
@@ -13,6 +7,12 @@ import type { Page } from "playwright";
 import { expect } from "playwright/test";
 import type SandboxNotePlugin from "src/main";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
+import {
+	CMD_ID_CLOSE_TAB,
+	CMD_ID_CONVERT_TO_FILE,
+	CMD_ID_OPEN_HOT_SANDBOX,
+	CMD_ID_UNDO_CLOSE_TAB,
+} from "./constants";
 
 type ViewType = "markdown" | typeof VIEW_TYPE_HOT_SANDBOX;
 // --- Page Object ---
@@ -75,7 +75,7 @@ export class HotSandboxPage {
 
 	// Actions
 	async createNewSandboxNote(content?: string) {
-		await runCommand(this.page, OPEN_HOT_SANDBOX);
+		await runCommandById(this.page, CMD_ID_OPEN_HOT_SANDBOX);
 		await expect(
 			this.page.locator(this.activeSandboxView).last()
 		).toBeVisible();
@@ -118,7 +118,7 @@ export class HotSandboxPage {
 	}
 
 	async convertToFile(fileName: string, folderPath: string) {
-		await runCommand(this.page, CONVERT_HOT_SANDBOX_TO_FILE);
+		await runCommandById(this.page, CMD_ID_CONVERT_TO_FILE);
 
 		await this.page
 			.getByPlaceholder("e.g., My Scratchpad", { exact: true })
@@ -134,11 +134,11 @@ export class HotSandboxPage {
 	}
 
 	async closeTab() {
-		await runCommand(this.page, CMD_CLOSE_CURRENT_TAB);
+		await runCommandById(this.page, CMD_ID_CLOSE_TAB);
 	}
 
 	async undoCloseTab() {
-		await runCommand(this.page, CMD_UNDO_CLOSE_TAB);
+		await runCommandById(this.page, CMD_ID_UNDO_CLOSE_TAB);
 	}
 
 	async goBackInHistory() {

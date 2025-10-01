@@ -14,17 +14,26 @@ export async function extractToFileInteraction<T extends AbstractNoteView>(
 	const settings: PluginSettings = view.pluginSettings;
 
 	try {
+		// Get content and base title.
 		const content = view.getContent();
 		const baseTitle = t("defaults.untitled");
 
+		// Sanitize filenames
 		const sanitizedBasename = sanitizeFilename(baseTitle);
+
+		// Determine save path.
+		const defaultLocation = settings[
+			"fileOperation.useObsidianDefaultLocation"
+		]
+			? (view.app.vault.getConfig("newFileLocation") as string)
+			: settings["fileOperation.defaultSavePath"];
+
 		const suggestedPath = buildSuggestedPath(
-			settings["fileOperation.useObsidianDefaultLocation"]
-				? (view.app.vault.getConfig("newFileLocation") as string)
-				: settings["fileOperation.defaultSavePath"],
+			defaultLocation,
 			sanitizedBasename
 		);
 
+		// Resolve the final file path.
 		const finalFilePath = await resolveFinalPath(
 			view.app,
 			settings,
@@ -32,13 +41,15 @@ export async function extractToFileInteraction<T extends AbstractNoteView>(
 			sanitizedBasename
 		);
 
+		// If canceled
 		if (!finalFilePath) {
 			new Notice(t("notices.conversionCancelled"));
 			return;
 		}
 
-		view.setContent("");
+		// Clear content and create a new file.
 		await createAndOpenFile(view, finalFilePath, content, baseTitle);
+
 		return true;
 	} catch (error: any) {
 		handleConversionError(error);
@@ -47,7 +58,9 @@ export async function extractToFileInteraction<T extends AbstractNoteView>(
 }
 
 function sanitizeFilename(filename: string): string {
-	return filename.replace(/[\\/:"*?<>|]+/g, "").trim() || t("defaults.untitled");
+	return (
+		filename.replace(/[\\/:"*?<>|]+/g, "").trim() || t("defaults.untitled")
+	);
 }
 
 function buildSuggestedPath(savePath: string, basename: string): string {
@@ -78,24 +91,16 @@ async function createAndOpenFile<T extends AbstractNoteView>(
 	view: T,
 	filePath: string,
 	content: string,
-	baseTitle: string,
-	newTab = false
+	baseTitle: string
 ): Promise<void> {
-	const availablePath = view.app.vault.getAvailablePath(
-		(view.app.vault.adapter as unknown as Path).path.basename(filePath),
-		"md"
+	const availablePath = view.app.vault.getAvailablePath(filePath, "md");
+	view.app.workspace.activeEditor?.editor?.setValue(content);
+	const newFile = await view.app.vault.create(availablePath, content);
+	view.setContent("");
+	await view.leaf.openFile(newFile);
+	new Notice(
+		t("notices.convertedToFile", { title: baseTitle, path: availablePath })
 	);
-	if (newTab) {
-		await view.app.fileManager.createAndOpenMarkdownFile(
-			availablePath,
-			"tab"
-		);
-		view.app.workspace.activeEditor?.editor?.setValue(content);
-	} else {
-		const newFile = await view.app.vault.create(availablePath, content);
-		await view.leaf.openFile(newFile);
-	}
-	new Notice(t("notices.convertedToFile", { title: baseTitle, path: availablePath }));
 }
 
 function handleConversionError(error: Error): void {
@@ -104,10 +109,7 @@ function handleConversionError(error: Error): void {
 		throw error;
 	}
 
-	new Notice(
-		t("notices.failedToConvertGeneral"),
-		5000
-	);
+	new Notice(t("notices.failedToConvertGeneral"), 5000);
 	throw error;
 }
 

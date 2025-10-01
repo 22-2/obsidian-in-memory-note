@@ -1,7 +1,7 @@
 import { existsSync } from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import invariant from "tiny-invariant";
+import { fileURLToPath } from "url";
 import manifest from "../manifest.json" with { type: "json" };
 import paths from "./paths.json" with { type: "json" };
 

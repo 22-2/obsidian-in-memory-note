@@ -1,5 +1,6 @@
 import log from "loglevel";
 import { Notice } from "obsidian"; // ObsidianのAPIからNoticeクラスをインポート
+import { t } from "../i18n";
 
 const originalFactory = log.methodFactory;
 
@@ -13,7 +14,7 @@ const obsidianNoticeMethodFactory: log.MethodFactory = (
 	return (...args) => {
 		if (logLevel === log.levels.ERROR) {
 			const errorMessage =
-				args[0]?.toString() || "An unknown error occurred.";
+				args[0]?.toString() || t("notices.unknownError");
 			new Notice(errorMessage);
 		}
 		rawMethod.apply(null, args);

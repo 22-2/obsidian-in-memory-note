@@ -1,5 +1,6 @@
 import { PluginSettingTab, Setting } from "obsidian";
 import { FolderSuggest } from "./helpers/interaction";
+import { t } from "./i18n";
 import type SandboxNotePlugin from "./main";
 import { DEBUG_MODE } from "./utils/constants";
 
@@ -44,11 +45,11 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 
 	private addDebugLoggingSetting(): void {
 		const settings = this.plugin.orchestrator.getSettings();
-		new Setting(this.containerEl).setHeading().setName("Advanced");
+		new Setting(this.containerEl).setHeading().setName(t("settings.sections.advanced"));
 
 		new Setting(this.containerEl)
-			.setName("Show debug messages")
-			.setDesc("Enable or disable debug messages in the console.")
+			.setName(t("settings.advanced.showDebugMessages.name"))
+			.setDesc(t("settings.advanced.showDebugMessages.desc"))
 			.addToggle((toggle) => {
 				toggle
 					.setValue(settings["advanced.enableLogger"])
@@ -62,7 +63,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 	}
 
 	private addAppearanceSection(): void {
-		new Setting(this.containerEl).setHeading().setName("Appearance");
+		new Setting(this.containerEl).setHeading().setName(t("settings.sections.appearance"));
 
 		this.addFirstLineAsTitleSetting();
 	}
@@ -71,7 +72,7 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 	 * Groups all settings related to file saving, location, and conversion behavior.
 	 */
 	private addFileOperationSection(): void {
-		new Setting(this.containerEl).setHeading().setName("File Operation");
+		new Setting(this.containerEl).setHeading().setName(t("settings.sections.fileOperation"));
 
 		this.addUseObsidianDefaultLocationSetting();
 		this.addDefaultSavePathSetting();
@@ -96,10 +97,8 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 		const settings = this.plugin.orchestrator.getSettings();
 
 		new Setting(this.containerEl)
-			.setName("Use Obsidian default location")
-			.setDesc(
-				"If enabled, converted notes will respect the 'Default location for new notes' setting defined in Obsidian's Files & Links preferences."
-			)
+			.setName(t("settings.fileOperation.useObsidianDefaultLocation.name"))
+			.setDesc(t("settings.fileOperation.useObsidianDefaultLocation.desc"))
 			.addToggle((toggle) => {
 				toggle
 					.setValue(
@@ -122,14 +121,12 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 		const settings = this.plugin.orchestrator.getSettings();
 
 		const settingItem = new Setting(this.containerEl)
-			.setName("Custom default save location")
-			.setDesc(
-				"The default folder path where converted notes will be saved. Must end with a slash (/) for a folder. (Ignored if 'Use Obsidian default location' is enabled)."
-			)
+			.setName(t("settings.fileOperation.customDefaultSaveLocation.name"))
+			.setDesc(t("settings.fileOperation.customDefaultSaveLocation.desc"))
 			.addSearch((search) => {
 				search
 					.setValue(settings["fileOperation.defaultSavePath"])
-					.setPlaceholder("e.g. Sandbox Notes/")
+					.setPlaceholder(t("settings.fileOperation.customDefaultSaveLocation.placeholder"))
 					.onChange(async (value) => {
 						const normalizedValue =
 							value && !value.endsWith("/") ? `${value}/` : value;
@@ -156,10 +153,8 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 		const settings = this.plugin.orchestrator.getSettings();
 
 		new Setting(this.containerEl)
-			.setName("Confirm save location before converting")
-			.setDesc(
-				"If enabled, a modal will appear to choose the file path every time you convert a sandbox note."
-			)
+			.setName(t("settings.fileOperation.confirmBeforeSaving.name"))
+			.setDesc(t("settings.fileOperation.confirmBeforeSaving.desc"))
 			.addToggle((toggle) => {
 				toggle
 					.setValue(settings["fileOperation.confirmBeforeSaving"])
@@ -176,8 +171,8 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 		const settings = this.plugin.orchestrator.getSettings();
 
 		new Setting(this.containerEl)
-			.setName("First line as title")
-			.setDesc("Use the first line of the note as the title.")
+			.setName(t("settings.appearance.firstLineAsTitle.name"))
+			.setDesc(t("settings.appearance.firstLineAsTitle.desc"))
 			.addToggle((toggle) => {
 				toggle
 					.setValue(settings["appearance.firstLineAsTitle"])
@@ -194,10 +189,8 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 		const settings = this.plugin.orchestrator.getSettings();
 
 		new Setting(this.containerEl)
-			.setName("Save to vault on command")
-			.setDesc(
-				"If enabled, the note will be saved to the vault when you execute the save command (Ctrl+S or Cmd+S)."
-			)
+			.setName(t("settings.fileOperation.saveToVaultOnCommand.name"))
+			.setDesc(t("settings.fileOperation.saveToVaultOnCommand.desc"))
 			.addToggle((toggle) => {
 				toggle
 					.setValue(

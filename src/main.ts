@@ -1,6 +1,7 @@
 import log from "loglevel";
 import { Plugin } from "obsidian";
 import type { AppEvents } from "./events/AppEvents";
+import { t } from "./i18n";
 import { AppOrchestrator } from "./managers/AppOrchestrator";
 import { SandboxNoteSettingTab } from "./settings";
 import { EventEmitter } from "./utils/EventEmitter";
@@ -52,7 +53,7 @@ export default class SandboxNotePlugin extends Plugin {
 		// Command to open the new hot sandbox note
 		this.addCommand({
 			id: "open-hot-sandbox-note-view",
-			name: "Open new hot sandbox note",
+			name: t("commands.openHotSandboxNote"),
 			icon: HOT_SANDBOX_NOTE_ICON,
 			callback: () => {
 				this.activateNewHotSandboxView();
@@ -61,7 +62,7 @@ export default class SandboxNotePlugin extends Plugin {
 
 		this.addCommand({
 			id: "convert-to-file",
-			name: "Convert to file",
+			name: t("commands.convertToFile"),
 			icon: "file-pen-line",
 			checkCallback: (checking) => {
 				const view = this.orchestrator.getActiveView();
@@ -84,7 +85,7 @@ export default class SandboxNotePlugin extends Plugin {
 		// Ribbon icon to open the hot sandbox note
 		this.addRibbonIcon(
 			HOT_SANDBOX_NOTE_ICON,
-			"Open new hot sandbox note",
+			t("ribbonIcon.openHotSandboxNote"),
 			() => {
 				this.activateNewHotSandboxView();
 			}

@@ -7,6 +7,7 @@ import {
 	TAbstractFile,
 	TFolder,
 } from "obsidian";
+import { t } from "../i18n";
 
 /**
  * Generic confirmation modal utility
@@ -42,7 +43,7 @@ export class ConfirmModal extends Modal {
 		new Setting(contentEl)
 			.addButton((btn) =>
 				btn
-					.setButtonText("Yes")
+					.setButtonText(t("modals.confirmSaveLocation.buttons.yes"))
 					.setCta()
 					.onClick(() => {
 						this.callback(true);
@@ -50,7 +51,7 @@ export class ConfirmModal extends Modal {
 					})
 			)
 			.addButton((btn) =>
-				btn.setButtonText("No").onClick(() => {
+				btn.setButtonText(t("modals.confirmSaveLocation.buttons.no")).onClick(() => {
 					this.callback(false);
 					this.close();
 				})
@@ -77,7 +78,7 @@ abstract class PathSuggest<
 	}
 
 	protected formatPath(path: string, isRoot?: boolean): string {
-		return path === "" || isRoot ? "Vault Root /" : path;
+		return path === "" || isRoot ? t("folderSuggest.vaultRoot") : path;
 	}
 
 	selectSuggestion(item: T): void {
@@ -330,7 +331,7 @@ class FilePathPromptModal extends Modal {
 	 */
 	private submit(): void {
 		if (!this.fileName.trim()) {
-			new Notice("File name cannot be empty.");
+			new Notice(t("notices.fileNameCannotBeEmpty"));
 			return;
 		}
 
@@ -370,20 +371,18 @@ class FilePathPromptModal extends Modal {
 
 	onOpen(): void {
 		const { contentEl, titleEl } = this;
-		titleEl.setText("Confirm Save Location");
+		titleEl.setText(t("modals.confirmSaveLocation.title"));
 
 		contentEl.createEl("p", {
-			text: `Converting note: "${this.baseFileName}"`,
+			text: t("modals.confirmSaveLocation.convertingNote", { title: this.baseFileName }),
 		});
 
 		// File name input
 		new Setting(contentEl)
-			.setName("File Name")
-			.setDesc(
-				"Enter the file name (extension will be added automatically)"
-			)
+			.setName(t("modals.confirmSaveLocation.fileName.name"))
+			.setDesc(t("modals.confirmSaveLocation.fileName.desc"))
 			.addText((text) => {
-				text.setPlaceholder("e.g., My Scratchpad")
+				text.setPlaceholder(t("modals.confirmSaveLocation.fileName.placeholder"))
 					.setValue(this.fileName)
 					.onChange((value) => {
 						this.fileName = value;
@@ -395,11 +394,11 @@ class FilePathPromptModal extends Modal {
 
 		// Folder path input with autocomplete
 		new Setting(contentEl)
-			.setName("Folder Path")
-			.setDesc("Enter folder path (leave empty for vault root)")
+			.setName(t("modals.confirmSaveLocation.folderPath.name"))
+			.setDesc(t("modals.confirmSaveLocation.folderPath.desc"))
 			.addSearch((search) => {
 				search
-					.setPlaceholder("e.g., Notes/Daily")
+					.setPlaceholder(t("modals.confirmSaveLocation.folderPath.placeholder"))
 					.setValue(this.folderPath)
 					.onChange((value) => {
 						this.folderPath = value;
@@ -414,12 +413,12 @@ class FilePathPromptModal extends Modal {
 		new Setting(contentEl)
 			.addButton((btn) =>
 				btn
-					.setButtonText("Save")
+					.setButtonText(t("modals.confirmSaveLocation.buttons.save"))
 					.setCta()
 					.onClick(() => this.submit())
 			)
 			.addButton((btn) =>
-				btn.setButtonText("Cancel").onClick(() =>
+				btn.setButtonText(t("modals.confirmSaveLocation.buttons.cancel")).onClick(() =>
 					this.resolveAndClose({
 						fullPath: null,
 						baseFileName: null,

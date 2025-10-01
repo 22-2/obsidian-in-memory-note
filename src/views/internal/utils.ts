@@ -1,6 +1,7 @@
 import log from "loglevel";
 import { App, Notice } from "obsidian";
 import { showFilePathPrompt } from "src/helpers/interaction";
+import { t } from "src/i18n";
 import type { PluginSettings } from "src/settings";
 import type { AbstractNoteView } from "./AbstractNoteView";
 
@@ -14,7 +15,7 @@ export async function extractToFileInteraction<T extends AbstractNoteView>(
 
 	try {
 		const content = view.getContent();
-		const baseTitle = "Untitled";
+		const baseTitle = t("defaults.untitled");
 
 		const sanitizedBasename = sanitizeFilename(baseTitle);
 		const suggestedPath = buildSuggestedPath(
@@ -32,7 +33,7 @@ export async function extractToFileInteraction<T extends AbstractNoteView>(
 		);
 
 		if (!finalFilePath) {
-			new Notice("Conversion cancelled.");
+			new Notice(t("notices.conversionCancelled"));
 			return;
 		}
 
@@ -46,7 +47,7 @@ export async function extractToFileInteraction<T extends AbstractNoteView>(
 }
 
 function sanitizeFilename(filename: string): string {
-	return filename.replace(/[\\/:"*?<>|]+/g, "").trim() || "Untitled";
+	return filename.replace(/[\\/:"*?<>|]+/g, "").trim() || t("defaults.untitled");
 }
 
 function buildSuggestedPath(savePath: string, basename: string): string {
@@ -94,17 +95,17 @@ async function createAndOpenFile<T extends AbstractNoteView>(
 		const newFile = await view.app.vault.create(availablePath, content);
 		await view.leaf.openFile(newFile);
 	}
-	new Notice(`${baseTitle} converted to file: ${availablePath}`);
+	new Notice(t("notices.convertedToFile", { title: baseTitle, path: availablePath }));
 }
 
 function handleConversionError(error: Error): void {
 	if (error.message.includes("ENOENT")) {
-		new Notice("Failed to convert sandbox: no such file or directory");
+		new Notice(t("notices.failedToConvertNoFile"));
 		throw error;
 	}
 
 	new Notice(
-		"Failed to convert sandbox note to file. See console for details.",
+		t("notices.failedToConvertGeneral"),
 		5000
 	);
 	throw error;

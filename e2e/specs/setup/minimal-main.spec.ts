@@ -5,7 +5,6 @@ import "../../log-setup";
 import type { Page } from "@playwright/test";
 import { DIST_DIR, PLUGIN_ID } from "e2e/config";
 import type { VaultPageTextContext } from "e2e/obsidian-setup/setup";
-import type { MarkdownEditView } from "obsidian";
 import SandboxNotePlugin from "src/main";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import {
@@ -15,6 +14,7 @@ import {
 	OPEN_HOT_SANDBOX,
 	delay,
 	runCommand,
+	runCommandById,
 } from "../../obsidian-commands/run-command";
 import { expect, test } from "../../test-fixtures";
 
@@ -408,33 +408,52 @@ test.describe("HotSandboxNoteView Main Features", () => {
 	test("6. Toggle Source Mode", async ({ vault }) => {
 		const { window: page } = vault;
 		const CMD_TOGGLE_SOURCE = "editor:toggle-source";
-		await createNewSandboxNote(page, "test");
+		const pluginHandle = await getSandboxPlugin(vault.pluginHandleMap);
+		await pluginHandle.evaluate(
+			(plugin, [id]) =>
+				plugin.addCommand({
+					id: id,
+					name: "Toggle Source Mode",
+					hotkeys: [
+						{
+							key: "F1",
+							modifiers: ["Alt"],
+						},
+					],
+					callback: () => {
+						console.log("use debug command");
+						app.commands.executeCommandById(id);
+					},
+				}),
+			[CMD_TOGGLE_SOURCE]
+		);
+
+		await createNewSandboxNote(page, "## test");
 		await expect(
 			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
 		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
 
+		await page.locator(ACTIVE_EDITOR_SELECTOR).focus();
+
 		expect(
 			await page.evaluate(() => {
-				(app.workspace.activeEditor as any)
-					?.editMode as MarkdownEditView;
+				return app.workspace.activeLeaf?.view.getState().source;
 			})
 		).toBe(true);
 
 		// Toggle to source mode
-		await runCommand(page, CMD_TOGGLE_SOURCE);
+		await runCommandById(page, CMD_TOGGLE_SOURCE);
 		expect(
 			await page.evaluate(() => {
-				(app.workspace.activeEditor as any)
-					?.editMode as MarkdownEditView;
+				return app.workspace.activeLeaf?.view.getState().source;
 			})
 		).toBe(false);
 
 		// Toggle back to WYSIWYG mode
-		await runCommand(page, CMD_TOGGLE_SOURCE);
+		await runCommandById(page, CMD_TOGGLE_SOURCE);
 		expect(
 			await page.evaluate(() => {
-				(app.workspace.activeEditor as any)
-					?.editMode as MarkdownEditView;
+				return app.workspace.activeLeaf?.view.getState().source;
 			})
 		).toBe(true);
 	});

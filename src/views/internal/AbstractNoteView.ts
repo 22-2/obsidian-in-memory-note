@@ -34,7 +34,6 @@ export type Context = {
 
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
-	public isSourceMode = true;
 	public masterId: string;
 	public scope: Scope;
 	public wrapper: MagicalEditorWrapper;
@@ -65,12 +64,12 @@ export abstract class AbstractNoteView extends ItemView {
 		this.eventHandler = new ViewEventHandler(
 			this.context.emitter,
 			() => this.editor,
-			() => this.wrapper.virtualEditor?.editMode
+			() => this.wrapper.magicalEditor?.editMode
 		);
 	}
 
 	public get editor() {
-		return this.wrapper.virtualEditor?.editor;
+		return this.wrapper.magicalEditor?.editor;
 	}
 
 	protected get hasUnsavedChanges(): boolean {
@@ -97,13 +96,13 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	public override getState(): AbstractNoteViewState {
-		const baseState = super.getState() as ObsidianViewState;
+		const baseState =
+			this.wrapper.magicalEditor.getState() as ObsidianViewState;
 		const content = this.editor?.getValue() ?? "";
 		return this.stateManager.buildState(
 			this.getViewType(),
 			content,
 			this.masterId,
-			this.isSourceMode,
 			baseState
 		);
 	}
@@ -137,7 +136,7 @@ export abstract class AbstractNoteView extends ItemView {
 			logger.debug(`Restored masterId: ${this.masterId}`);
 		}
 
-		const editMode = this.wrapper.virtualEditor?.editMode;
+		const editMode = this.wrapper.magicalEditor?.editMode;
 
 		// update sourceModde
 		if (
@@ -150,7 +149,7 @@ export abstract class AbstractNoteView extends ItemView {
 
 		if (this.editor && state.state?.content != null) {
 			this.setContent(state.state.content);
-			await this.wrapper.virtualEditor.setState(state, result);
+			await this.wrapper.magicalEditor.setState(state, result);
 			// @ts-ignore
 			result.close = false;
 		}
@@ -269,7 +268,6 @@ export class ViewStateManager {
 		viewType: string,
 		content: string,
 		masterId: string,
-		isSourceMode: boolean,
 		baseState: any
 	): AbstractNoteViewState {
 		const state: AbstractNoteViewState = {
@@ -279,7 +277,6 @@ export class ViewStateManager {
 				masterId,
 				content,
 			},
-			source: isSourceMode,
 		};
 		logger.debug("ViewStateManager.buildState", state);
 		return state;

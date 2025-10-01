@@ -25,7 +25,7 @@ type Context = {
 
 /** Manages inline MarkdownView without physical file. */
 export class MagicalEditorWrapper {
-	public virtualEditor!: VirtualMarkdownView;
+	public magicalEditor!: VirtualMarkdownView;
 	containerEl!: HTMLDivElement;
 	public targetEl: HTMLElement | null = null;
 	private content = "";
@@ -63,7 +63,7 @@ export class MagicalEditorWrapper {
 		this.context.parentView.setContent(initialContent);
 
 		if (initialState) {
-			await this.virtualEditor.setState(initialState, {
+			await this.magicalEditor.setState(initialState, {
 				history: false,
 			});
 		}
@@ -71,11 +71,11 @@ export class MagicalEditorWrapper {
 	}
 
 	getContent() {
-		return this.virtualEditor.editor.getValue();
+		return this.magicalEditor.editor.getValue();
 	}
 
 	setContent(content: string) {
-		this.virtualEditor.__setViewData__(content, true);
+		this.magicalEditor.__setViewData__(content, true);
 	}
 
 	load(target: HTMLElement) {
@@ -93,7 +93,7 @@ export class MagicalEditorWrapper {
 	}
 
 	focus() {
-		this.virtualEditor.editor.focus();
+		this.magicalEditor.editor.focus();
 	}
 
 	// private setActiveEditor = () => {
@@ -133,21 +133,21 @@ export class MagicalEditorWrapper {
 		this.containerEl = document.createElement("div");
 		this.containerEl.addClasses(["sandbox-inline-editor"]);
 
-		this.virtualEditor = new MarkdownView(
+		this.magicalEditor = new MarkdownView(
 			this.createFakeLeaf()
 		) as VirtualMarkdownView;
 		// this.virtualEditor.file = createVirtualFile(this.context.parentView.app);
-		this.virtualEditor.leaf.working = false;
+		this.magicalEditor.leaf.working = false;
 		this.disableSaveOperations();
 		// await this.ensureSourceMode();
 	}
 
 	private disableSaveOperations() {
-		this.virtualEditor.save = noop;
-		this.virtualEditor.saveTitle = noop;
-		this.virtualEditor.requestSave = noop;
-		this.virtualEditor.__setViewData__ = this.virtualEditor.setViewData;
-		this.virtualEditor.setViewData = noop;
+		this.magicalEditor.save = noop;
+		this.magicalEditor.saveTitle = noop;
+		this.magicalEditor.requestSave = noop;
+		this.magicalEditor.__setViewData__ = this.magicalEditor.setViewData;
+		this.magicalEditor.setViewData = noop;
 	}
 
 	// private async ensureSourceMode() {
@@ -199,7 +199,7 @@ export class MagicalEditorWrapper {
 		if (activeView?.editor) {
 			logger.debug("active view editr true");
 			// @ts-expect-error
-			workspace._activeEditor = activeView.wrapper.virtualEditor;
+			workspace._activeEditor = activeView.wrapper.magicalEditor;
 		} else if (
 			// @ts-expect-error
 			workspace._activeEditor?.leaf?.__FAKE_LEAF__

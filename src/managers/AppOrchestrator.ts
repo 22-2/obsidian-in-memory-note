@@ -188,7 +188,6 @@ export class AppOrchestrator implements IManager {
 			const dbManager = this.get<DatabaseManager>("dbManager");
 			const viewManager = this.get<ViewManager>("viewManager"); // 変更点：viewManagerを取得
 			return new PluginEventManager({
-				applyLogger: this.plugin.applyLogger.bind(this.plugin),
 				cache: this.get<CacheManager>("cacheManager"),
 				emitter: this.emitter,
 				settings: this.get<SettingsManager>("settingsManager"),
@@ -205,6 +204,7 @@ export class AppOrchestrator implements IManager {
 					viewManager.isLastHotView(masterId),
 				deleteFromAll: (masterId: string | null) =>
 					dbManager.deleteFromAll(masterId),
+				togglLoggersBy: this.plugin.togglLoggersBy.bind(this.plugin),
 			});
 		});
 

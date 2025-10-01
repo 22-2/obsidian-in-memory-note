@@ -32,7 +32,6 @@ export default class SandboxNotePlugin extends Plugin {
 		// Load all managers and data via the orchestrator
 		await this.orchestrator.load();
 
-		this.applyLogger();
 		this.setupSettingsTab();
 		this.setupCommandsAndRibbons();
 
@@ -108,16 +107,15 @@ export default class SandboxNotePlugin extends Plugin {
 		return this.orchestrator.activateView();
 	}
 
-	/** Initialize logger with current settings. */
-	applyLogger(): void {
-		const settings = this.orchestrator?.getSettings();
-		if (settings) {
-			Object.values(log.getLoggers()).forEach((logger) => {
-				logger.setLevel(settings.enableLogger ? "debug" : "warn");
+	togglLoggersBy(
+		level: log.LogLevelDesc,
+		filter: (name: string) => boolean = () => true
+	): void {
+		Object.values(log.getLoggers())
+			// @ts-expect-error
+			.filter((logger) => filter(logger.name))
+			.forEach((logger) => {
+				logger.setLevel(level);
 			});
-		} else {
-			logger.setLevel("warn");
-		}
-		logger.debug("Logger initialized");
 	}
 }

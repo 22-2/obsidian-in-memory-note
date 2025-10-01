@@ -14,7 +14,6 @@ const logger = log.getLogger("PluginEventManager");
 
 type Context = {
 	saveSandbox: DatabaseManager["debouncedSaveSandboxes"];
-	applyLogger: SandboxPlugin["applyLogger"];
 	cache: CacheManager;
 	emitter: EventEmitter<AppEvents>;
 	settings: SettingsManager;
@@ -24,6 +23,7 @@ type Context = {
 	// 変更点：新しい依存関係を追加
 	isLastHotView: ViewManager["isLastHotView"];
 	deleteFromAll: DatabaseManager["deleteFromAll"];
+	togglLoggersBy: SandboxPlugin["togglLoggersBy"];
 };
 
 export class PluginEventManager implements IManager {
@@ -45,6 +45,9 @@ export class PluginEventManager implements IManager {
 			this.handleLayoutReady
 		);
 		this.context.emitter.on("plugin-unload", this.handleUnload);
+		this.handleSettingsChanged({
+			newSettings: this.context.settings.getSettings(),
+		});
 	}
 
 	unload(): void {
@@ -102,8 +105,13 @@ export class PluginEventManager implements IManager {
 		this.context.connectEditorPluginToView(payload.view);
 	};
 
-	private handleSettingsChanged = () => {
-		this.context.applyLogger();
+	private handleSettingsChanged = (
+		payload: AppEvents["settings-changed"]
+	) => {
+		this.context.togglLoggersBy(
+			payload.newSettings.enableLogger ? "debug" : "warn"
+		);
+		logger.debug("Logger initialized");
 	};
 
 	private handleEditorContentChanged = (

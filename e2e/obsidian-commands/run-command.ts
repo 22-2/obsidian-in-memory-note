@@ -23,22 +23,23 @@ export const CONVERT_HOT_SANDBOX_TO_FILE = "Sandbox Note: Convert to file";
 const logger = log.getLogger("run-commands");
 
 export const PROMPT_INPUT = ".prompt-input";
-export const runCommand = async (
-	page: Page,
-	commandName: string,
-	required = true
-) => {
+
+/**
+ * @deprecated use runCommandById
+ */
+export const runCommand = async (page: Page, commandName: string) => {
 	logger.debug("runCommand", commandName);
-	const success = await page.evaluate((commandName) => {
-		const command = app.commands
-			.listCommands()
-			.find((c) => c.name === commandName);
-		if (command) {
-			app.commands.executeCommandById(command.id);
-			return null;
-		}
-		return command;
+	const command = await page.evaluate((commandName) => {
+		return app.commands.listCommands().find((c) => c.name === commandName);
 	}, commandName);
-	expect(success).toBe(null);
-	await delay(1000);
+	expect(command).toBeTruthy();
+	return runCommandById(page, command!.id);
+};
+
+export const runCommandById = async (page: Page, commandId: string) => {
+	logger.debug("runCommandById", commandId);
+	const success = await page.evaluate((cmdId) => {
+		return app.commands.executeCommandById(cmdId);
+	}, commandId);
+	expect(success).toBe(true);
 };

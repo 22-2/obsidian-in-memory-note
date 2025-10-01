@@ -1,14 +1,18 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\views\helpers\EditorWrapper.ts
 import log from "loglevel";
-import { type ViewStateResult, WorkspaceLeaf } from "obsidian";
+import { MarkdownView, WorkspaceLeaf, type ViewStateResult } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
 import { noop } from "src/utils";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AbstractNoteView } from "./AbstractNoteView";
-import { VirtualMarkdownView } from "./VirtualMarkdownView";
+// import { VirtualMarkdownView } from "./VirtualMarkdownView";
 import type { AbstractNoteViewState } from "./types";
 
 const logger = log.getLogger("EditorWrapper");
+
+interface VirtualMarkdownView extends MarkdownView {
+	__setViewData__: MarkdownView["setViewData"];
+}
 
 type Context = {
 	getActiveView: () => AbstractNoteView | null;
@@ -27,8 +31,16 @@ export class MagicalEditorWrapper {
 	private content = "";
 
 	constructor(private context: Context) {
-		this.context.emitter.on(
+		this.context.emitter.off(
 			"obsidian-active-leaf-changed",
+			this.syncActiveEditorState.bind(this)
+		);
+		this.context.emitter.off(
+			"obsidian-layout-changed",
+			this.syncActiveEditorState.bind(this)
+		);
+		this.context.emitter.off(
+			"obsidian-layout-ready",
 			this.syncActiveEditorState.bind(this)
 		);
 	}
@@ -95,7 +107,20 @@ export class MagicalEditorWrapper {
 	// };
 
 	unload() {
-		this.content = this.getContent();
+		// this.content = this.getContent();
+
+		this.context.emitter.off(
+			"obsidian-active-leaf-changed",
+			this.syncActiveEditorState.bind(this)
+		);
+		this.context.emitter.off(
+			"obsidian-layout-changed",
+			this.syncActiveEditorState.bind(this)
+		);
+		this.context.emitter.off(
+			"obsidian-layout-ready",
+			this.syncActiveEditorState.bind(this)
+		);
 		if (this.targetEl) {
 			this.targetEl.empty();
 			// this.targetEl.removeEventListener("focusin", this.setActiveEditor);
@@ -107,10 +132,9 @@ export class MagicalEditorWrapper {
 		this.containerEl = document.createElement("div");
 		this.containerEl.addClasses(["sandbox-inline-editor"]);
 
-		this.virtualEditor = new VirtualMarkdownView(
-			this.createFakeLeaf(),
-			this
-		);
+		this.virtualEditor = new MarkdownView(
+			this.createFakeLeaf()
+		) as VirtualMarkdownView;
 		// this.virtualEditor.file = createVirtualFile(this.context.parentView.app);
 		this.virtualEditor.leaf.working = false;
 		this.disableSaveOperations();
@@ -143,21 +167,15 @@ export class MagicalEditorWrapper {
 		const fakeLeaf = {
 			...this.context.parentView.leaf,
 			containerEl: this.containerEl,
-			getState: () => {
-				const state = this.context.parentView.getState();
-				logger.debug("getState", state);
-				return state;
-			},
+			// getState: () => {
+			// 	const state = this.context.parentView.getState();
+			// 	logger.debug("getState", state);
+			// 	return state;
+			// },
 			setViewState: async (state: any, result: ViewStateResult) => {
 				if (state.type === "markdown") {
 					state.type = this.context.parentView.getViewType();
 				}
-				logger.debug(
-					"setViewState",
-					state,
-					"state.state.source",
-					state?.state?.source
-				);
 				this.context.parentView.leaf.setViewState(
 					state,
 					result || { history: false }

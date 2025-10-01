@@ -19,10 +19,8 @@ type WorkerFixtures = {
 const logger = log.getLogger("obsidianSetup");
 
 export const test = base.extend<TestFixtures, WorkerFixtures>({
-	// WorkerFixturesを追加
 	vaultOptions: {
 		useSandbox: true,
-		enablePlugins: false,
 		plugins: [],
 	},
 

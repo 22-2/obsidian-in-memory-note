@@ -10,6 +10,7 @@ import path from "path";
 import type { ElectronApplication, JSHandle, Page } from "playwright";
 import { _electron as electron } from "playwright/test";
 import { LAUNCH_OPTIONS } from "../config";
+import { getPluginHandleMap } from "./helpers";
 import { PageManager } from "./page-manager";
 import { VaultManager, type VaultOptions } from "./vault-manager";
 
@@ -73,13 +74,18 @@ export class ObsidianTestSetup {
 
 		const vaultName = await page.evaluate(() => app?.vault?.getName());
 
-		const pluginHandleMap = await page.evaluateHandle((plugins) => {
-			const map = new Map<string, Plugin>();
-			plugins.forEach((p) => {
-				map.set(p.pluginId, app?.plugins.getPlugin(p.pluginId)!);
-			});
-			return map;
-		}, options.plugins || []);
+		const pluginHandleMap = await getPluginHandleMap(
+			page,
+			options.plugins || []
+		);
+
+		// const pluginHandleMap = await page.evaluateHandle((plugins) => {
+		// 	const map = new Map<string, Plugin>();
+		// 	plugins.forEach((p) => {
+		// 		map.set(p.pluginId, app?.plugins.getPlugin(p.pluginId)!);
+		// 	});
+		// 	return map;
+		// }, options.plugins || []);
 
 		// page = await this.pageManager!.executeActionAndWaitForNewWindow(
 		// 	async () => {

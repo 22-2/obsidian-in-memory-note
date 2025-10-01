@@ -2,7 +2,9 @@ import "../../log-setup";
 
 import type { Page } from "@playwright/test";
 import { DIST_DIR, PLUGIN_ID } from "e2e/config";
+import { getPluginHandleMap } from "e2e/obsidian-setup/helpers";
 import type { VaultPageTextContext } from "e2e/obsidian-setup/setup";
+import type { VaultOptions } from "e2e/obsidian-setup/vault-manager";
 import SandboxNotePlugin from "src/main";
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import {
@@ -21,7 +23,6 @@ test.use({
 	vaultOptions: {
 		useSandbox: true,
 		plugins: [{ pluginId: PLUGIN_ID, path: DIST_DIR }],
-		enablePlugins: true,
 	},
 });
 
@@ -76,6 +77,13 @@ class HotSandboxPage {
 
 	get allSandboxViews() {
 		return this.activeSandboxView.replace(".mod-active", "");
+	}
+
+	async rebuildReferences(vaultOptions: VaultOptions) {
+		this.pluginHandleMap = await getPluginHandleMap(
+			this.page,
+			vaultOptions.plugins || []
+		);
 	}
 
 	// Actions
@@ -222,6 +230,10 @@ class HotSandboxPage {
 			},
 			[PLUGIN_ID]
 		);
+	}
+
+	public waitForLayoutReady() {
+		return this.page.waitForFunction(() => app.workspace.layoutReady);
 	}
 }
 
@@ -403,5 +415,48 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		// Toggle back to live preview
 		await runCommandById(vault.window, CMD_TOGGLE_SOURCE);
 		await hotSandbox.expectSourceMode(true);
+	});
+
+	test.use({
+		vaultOptions: {
+			useSandbox: false,
+			plugins: [{ pluginId: PLUGIN_ID, path: DIST_DIR }],
+		},
+	});
+
+	test("7. Data Persistence After Reload", async ({
+		vault,
+		vaultOptions,
+	}) => {
+		const hotSandbox = new HotSandboxPage(
+			vault.window,
+			vault.pluginHandleMap
+		);
+		const persistentContent = "This content should persist after reload.";
+
+		// Create sandbox note with content
+		await hotSandbox.createNewSandboxNote(persistentContent);
+		await hotSandbox.expectActiveTitle("*Hot Sandbox-1");
+		expect(await hotSandbox.getActiveEditorContent()).toBe(
+			persistentContent
+		);
+
+		// Reload Obsidian
+		await vault.window.reload();
+		await hotSandbox.waitForLayoutReady();
+
+		// Verify content persists
+		const reloadedWindow = vault.electronApp.windows().at(-1)!;
+		const reloadedHotSandbox = new HotSandboxPage(
+			reloadedWindow,
+			await getPluginHandleMap(reloadedWindow, vaultOptions.plugins || [])
+		);
+		await expect(
+			vault.window.locator(reloadedHotSandbox.activeSandboxView)
+		).toBeVisible();
+		expect(await reloadedHotSandbox.getActiveEditorContent()).toBe(
+			persistentContent
+		);
+		await reloadedHotSandbox.expectActiveTitle("*Hot Sandbox-1");
 	});
 });

@@ -8,7 +8,6 @@ import type { ElectronApplication, Page } from "playwright";
 export interface VaultConfig {
 	name: string;
 	path?: string;
-	isNew?: boolean;
 	plugins?: string[];
 	enablePlugins?: boolean;
 }

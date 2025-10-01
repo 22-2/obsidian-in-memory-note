@@ -6,7 +6,9 @@
 import chalk from "chalk";
 import type { WebContents } from "electron";
 import { existsSync, rmSync } from "fs";
+import fs from "fs/promises";
 import log from "loglevel";
+import os from "os";
 import path from "path";
 import type { ElectronApplication, Page } from "playwright";
 import { SANDBOX_VAULT_NAME } from "../config";
@@ -21,11 +23,10 @@ export interface TestPlugin {
 
 export interface VaultOptions {
 	name?: string;
-	path?: string;
-	createNew?: boolean;
+	vaultPath?: string;
+	forceNewVault?: boolean;
 	useSandbox?: boolean;
 	plugins?: TestPlugin[];
-	enablePlugins?: boolean;
 }
 
 const logger = log.getLogger("VaultManager");
@@ -60,17 +61,21 @@ export class VaultManager {
 			logger.debug(chalk.green("Sandbox vault opened at:", vaultPath));
 		} else {
 			logger.debug("Opening normal vault...");
-			if (options.path) {
-				vaultPath = options.path;
+			if (options.vaultPath) {
+				vaultPath = options.vaultPath;
 			} else if (options.name) {
 				vaultPath = await this.getVaultPath(options.name);
 			} else {
-				throw new Error(
-					"Either 'name' or 'path' must be specified for a normal vault."
+				logger.debug(
+					"options.name and options.path not specified, create temp dir"
 				);
+				vaultPath = await fs.mkdtemp(
+					path.join(os.tmpdir(), "obsidian-e2e-")
+				);
+				logger.debug("temp dir created:", vaultPath);
 			}
 
-			if (options.createNew && existsSync(vaultPath)) {
+			if (options.forceNewVault && existsSync(vaultPath)) {
 				rmSync(vaultPath, { recursive: true });
 			}
 
@@ -78,7 +83,7 @@ export class VaultManager {
 				async () => {
 					const result = await this.ipc.openVault(
 						vaultPath,
-						options.createNew
+						options.forceNewVault
 					);
 					if (result !== true) {
 						throw new Error(`Failed to open vault: ${result}`);
@@ -89,8 +94,6 @@ export class VaultManager {
 			logger.debug("Normal vault opened:", vaultPath);
 		}
 
-		await this.pageManager.waitForVaultReady(newPage);
-
 		// --- Step 2: Install Plugins (if specified) ---
 		if (options.plugins && options.plugins.length > 0) {
 			logger.debug("Installing plugins...");
@@ -100,7 +103,7 @@ export class VaultManager {
 		}
 
 		// --- Step 3: Enable Plugins (if specified) ---
-		if (options.enablePlugins && options.plugins) {
+		if (options.plugins) {
 			logger.debug("Enabling plugins...");
 			await this.pluginManager.enablePlugins(
 				this.app,

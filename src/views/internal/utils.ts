@@ -102,3 +102,13 @@ function handleConversionError(error: Error): void {
 	);
 	throw error;
 }
+
+export function getSandboxVaultPath() {
+	try {
+		return require("electron").ipcRenderer.sendSync(
+			"get-sandbox-vault-path"
+		);
+	} catch {
+		return undefined;
+	}
+}

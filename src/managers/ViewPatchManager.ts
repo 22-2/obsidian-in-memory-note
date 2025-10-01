@@ -1,8 +1,9 @@
 // File: src/managers/ViewPatchManager.ts (New File)
 import log from "loglevel";
 import { around } from "monkey-around";
-import { WorkspaceLeaf, type Plugin } from "obsidian";
+import { Platform, WorkspaceLeaf, type Plugin } from "obsidian";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
+import { getSandboxVaultPath } from "src/views/internal/utils";
 import type { IManager } from "./IManager";
 
 const logger = log.getLogger("ViewPatchManager");
@@ -37,14 +38,24 @@ export class ViewPatchManager implements IManager {
 	 * and execute HotSandboxNoteView's shouldClose logic (confirmation dialog).
 	 */
 	private applyLeafDetachPatch(): void {
+		let initialized = false;
 		const cleanup = around(WorkspaceLeaf.prototype, {
 			detach: (orig) =>
 				async function (this: WorkspaceLeaf) {
 					if (!(this.view instanceof HotSandboxNoteView)) {
 						return orig.call(this);
 					}
+
+					const shouldInitialClose =
+						!initialized &&
+						Platform.isDesktopApp &&
+						getSandboxVaultPath() ===
+							this.app.vault.adapter.basePath &&
+						this.app.vault.getName() === "Obsidian Sandbox";
+
 					// Handling automatic closing of the Sandbox Vault
-					if (!this.workspace.layoutReady) {
+					if (shouldInitialClose) {
+						initialized = true;
 						return orig.call(this);
 					}
 

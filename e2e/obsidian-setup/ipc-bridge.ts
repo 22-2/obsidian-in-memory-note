@@ -2,7 +2,6 @@
 // ipc-bridge.mts - IPCの簡素化と統合
 // ===================================================================
 
-import type { Page } from "playwright";
 import type { PageManager } from "./page-manager";
 
 export class IPCBridge {
@@ -34,9 +33,9 @@ export class IPCBridge {
 
 	async openVault(
 		vaultPath: string,
-		createNew = false
+		forceNew = false
 	): Promise<true | string> {
-		return this.send<true | string>("vault-open", vaultPath, createNew);
+		return this.send<true | string>("vault-open", vaultPath, forceNew);
 	}
 
 	async openSandbox(): Promise<void> {

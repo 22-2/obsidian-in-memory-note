@@ -305,10 +305,6 @@ export class AppOrchestrator implements IManager {
 		return this.get("viewManager").getActiveView();
 	}
 
-	getAllView() {
-		return this.get("viewManager").getAllViews();
-	}
-
 	activateView() {
 		return this.get("viewManager").activateView();
 	}

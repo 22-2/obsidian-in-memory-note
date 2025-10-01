@@ -1,6 +1,4 @@
-import log from "loglevel";
 import { Editor, MarkdownEditView } from "obsidian";
-import type { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 
 /** Handle right-click context menu events. */
 export const handleContextMenu = async (

@@ -2,7 +2,6 @@ import log from "loglevel";
 import { Plugin } from "obsidian";
 import type { AppEvents } from "./events/AppEvents";
 import { AppOrchestrator } from "./managers/AppOrchestrator";
-import { DatabaseManager } from "./managers/DatabaseManager";
 import { SandboxNoteSettingTab } from "./settings";
 import { EventEmitter } from "./utils/EventEmitter";
 import { DEBUG_MODE, HOT_SANDBOX_NOTE_ICON } from "./utils/constants";
@@ -71,7 +70,7 @@ export default class SandboxNotePlugin extends Plugin {
 						extractToFileInteraction(view).then((success) => {
 							if (success && view.masterId) {
 								this.orchestrator
-									.get<DatabaseManager>("dbManager")
+									.get("dbManager")
 									.deleteFromAll(view.masterId);
 							}
 						});

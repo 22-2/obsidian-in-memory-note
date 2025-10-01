@@ -12,7 +12,6 @@ import {
 	CMD_UNDO_CLOSE_TAB,
 	CONVERT_HOT_SANDBOX_TO_FILE,
 	OPEN_HOT_SANDBOX,
-	delay,
 	runCommand,
 } from "../../obsidian-commands/run-command";
 import { expect, test } from "../../test-fixtures";
@@ -93,33 +92,6 @@ async function getActiveEditorContent(
 		throw new Error("failed to get active editor");
 	});
 }
-
-function closeAllTabs(page: Page) {
-	return page.waitForFunction(
-		async ([cmd]) => {
-			app.commands.executeCommandById(cmd);
-			let i = 0;
-			app.workspace.iterateRootLeaves(() => {
-				i++;
-			});
-			return (
-				i === 1 &&
-				app.workspace.activeLeaf?.view.getViewType() === "empty"
-			);
-		},
-		[CMD_CLOSE_CURRENT_TAB]
-	);
-}
-
-// async function countTabs(page: Page) {
-// 	return page.evaluate(() => {
-// 		let i = 0;
-// 		app.workspace.iterateRootLeaves(() => {
-// 				i++;
-// 		})
-// 		return i;
-// 	})
-// }
 
 // --- Test Suite ---
 
@@ -236,6 +208,12 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		const expectedFileName = "Untitled";
 		const expectedPath = "Adventurer";
 
+		await runCommand(page, CMD_CLOSE_CURRENT_TAB); // 1 tabs
+		await expect(
+			page.locator(".mod-root .workspace-tab-header-container-inner")
+		).toHaveCount(1);
+		expect(await getActiveViewType(page)).toBe("empty");
+
 		/* ========================================================================== */
 		//
 		//  HotSandbox view
@@ -243,7 +221,11 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		/* ========================================================================== */
 
 		// 1. Create the note to be converted
-		await createNewSandboxNote(page, noteContent);
+		await createNewSandboxNote(page, noteContent); // 1 tabs
+		await expect(
+			page.locator(".mod-root .workspace-tab-header-container-inner")
+		).toHaveCount(1);
+		expect(await getActiveViewType(page)).toBe(VIEW_TYPE_HOT_SANDBOX);
 
 		/* ========================================================================== */
 		//
@@ -269,28 +251,10 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		await page.getByText("Save", { exact: true }).click();
 
-		// ポーリングしてデータが削除されるのを待つ
-		// await expect
-		// 	.poll(
-		// 		async () => {
-		// 			const pluginHandle = await getSandboxPlugin(
-		// 				vault.pluginHandleMap
-		// 			);
-		// 			const cacheSize = await pluginHandle.evaluate((plugin) => {
-		// 				const cache = (plugin as any).orchestrator.get(
-		// 					"cacheManager"
-		// 				);
-		// 				return cache.getAllSandboxes().length;
-		// 			});
-		// 			return cacheSize;
-		// 		},
-		// 		{
-		// 			message:
-		// 				"Cache should be cleared after file conversion, but it was not.",
-		// 			timeout: 5000, // タイムアウトを5秒に設定
-		// 		}
-		// 	)
-		// 	.toBe(0);
+		expect(await getActiveViewType(page)).toBe("markdown");
+		await expect(
+			page.locator(".mod-root .workspace-tab-header-container-inner")
+		).toHaveCount(1);
 
 		/* ========================================================================== */
 		//
@@ -298,10 +262,11 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		//
 		/* ========================================================================== */
 
-		await delay(500);
-
 		// 3. Verify the sandbox note view is closed
 		expect(await getActiveViewType(page)).toBe("markdown");
+		await expect(
+			page.locator(".mod-root .workspace-tab-header-container-inner")
+		).toHaveCount(1);
 
 		// 5. Verify the newly opened file name and content are correct
 		await expect(
@@ -326,15 +291,14 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		expect(fileContent).toBe(noteContent);
 
 		await expect(
-			page.locator(`${ACTIVE_LEAF_SELECTOR} ${DATA_TYPE_MARKDOWN}`)
-		).toBeVisible();
+			page.locator(".mod-root .workspace-tab-header-container-inner")
+		).toHaveCount(1);
+		expect(await getActiveViewType(page)).toBe("markdown");
 
 		// back to sandbox view
 		await page.evaluate(async () => {
 			await app.workspace.activeLeaf?.history.back();
 		});
-
-		await delay(500);
 
 		/* ========================================================================== */
 		//
@@ -350,13 +314,18 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		expect(sandboxNoteContent).toBe("");
 
-		await closeAllTabs(page);
+		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
 
 		/* ========================================================================== */
 		//
 		//  Hotsandbox view
 		//
 		/* ========================================================================== */
+
+		expect(await getActiveViewType(page)).toBe("empty");
+		await expect(
+			page.locator(".mod-root .workspace-tab-header-container-inner")
+		).toHaveCount(1);
 
 		await createNewSandboxNote(page, noteContent);
 

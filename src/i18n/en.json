@@ -1,83 +1,83 @@
 {
-    "commands": {
-        "openHotSandboxNote": "Open new hot sandbox note",
-        "convertToFile": "Convert to file"
-    },
-    "ribbonIcon": {
-        "openHotSandboxNote": "Open new hot sandbox note"
-    },
-    "notices": {
-        "conversionCancelled": "Conversion cancelled.",
-        "convertedToFile": "{{title}} converted to file: {{path}}",
-        "failedToConvertNoFile": "Failed to convert sandbox: no such file or directory",
-        "failedToConvertGeneral": "Failed to convert sandbox note to file. See console for details.",
-        "fileNameCannotBeEmpty": "File name cannot be empty.",
-        "unknownError": "An unknown error occurred."
-    },
-    "settings": {
-        "sections": {
-            "appearance": "Appearance",
-            "fileOperation": "File Operation",
-            "advanced": "Advanced"
-        },
-        "appearance": {
-            "firstLineAsTitle": {
-                "name": "First line as title",
-                "desc": "Use the first line of the note as the title."
-            }
-        },
-        "fileOperation": {
-            "useObsidianDefaultLocation": {
-                "name": "Use Obsidian default location",
-                "desc": "If enabled, converted notes will respect the 'Default location for new notes' setting defined in Obsidian's Files & Links preferences."
-            },
-            "customDefaultSaveLocation": {
-                "name": "Custom default save location",
-                "desc": "The default folder path where converted notes will be saved. Must end with a slash (/) for a folder. (Ignored if 'Use Obsidian default location' is enabled).",
-                "placeholder": "e.g. Sandbox Notes/"
-            },
-            "confirmBeforeSaving": {
-                "name": "Confirm save location before converting",
-                "desc": "If enabled, a modal will appear to choose the file path every time you convert a sandbox note."
-            },
-            "saveToVaultOnCommand": {
-                "name": "Save to vault on command",
-                "desc": "If enabled, the note will be saved to the vault when you execute the save command (Ctrl+S or Cmd+S)."
-            }
-        },
-        "advanced": {
-            "showDebugMessages": {
-                "name": "Show debug messages",
-                "desc": "Enable or disable debug messages in the console."
-            }
-        }
-    },
-    "modals": {
-        "confirmSaveLocation": {
-            "title": "Confirm Save Location",
-            "convertingNote": "Converting note: \"{{title}}\"",
-            "fileName": {
-                "name": "File Name",
-                "desc": "Enter the file name (extension will be added automatically)",
-                "placeholder": "e.g., My Scratchpad"
-            },
-            "folderPath": {
-                "name": "Folder Path",
-                "desc": "Enter folder path (leave empty for vault root)",
-                "placeholder": "e.g., Notes/Daily"
-            },
-            "buttons": {
-                "save": "Save",
-                "cancel": "Cancel",
-                "yes": "Yes",
-                "no": "No"
-            }
-        }
-    },
-    "folderSuggest": {
-        "vaultRoot": "Vault Root /"
-    },
-    "defaults": {
-        "untitled": "Untitled"
-    }
+	"commands": {
+		"openHotSandboxNote": "Open hot sandbox note",
+		"convertToFile": "Convert to file"
+	},
+	"ribbonIcon": {
+		"openHotSandboxNote": "Open hot sandbox note"
+	},
+	"notices": {
+		"conversionCancelled": "Conversion cancelled.",
+		"convertedToFile": "{{title}} converted to file: {{path}}",
+		"failedToConvertNoFile": "Failed to convert sandbox note: file or directory not found.",
+		"failedToConvertGeneral": "Failed to convert sandbox note to file. See console for details.",
+		"fileNameCannotBeEmpty": "File name cannot be empty.",
+		"unknownError": "An unknown error occurred."
+	},
+	"settings": {
+		"sections": {
+			"appearance": "Appearance",
+			"fileOperation": "File Operation",
+			"advanced": "Advanced"
+		},
+		"appearance": {
+			"firstLineAsTitle": {
+				"name": "First line as title",
+				"desc": "Use the first line of the note as its title."
+			}
+		},
+		"fileOperation": {
+			"useObsidianDefaultLocation": {
+				"name": "Use Obsidian default location",
+				"desc": "Converted notes will use Obsidian's 'Default location for new notes' setting."
+			},
+			"customDefaultSaveLocation": {
+				"name": "Custom default save location",
+				"desc": "The default folder path for saving converted notes. Must end with a slash (/). (Ignored if 'Use Obsidian default location' is active.)",
+				"placeholder": "e.g. Sandbox Notes/"
+			},
+			"confirmBeforeSaving": {
+				"name": "Confirm location before converting",
+				"desc": "Prompt for the file path and name every time a note is converted."
+			},
+			"saveToVaultOnCommand": {
+				"name": "Save to vault on command",
+				"desc": "Enable saving the sandbox note to the vault using the standard save command (e.g., Ctrl+S / Cmd+S)."
+			}
+		},
+		"advanced": {
+			"showDebugMessages": {
+				"name": "Show debug messages",
+				"desc": "Enable or disable debug messages in the console."
+			}
+		}
+	},
+	"modals": {
+		"confirmSaveLocation": {
+			"title": "Confirm Save Location",
+			"convertingNote": "Converting note: \"{{title}}\"",
+			"fileName": {
+				"name": "File Name",
+				"desc": "Enter the file name (extension will be added automatically)",
+				"placeholder": "e.g., My Scratchpad"
+			},
+			"folderPath": {
+				"name": "Folder Path",
+				"desc": "Enter folder path (leave blank for vault root)",
+				"placeholder": "e.g., Notes/Daily"
+			},
+			"buttons": {
+				"save": "Save",
+				"cancel": "Cancel",
+				"yes": "Yes",
+				"no": "No"
+			}
+		}
+	},
+	"folderSuggest": {
+		"vaultRoot": "Vault Root /"
+	},
+	"defaults": {
+		"untitled": "Untitled"
+	}
 }

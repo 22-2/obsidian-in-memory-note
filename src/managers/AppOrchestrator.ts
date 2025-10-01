@@ -20,7 +20,7 @@ import { ViewPatchManager } from "./ViewPatchManager";
 
 const logger = log.getLogger("AppOrchestrator");
 
-// マネージャーの型定義マップ
+// Manager type definition map
 interface ManagerTypeMap {
 	cacheManager: CacheManager;
 	cmExtensionManager: CodeMirrorExtensionManager;
@@ -50,7 +50,7 @@ const MANAGER_NAMES: readonly ManagerName[] = [
 ] as const;
 
 /**
- * DIコンテナとして機能し、マネージャーのライフサイクルと依存関係を管理します。
+ * Manages the manager's lifecycle and dependencies as a DI container.
  */
 export class AppOrchestrator implements IManager {
 	private readonly plugin: SandboxNotePlugin;
@@ -69,8 +69,8 @@ export class AppOrchestrator implements IManager {
 	}
 
 	/**
-	 * 指定された名前のマネージャーインスタンスを取得します。
-	 * インスタンスがなければファクトリを使って生成し、キャッシュします。
+	 * Get the manager instance by name.
+	 * Create and cache if it doesn't exist.
 	 */
 	public get<K extends ManagerName>(name: K): ManagerTypeMap[K] {
 		let instance = this.instances.get(name);
@@ -142,7 +142,7 @@ export class AppOrchestrator implements IManager {
 			const settings = this.get("settingsManager");
 			const cache = this.get("cacheManager");
 
-			// ViewManager自身への参照が必要なため、後で設定する
+			// We need a reference to the ViewManager itself, so we'll set it later.
 			let viewManager: ViewManager;
 
 			viewManager = new ViewManager({
@@ -283,7 +283,7 @@ export class AppOrchestrator implements IManager {
 	}
 
 	unload(): void {
-		// 逆順でアンロード（依存関係を考慮）
+		// Unload in reverse order (considering dependencies)
 		const reversedNames = [...MANAGER_NAMES].reverse();
 		for (const name of reversedNames) {
 			const manager = this.instances.get(name);

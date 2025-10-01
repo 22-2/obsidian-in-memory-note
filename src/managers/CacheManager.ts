@@ -16,7 +16,7 @@ type Context = {
 };
 
 export class CacheManager implements IManager {
-	private sandboxNotes = new Map<string, HotSandboxNoteData>();
+	private sandboxes = new Map<string, HotSandboxNoteData>();
 
 	constructor(private context: Context) {}
 
@@ -25,7 +25,7 @@ export class CacheManager implements IManager {
 			.getDbManager()
 			.getAllSandboxes();
 		allSandboxes.forEach((note) => {
-			this.sandboxNotes.set(note.id, note);
+			this.sandboxes.set(note.id, note);
 		});
 
 		logger.debug(
@@ -35,37 +35,37 @@ export class CacheManager implements IManager {
 	}
 
 	getAllSandboxes(): HotSandboxNoteData[] {
-		return Array.from(this.sandboxNotes.values());
+		return Array.from(this.sandboxes.values());
 	}
 
-	getNoteContent(masterId: string): string {
-		return this.sandboxNotes.get(masterId)?.content ?? "";
+	getSandboxContent(masterId: string): string {
+		return this.sandboxes.get(masterId)?.content ?? "";
 	}
 
 	get(masterId: string): HotSandboxNoteData | undefined {
-		return this.sandboxNotes.get(masterId);
+		return this.sandboxes.get(masterId);
 	}
 
-	registerNewNote(masterId: string): void {
-		if (!this.sandboxNotes.has(masterId)) {
+	registerNewSandbox(masterId: string): void {
+		if (!this.sandboxes.has(masterId)) {
 			const newNote: HotSandboxNoteData = {
 				id: masterId,
 				content: "",
 				mtime: Date.now(),
 			};
-			this.sandboxNotes.set(masterId, newNote);
+			this.sandboxes.set(masterId, newNote);
 			logger.debug(`Registered new note: ${masterId}`);
 			// this.emitter.emit("sandbox-note-registered", { noteId: masterId });
 		}
 	}
 
 	delete(masterId: string): void {
-		this.sandboxNotes.delete(masterId);
+		this.sandboxes.delete(masterId);
 		logger.debug(`Deleted note: ${masterId}`);
 	}
 
-	updateNoteContent(masterId: string, content: string): void {
-		const note = this.sandboxNotes.get(masterId);
+	updateSandboxContent(masterId: string, content: string): void {
+		const note = this.sandboxes.get(masterId);
 		if (note) {
 			note.content = content;
 			note.mtime = Date.now();
@@ -77,6 +77,6 @@ export class CacheManager implements IManager {
 	}
 
 	unload(): void {
-		this.sandboxNotes.clear();
+		this.sandboxes.clear();
 	}
 }

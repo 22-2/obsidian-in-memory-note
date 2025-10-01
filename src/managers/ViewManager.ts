@@ -13,7 +13,7 @@ type Context = {
 	detachLeavesOfType: Workspace["detachLeavesOfType"];
 	getLeavesOfType: Workspace["getLeavesOfType"];
 	getActiveViewOfType: Workspace["getActiveViewOfType"];
-	getAllNotes: CacheManager["getAllSandboxes"];
+	getAllSandboxes: CacheManager["getAllSandboxes"];
 	createView: Parameters<Plugin["registerView"]>[1];
 };
 
@@ -68,7 +68,7 @@ export class ViewManager implements IManager {
 	}
 
 	public indexOfMasterId(masterId: string): number {
-		// 変更点：キャッシュ(getAllNotes)ではなく、現在開いているビュー(getAllViews)を基準にする
+		// 変更点：キャッシュ(getAllSandboxes)ではなく、現在開いているビュー(getAllViews)を基準にする
 		const allViews = this.getAllViews();
 		// 開いているビューから、重複しないmasterIdのリストを作成
 		const uniqueMasterIds = [

@@ -121,7 +121,10 @@ export class PluginEventManager implements IManager {
 
 		if (sourceView instanceof HotSandboxNoteView && sourceView.masterId) {
 			// インメモリ状態を更新
-			this.context.cache.updateNoteContent(sourceView.masterId, content);
+			this.context.cache.updateSandboxContent(
+				sourceView.masterId,
+				content
+			);
 
 			// 自動保存が有効な場合はデバウンス保存
 			if (this.context.settings.getSettings().enableAutoSave) {

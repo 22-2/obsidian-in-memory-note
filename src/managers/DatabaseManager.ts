@@ -16,7 +16,7 @@ type Context = {
 	dbAPI: DatabaseAPI;
 	cache: {
 		get: CacheManager["get"];
-		set: CacheManager["updateNoteContent"];
+		set: CacheManager["updateSandboxContent"];
 		delete: CacheManager["delete"];
 	};
 	emitter: EventEmitter<AppEvents>;

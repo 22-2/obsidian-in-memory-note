@@ -110,7 +110,7 @@ export class AppOrchestrator implements IManager {
 				cache: {
 					get: (noteId: string) => cacheManager.get(noteId),
 					set: (noteId: string, content: string) =>
-						cacheManager.updateNoteContent(noteId, content),
+						cacheManager.updateSandboxContent(noteId, content),
 					delete: (noteId: string) => cacheManager.delete(noteId),
 				},
 				emitter: this.emitter,
@@ -156,7 +156,7 @@ export class AppOrchestrator implements IManager {
 					this.plugin.app.workspace.getActiveViewOfType(type),
 				getLeavesOfType: (type: string) =>
 					this.plugin.app.workspace.getLeavesOfType(type),
-				getAllNotes: () => cacheManager.getAllSandboxes(),
+				getAllSandboxes: () => cacheManager.getAllSandboxes(),
 			});
 			return viewManager;
 		});
@@ -167,9 +167,11 @@ export class AppOrchestrator implements IManager {
 			return new EditorSyncManager({
 				emitter: this.emitter,
 				getAllHotSandboxViews: () => viewManager.getAllViews(),
-				getAllNotes: () => cacheManager.getAllSandboxes(),
-				registerNewNote: (note) => cacheManager.registerNewNote(note),
-				getNoteContent: (noteId) => cacheManager.getNoteContent(noteId),
+				getAllSandboxes: () => cacheManager.getAllSandboxes(),
+				registerNewSandbox: (note) =>
+					cacheManager.registerNewSandbox(note),
+				getSandboxContent: (noteId) =>
+					cacheManager.getSandboxContent(noteId),
 				getActiveView: () => viewManager.getActiveView(),
 				workspace: this.plugin.app.workspace as never,
 			});

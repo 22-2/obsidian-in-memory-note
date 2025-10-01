@@ -2,7 +2,6 @@ import log from "loglevel";
 import type { AppEvents } from "src/events/AppEvents";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
-import { AbstractNoteView } from "src/views/internal/AbstractNoteView";
 import type { CacheManager } from "./CacheManager";
 import type { IManager } from "./IManager";
 import type { ViewManager } from "./ViewManager";
@@ -12,9 +11,9 @@ const logger = log.getLogger("EditorSyncManager");
 type Context = {
 	emitter: EventEmitter<AppEvents>;
 	getAllHotSandboxViews: ViewManager["getAllViews"];
-	getAllNotes: CacheManager["getAllSandboxes"];
-	registerNewNote: CacheManager["registerNewNote"];
-	getNoteContent: CacheManager["getNoteContent"];
+	getAllSandboxes: CacheManager["getAllSandboxes"];
+	registerNewSandbox: CacheManager["registerNewSandbox"];
+	getSandboxContent: CacheManager["getSandboxContent"];
 	getActiveView: ViewManager["getActiveView"];
 	workspace: {
 		_activeEditor: never;
@@ -60,9 +59,9 @@ export class EditorSyncManager implements IManager {
 	private handleViewOpened = (payload: AppEvents["view-opened"]) => {
 		const { view } = payload;
 		if (view instanceof HotSandboxNoteView && view.masterId) {
-			this.context.registerNewNote(view.masterId);
+			this.context.registerNewSandbox(view.masterId);
 			this.viewMasterIdMap.set(view, view.masterId);
-			view.setContent(this.getNoteContent(view.masterId));
+			view.setContent(this.getSandboxContent(view.masterId));
 			log.debug(
 				`View ${view.leaf.id} associated with masterId ${view.masterId}`
 			);
@@ -92,8 +91,8 @@ export class EditorSyncManager implements IManager {
 		logger.debug("finish");
 	}
 
-	public getNoteContent(masterId: string): string {
-		return this.context.getNoteContent(masterId);
+	public getSandboxContent(masterId: string): string {
+		return this.context.getSandboxContent(masterId);
 	}
 
 	public syncHotViews(

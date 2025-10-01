@@ -1,5 +1,5 @@
 import Dexie, { type Table } from "dexie";
-import type { HotSandboxNoteData } from "src/settings";
+import type { HotSandboxNoteData } from "src/types";
 
 export class DatabaseAPI extends Dexie {
 	// 'notes' is typed with schema of our note object.

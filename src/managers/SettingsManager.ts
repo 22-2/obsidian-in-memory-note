@@ -1,9 +1,8 @@
 import type { Plugin } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
 import type { PluginSettings } from "src/settings";
-import { type SandboxNotePluginData } from "src/settings";
+import { DEFAULT_PLUGIN_DATA, type SandboxNotePluginData } from "src/settings";
 import type { EventEmitter } from "src/utils/EventEmitter";
-import { DEFAULT_PLUGIN_DATA } from "src/utils/constants";
 import type { IManager } from "./IManager";
 
 type Context = {

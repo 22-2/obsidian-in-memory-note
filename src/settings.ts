@@ -1,20 +1,10 @@
 import { PluginSettingTab, Setting } from "obsidian";
 import { FolderSuggest } from "./helpers/interaction";
 import type SandboxNotePlugin from "./main";
-
-// --- Plugin Data & Settings Interfaces ---
-
-export interface HotSandboxNoteData {
-	id: string;
-	content: string;
-	mtime: number;
-}
+import { DEBUG_MODE } from "./utils/constants";
 
 export interface SandboxNotePluginData {
 	settings: PluginSettings;
-	data: {
-		hotSandboxNotes: Record<string, HotSandboxNoteData>;
-	};
 }
 
 export interface PluginSettings {
@@ -136,3 +126,15 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 			});
 	}
 }
+export const DEFAULT_SETTINGS: PluginSettings = {
+	enableLogger: DEBUG_MODE,
+	enableAutoSave: true,
+	autoSaveDebounceMs: 3000,
+	defaultSavePath: "./",
+	confirmBeforeSaving: true,
+	firstLineAsTitle: false,
+};
+
+export const DEFAULT_PLUGIN_DATA: SandboxNotePluginData = {
+	settings: DEFAULT_SETTINGS,
+};

@@ -1,6 +1,6 @@
 import log from "loglevel";
 import type { AppEvents } from "src/events/AppEvents";
-import type { HotSandboxNoteData } from "src/settings";
+import type { HotSandboxNoteData } from "src/types";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { DatabaseManager } from "./DatabaseManager";
 import type { IManager } from "./IManager";

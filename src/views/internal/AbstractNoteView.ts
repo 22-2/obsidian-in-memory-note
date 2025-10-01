@@ -15,7 +15,6 @@ import type { ViewManager } from "src/managers/ViewManager";
 import type { PluginSettings } from "src/settings";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
-import { issue2Logger } from "../../special-loggers";
 import { MagicalEditorWrapper } from "./MagicalEditorWrapper";
 import type { AbstractNoteViewState, ObsidianViewState } from "./types";
 import { extractToFileInteraction } from "./utils";
@@ -128,8 +127,6 @@ export abstract class AbstractNoteView extends ItemView {
 		state: AbstractNoteViewState,
 		result: ViewStateResult
 	): Promise<void> {
-		issue2Logger.debug("AbstractNoteView.setState", state);
-
 		// Update only when restoring masterId from state.
 		if (state?.state?.masterId) {
 			this.masterId = state.state.masterId;

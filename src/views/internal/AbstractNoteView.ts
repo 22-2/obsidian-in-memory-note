@@ -50,7 +50,7 @@ export abstract class AbstractNoteView extends ItemView {
 
 	constructor(leaf: WorkspaceLeaf, protected context: Context) {
 		super(leaf);
-		// 確実にmasterIdを初期化
+		// Ensure masterId is initialized.
 		this.masterId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
 		this.wrapper = new MagicalEditorWrapper({
 			emitter: this.context.emitter,
@@ -131,7 +131,7 @@ export abstract class AbstractNoteView extends ItemView {
 	): Promise<void> {
 		issue2Logger.debug("AbstractNoteView.setState", state);
 
-		// stateからmasterIdを復元する場合のみ更新
+		// Update only when restoring masterId from state.
 		if (state?.state?.masterId) {
 			this.masterId = state.state.masterId;
 			logger.debug(`Restored masterId: ${this.masterId}`);
@@ -139,7 +139,7 @@ export abstract class AbstractNoteView extends ItemView {
 
 		const editMode = this.wrapper.virtualEditor?.editMode;
 
-		// sourceModeの更新
+		// update sourceModde
 		if (
 			typeof state.source === "boolean" &&
 			editMode.sourceMode !== state.source
@@ -155,7 +155,7 @@ export abstract class AbstractNoteView extends ItemView {
 			result.close = false;
 		}
 
-		// 初期state保存
+		// save initial state
 		this.stateManager.setInitialState(state);
 
 		await super.setState(state, result);

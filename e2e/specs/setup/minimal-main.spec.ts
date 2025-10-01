@@ -42,7 +42,6 @@ test.use({
 		enablePlugins: true,
 	},
 });
-
 // --- Helper Functions ---
 
 /**
@@ -225,7 +224,9 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await expect(
 			page.locator(".mod-root .workspace-tab-header-container-inner")
 		).toHaveCount(1);
-		expect(await getActiveViewType(page)).toBe(VIEW_TYPE_HOT_SANDBOX);
+		await expect(
+			page.locator(".workspace-tab-header-container-inner > .mod-active")
+		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
 
 		/* ========================================================================== */
 		//
@@ -251,7 +252,9 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		await page.getByText("Save", { exact: true }).click();
 
-		expect(await getActiveViewType(page)).toBe("markdown");
+		await expect(
+			page.locator(".workspace-tab-header-container-inner > .mod-active")
+		).toHaveAttribute("data-type", "markdown");
 		await expect(
 			page.locator(".mod-root .workspace-tab-header-container-inner")
 		).toHaveCount(1);
@@ -263,7 +266,9 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		/* ========================================================================== */
 
 		// 3. Verify the sandbox note view is closed
-		expect(await getActiveViewType(page)).toBe("markdown");
+		await expect(
+			page.locator(".workspace-tab-header-container-inner > .mod-active")
+		).toHaveAttribute("data-type", "markdown");
 		await expect(
 			page.locator(".mod-root .workspace-tab-header-container-inner")
 		).toHaveCount(1);
@@ -293,7 +298,9 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await expect(
 			page.locator(".mod-root .workspace-tab-header-container-inner")
 		).toHaveCount(1);
-		expect(await getActiveViewType(page)).toBe("markdown");
+		await expect(
+			page.locator(".workspace-tab-header-container-inner > .mod-active")
+		).toHaveAttribute("data-type", "markdown");
 
 		// back to sandbox view
 		await page.evaluate(async () => {
@@ -306,7 +313,9 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		//
 		/* ========================================================================== */
 
-		expect(await getActiveViewType(page)).toBe(VIEW_TYPE_HOT_SANDBOX);
+		await expect(
+			page.locator(".workspace-tab-header-container-inner > .mod-active")
+		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
 
 		const sandboxNoteContent = await page.evaluate(() =>
 			app.workspace.activeEditor?.editor?.getValue()
@@ -349,7 +358,9 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			"test"
 		);
 
-		expect(await getActiveViewType(page)).toBe(VIEW_TYPE_HOT_SANDBOX);
+		await expect(
+			page.locator(".workspace-tab-header-container-inner > .mod-active")
+		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
 
 		// Simulate closing the last tab
 		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
@@ -364,7 +375,9 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await page.getByText("No", { exact: true }).click();
 		console.log("no clicked");
 
-		expect(await getActiveViewType(page)).toBe(VIEW_TYPE_HOT_SANDBOX);
+		await expect(
+			page.locator(".workspace-tab-header-container-inner > .mod-active")
+		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
 
 		// Simulate closing the last tab again
 		await runCommand(page, CMD_CLOSE_CURRENT_TAB);

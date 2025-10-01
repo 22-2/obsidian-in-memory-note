@@ -84,8 +84,8 @@ export abstract class AbstractNoteView extends ItemView {
 	public abstract getIcon(): string;
 	public abstract getViewType(): string;
 
-	save(): void {
-		this.saveManager.save(this.masterId);
+	save(): Promise<void> {
+		return this.saveManager.save(this.masterId);
 	}
 
 	public override getDisplayText(): string {

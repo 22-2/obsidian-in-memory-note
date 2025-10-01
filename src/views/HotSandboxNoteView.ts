@@ -3,6 +3,7 @@ import log from "loglevel";
 import { WorkspaceLeaf } from "obsidian";
 import { showConfirmModal } from "src/helpers/interaction";
 import type { DatabaseManager } from "src/managers/DatabaseManager";
+import type { ViewManager } from "src/managers/ViewManager";
 import {
 	HOT_SANDBOX_NOTE_ICON,
 	VIEW_TYPE_HOT_SANDBOX,
@@ -18,6 +19,7 @@ const logger = log.getLogger("HotSandboxNoteView");
 type Context = AbstractNoteViewContext & {
 	getDisplayIndex(masterId: string): number;
 	deleteFromAll: DatabaseManager["deleteFromAll"];
+	getActiveView: ViewManager["getActiveView"];
 };
 
 export class HotSandboxNoteView extends AbstractNoteView {
@@ -100,16 +102,31 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	/**
 	 * Handle save request (Ctrl+S)
 	 */
-	async handleSaveRequest(): Promise<void> {
+	async handleSaveRequest(
+		{
+			force = false,
+			saveToVault = false,
+		}: { force?: boolean; saveToVault?: boolean } = {
+			force: false,
+			saveToVault: false,
+		}
+	): Promise<void> {
 		// Only save if this view has focus
-		const activeView = this.app.workspace.activeLeaf?.view;
-		if (activeView !== this || !this.editor?.hasFocus()) {
+		const activeView = this.context.getActiveView();
+		if (activeView?.leaf.id !== this.leaf.id || !this.editor?.hasFocus()) {
 			return;
 		}
 
-		// Only save if there are unsaved changes
-		if (!this.hasUnsavedChanges) {
+		if (!saveToVault) {
+			this.save();
 			return;
+		}
+
+		if (!force) {
+			// save if there are unsaved changes
+			if (!this.hasUnsavedChanges) {
+				return;
+			}
 		}
 
 		if (await extractToFileInteraction(this)) {

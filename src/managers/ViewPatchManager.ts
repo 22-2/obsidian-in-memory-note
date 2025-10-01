@@ -101,7 +101,10 @@ export class ViewPatchManager implements IManager {
 					return orig?.call(this, checking) || false;
 				}
 				if (!checking) {
-					activeView.handleSaveRequest();
+					activeView.handleSaveRequest({
+						force: true,
+						saveToVault: true,
+					});
 					return true; // Indicate that the command was handled.
 				}
 				return false;

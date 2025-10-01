@@ -43,6 +43,10 @@ export class ViewPatchManager implements IManager {
 					if (!(this.view instanceof HotSandboxNoteView)) {
 						return orig.call(this);
 					}
+					// Handling automatic closing of the Sandbox Vault
+					if (!this.workspace.layoutReady) {
+						return orig.call(this);
+					}
 
 					// HotSandboxNoteViewの場合、閉じる前に確認を行う
 					let shouldClose = false;

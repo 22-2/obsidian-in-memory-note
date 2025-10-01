@@ -14,6 +14,7 @@ export interface PluginSettings {
 	defaultSavePath: string;
 	confirmBeforeSaving: boolean;
 	firstLineAsTitle: boolean;
+	saveToVaultOnCommandExecuted: boolean;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -23,6 +24,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	defaultSavePath: "./",
 	confirmBeforeSaving: true,
 	firstLineAsTitle: false,
+	saveToVaultOnCommandExecuted: false,
 };
 
 export const DEFAULT_PLUGIN_DATA: SandboxNotePluginData = {
@@ -69,10 +71,11 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 	}
 
 	private addFileConversionSection(): void {
-		new Setting(this.containerEl).setHeading().setName("File Conversion");
+		new Setting(this.containerEl).setHeading().setName("File Operation");
 
 		this.addDefaultSavePathSetting();
 		this.addConfirmBeforeSavingSetting();
+		this.addSaveToVaultSetting();
 	}
 
 	private addDefaultSavePathSetting(): void {
@@ -134,6 +137,26 @@ export class SandboxNoteSettingTab extends PluginSettingTab {
 						await this.plugin.orchestrator.updateSettings({
 							...settings,
 							firstLineAsTitle: value,
+						});
+					});
+			});
+	}
+
+	private addSaveToVaultSetting(): void {
+		const settings = this.plugin.orchestrator.getSettings();
+
+		new Setting(this.containerEl)
+			.setName("Save to vault on command")
+			.setDesc(
+				"If enabled, the note will be saved to the vault when you execute the save command (Ctrl+S or Cmd+S)."
+			)
+			.addToggle((toggle) => {
+				toggle
+					.setValue(settings.saveToVaultOnCommandExecuted)
+					.onChange(async (value) => {
+						await this.plugin.orchestrator.updateSettings({
+							...settings,
+							saveToVaultOnCommandExecuted: value,
 						});
 					});
 			});

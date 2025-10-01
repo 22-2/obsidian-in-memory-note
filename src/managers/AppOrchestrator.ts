@@ -273,6 +273,7 @@ export class AppOrchestrator implements IManager {
 				findCommand: this.plugin.app.commands.findCommand.bind(
 					this.plugin.app.commands
 				),
+				getSettings: () => this.get("settingsManager").getSettings(),
 			});
 		});
 	}

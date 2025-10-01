@@ -14,6 +14,7 @@ type Context = {
 	register: Plugin["register"];
 	getActiveView: AppOrchestrator["getActiveView"];
 	findCommand: Commands["findCommand"];
+	getSettings: AppOrchestrator["getSettings"];
 };
 
 /**
@@ -96,6 +97,7 @@ export class ViewPatchManager implements IManager {
 
 		const cleanup = around(saveCommandDefinition, {
 			checkCallback: (orig) => (checking: boolean) => {
+				const settings = this.context.getSettings();
 				const activeView = this.context.getActiveView();
 				if (!activeView) {
 					return orig?.call(this, checking) || false;
@@ -103,7 +105,7 @@ export class ViewPatchManager implements IManager {
 				if (!checking) {
 					activeView.handleSaveRequest({
 						force: true,
-						saveToVault: true,
+						saveToVault: settings.saveToVaultOnCommandExecuted,
 					});
 					return true; // Indicate that the command was handled.
 				}

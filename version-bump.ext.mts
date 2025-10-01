@@ -13,10 +13,10 @@
  * node version-bump.ts interactive - Run in interactive mode
  */
 
-import readline from "readline";
-import fs from "fs";
-import semver, { ReleaseType } from "semver";
 import { execSync } from "child_process";
+import fs from "fs";
+import readline from "readline";
+import semver, { ReleaseType } from "semver";
 
 // =========== 型定義 (TypeScript) ===========
 
@@ -521,7 +521,7 @@ async function main() {
 				await commandHandler.tagCommand();
 				break;
 			case "push":
-			case "all": // 'all' は 'push' のエイリアス（別名）として動作
+			case "all": // 'all' acts as an alias for 'push'.
 				await commandHandler.pushCommand();
 				break;
 			case "interactive":
@@ -533,7 +533,7 @@ async function main() {
 		console.error("\n💥 An unexpected error occurred:", error);
 		process.exit(1);
 	} finally {
-		// すべての処理の最後に一度だけ readline を閉じる
+		// Close readline once at the end of all processing.
 		commandHandler.finish();
 	}
 }

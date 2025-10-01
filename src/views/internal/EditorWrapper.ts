@@ -94,6 +94,7 @@ export class EditorWrapper {
 			this.createFakeLeaf(),
 			this
 		);
+		// this.virtualEditor.file = createVirtualFile(this.parentView.app);
 		this.virtualEditor.leaf.working = false;
 		this.disableSaveOperations();
 		// await this.ensureSourceMode();
@@ -147,7 +148,6 @@ export class EditorWrapper {
 			},
 			__FAKE_LEAF__: true,
 		} as unknown as WorkspaceLeaf;
-		fakeLeaf.working = false;
 		return fakeLeaf;
 	}
 }

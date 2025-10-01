@@ -8,22 +8,23 @@ import {
 } from "obsidian";
 
 /** Create virtual TFile-like object. */
-export function createVirtualFile(app: App) {
-	const now = new Date().getTime();
-	return {
-		path: `sandbox-note.md`,
-		name: `Sandbox Note.md`,
-		basename: `Sandbox Note`,
-		extension: "md",
-		vault: app.vault,
-		// stat is a dummy value
-		stat: {
-			ctime: now,
-			mtime: now,
-			size: 0,
-		},
-	};
-}
+// export function createVirtualFile(app: App) {
+// 	const now = new Date().getTime();
+// 	const file = new TFile(app.vault, `sandbox-note.md`);
+// 	// return {
+// 	// 	path: `sandbox-note.md`,
+// 	// 	name: `Sandbox Note.md`,
+// 	// 	basename: `Sandbox Note`,
+// 	// 	extension: "md",
+// 	// 	vault: app.vault,
+// 	// 	// stat is a dummy value
+// 	// 	stat: {
+// 	// 		ctime: now,
+// 	// 		mtime: now,
+// 	// 		size: 0,
+// 	// 	},
+// 	// };
+// }
 /** Open view in new tab. */
 export async function activateView<T = any, U = any>(
 	{

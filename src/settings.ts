@@ -9,8 +9,6 @@ export interface SandboxNotePluginData {
 
 export interface PluginSettings {
 	enableLogger: boolean;
-	enableAutoSave: boolean;
-	autoSaveDebounceMs: number;
 	defaultSavePath: string;
 	confirmBeforeSaving: boolean;
 	firstLineAsTitle: boolean;
@@ -19,17 +17,15 @@ export interface PluginSettings {
 
 export const DEFAULT_SETTINGS: PluginSettings = {
 	enableLogger: DEBUG_MODE,
-	enableAutoSave: true,
-	autoSaveDebounceMs: 3000,
-	defaultSavePath: "./",
+	defaultSavePath: "",
 	confirmBeforeSaving: true,
 	firstLineAsTitle: false,
 	saveToVaultOnCommandExecuted: false,
 };
 
-export const DEFAULT_PLUGIN_DATA: SandboxNotePluginData = {
-	settings: DEFAULT_SETTINGS,
-};
+// export const DEFAULT_PLUGIN_DATA: SandboxNotePluginData = {
+// 	settings: DEFAULT_SETTINGS,
+// };
 
 export class SandboxNoteSettingTab extends PluginSettingTab {
 	constructor(public plugin: SandboxNotePlugin) {

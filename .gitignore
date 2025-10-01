@@ -45,7 +45,7 @@ e2e/vault/.obsidian/**/*
 .env
 
 # Obsidian local settings
-data.json
+*.json
 
 
 # =============================================================================

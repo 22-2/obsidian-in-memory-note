@@ -1,7 +1,7 @@
-import type { Plugin } from "obsidian";
+import type { Plugin, Vault } from "obsidian";
 import type { AppEvents } from "src/events/AppEvents";
 import type { PluginSettings } from "src/settings";
-import { DEFAULT_PLUGIN_DATA, type SandboxNotePluginData } from "src/settings";
+import { DEFAULT_SETTINGS } from "src/settings";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import type { IManager } from "./IManager";
 
@@ -9,20 +9,24 @@ type Context = {
 	emitter: EventEmitter<AppEvents>;
 	loadData: Plugin["loadData"];
 	saveData: Plugin["saveData"];
+	getObsidianConfig: Vault["getConfig"];
 };
 
 export class SettingsManager implements IManager {
-	private data: SandboxNotePluginData = DEFAULT_PLUGIN_DATA;
+	private settings: PluginSettings = DEFAULT_SETTINGS;
 	constructor(private context: Context) {}
 
 	getSettings(): PluginSettings {
-		return this.data.settings;
+		return this.settings;
 	}
 
 	async load() {
+		// const newFileFolderPath = this.context.getObsidianConfig(
+		// 	"newFileFolderPath"
+		// ) as string;
 		const loadedData = await this.context.loadData();
-		this.data = {
-			...this.data,
+		this.settings = {
+			...this.settings,
 			...loadedData,
 		};
 	}
@@ -30,13 +34,12 @@ export class SettingsManager implements IManager {
 	unload(): void {}
 
 	async updateSettingsAndSave(settings: PluginSettings): Promise<void> {
-		this.data.settings = settings;
+		this.settings = settings;
 		await this.context.saveData({
-			...this.data,
-			settings: this.data.settings,
+			...this.settings,
 		});
 		this.context.emitter.emit("settings-changed", {
-			newSettings: this.data.settings,
+			newSettings: this.settings,
 		});
 	}
 }

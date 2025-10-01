@@ -106,6 +106,9 @@ export class AppOrchestrator implements IManager {
 				emitter: this.emitter,
 				loadData: this.plugin.loadData.bind(this.plugin),
 				saveData: this.plugin.saveData.bind(this.plugin),
+				getObsidianConfig: this.plugin.app.vault.getConfig.bind(
+					this.plugin.app.vault
+				),
 			});
 		});
 	}
@@ -114,6 +117,7 @@ export class AppOrchestrator implements IManager {
 		this.factories.set("cacheManager", () => {
 			return new CacheManager({
 				emitter: this.emitter,
+				// FIXE: Calling `getAllSandboxes` directly results in "Maximum call stack size exceeded."
 				getDbManager: () => this.get("dbManager"),
 			});
 		});

@@ -419,3 +419,8 @@ export async function showFilePathPrompt(
 ): Promise<FilePathPromptModalResult> {
 	return new FilePathPromptModal(app, options).waitForResult();
 }
+
+export function setDisabled(el: HTMLElement, disabled: boolean) {
+	el.toggleClass("is-disabled", disabled);
+	el.setAttr("aria-disabled", disabled ? "true" : "false");
+}

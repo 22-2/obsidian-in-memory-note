@@ -1,9 +1,9 @@
 // src/views/HotSandboxNoteView.ts
 import log from "loglevel";
 import { WorkspaceLeaf } from "obsidian";
-import { showConfirmModal } from "src/helpers/interaction";
+import type { AppEvents } from "src/events/AppEvents";
+import { setDisabled, showConfirmModal } from "src/helpers/interaction";
 import type { DatabaseManager } from "src/managers/DatabaseManager";
-import type { ViewManager } from "src/managers/ViewManager";
 import {
 	HOT_SANDBOX_NOTE_ICON,
 	VIEW_TYPE_HOT_SANDBOX,
@@ -19,12 +19,43 @@ const logger = log.getLogger("HotSandboxNoteView");
 type Context = AbstractNoteViewContext & {
 	getDisplayIndex(masterId: string): number;
 	deleteFromAll: DatabaseManager["deleteFromAll"];
-	getActiveView: ViewManager["getActiveView"];
 };
 
 export class HotSandboxNoteView extends AbstractNoteView {
+	private saveActionButtonEl: HTMLElement | null = null;
 	constructor(leaf: WorkspaceLeaf, protected context: Context) {
 		super(leaf, context);
+
+		this.saveActionButtonEl = this.addAction(
+			"save",
+			"save to vault",
+			() => {
+				this.handleSaveRequest({
+					allowEmpty: true,
+				});
+			}
+		);
+		this.context.emitter.on(
+			"settings-changed",
+			this.onSettingsChanged.bind(this)
+		);
+		this.context.emitter.on(
+			"editor-content-changed",
+			this.onContentChanged.bind(this)
+		);
+		this.onSettingsChanged({ newSettings: this.context.getSettings() });
+		this.onContentChanged();
+	}
+
+	onContentChanged() {
+		this.saveActionButtonEl &&
+			setDisabled(this.saveActionButtonEl, !this.hasUnsavedChanges);
+	}
+
+	onSettingsChanged({ newSettings }: AppEvents["settings-changed"]) {
+		const saveEl = this.saveActionButtonEl;
+		if (!saveEl) return;
+		setDisabled(saveEl, !newSettings.saveToVaultOnCommandExecuted);
 	}
 
 	getViewType(): string {
@@ -102,31 +133,20 @@ export class HotSandboxNoteView extends AbstractNoteView {
 	/**
 	 * Handle save request (Ctrl+S)
 	 */
-	async handleSaveRequest(
-		{
-			force = false,
-			saveToVault = false,
-		}: { force?: boolean; saveToVault?: boolean } = {
-			force: false,
-			saveToVault: false,
-		}
-	): Promise<void> {
+	async handleSaveRequest({
+		allowEmpty = false,
+	}: {
+		allowEmpty?: boolean;
+	}): Promise<void> {
 		// Only save if this view has focus
 		const activeView = this.context.getActiveView();
-		if (activeView?.leaf.id !== this.leaf.id || !this.editor?.hasFocus()) {
+		if (activeView?.leaf.id !== this.leaf.id || !this.leaf.isVisible()) {
 			return;
 		}
 
-		if (!saveToVault) {
-			this.save();
+		if (!this.hasUnsavedChanges && !allowEmpty) {
+			logger.debug("No changes to save. Aborting save operation.");
 			return;
-		}
-
-		if (!force) {
-			// save if there are unsaved changes
-			if (!this.hasUnsavedChanges) {
-				return;
-			}
 		}
 
 		if (await extractToFileInteraction(this)) {

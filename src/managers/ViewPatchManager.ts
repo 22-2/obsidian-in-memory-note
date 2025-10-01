@@ -104,7 +104,7 @@ export class ViewPatchManager implements IManager {
 				}
 				if (!checking) {
 					activeView.handleSaveRequest({
-						force: true,
+						allowEmpty: true,
 						saveToVault: settings.saveToVaultOnCommandExecuted,
 					});
 					return true; // Indicate that the command was handled.

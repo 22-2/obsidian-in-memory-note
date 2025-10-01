@@ -31,15 +31,15 @@ export class MagicalEditorWrapper {
 	private content = "";
 
 	constructor(private context: Context) {
-		this.context.emitter.off(
+		this.context.emitter.on(
 			"obsidian-active-leaf-changed",
 			this.syncActiveEditorState.bind(this)
 		);
-		this.context.emitter.off(
+		this.context.emitter.on(
 			"obsidian-layout-changed",
 			this.syncActiveEditorState.bind(this)
 		);
-		this.context.emitter.off(
+		this.context.emitter.on(
 			"obsidian-layout-ready",
 			this.syncActiveEditorState.bind(this)
 		);

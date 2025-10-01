@@ -16,7 +16,7 @@ import type { PluginSettings } from "src/settings";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HOT_SANDBOX_ID_PREFIX } from "src/utils/constants";
 import { issue2Logger } from "../../special-loggers";
-import { EditorWrapper } from "./EditorWrapper";
+import { MagicalEditorWrapper } from "./MagicalEditorWrapper";
 import type { AbstractNoteViewState, ObsidianViewState } from "./types";
 import { extractToFileInteraction } from "./utils";
 
@@ -37,7 +37,7 @@ export abstract class AbstractNoteView extends ItemView {
 	public isSourceMode = true;
 	public masterId: string;
 	public scope: Scope;
-	public wrapper: EditorWrapper;
+	public wrapper: MagicalEditorWrapper;
 	public navigation = true;
 
 	private stateManager: ViewStateManager;
@@ -52,7 +52,7 @@ export abstract class AbstractNoteView extends ItemView {
 		super(leaf);
 		// 確実にmasterIdを初期化
 		this.masterId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
-		this.wrapper = new EditorWrapper({
+		this.wrapper = new MagicalEditorWrapper({
 			emitter: this.context.emitter,
 			getActiveView: this.context.getActiveView,
 			parentView: this,

@@ -1,9 +1,9 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\views\helpers\UnsafeMarkdownView.ts
 import { MarkdownView, WorkspaceLeaf } from "obsidian";
-import type { EditorWrapper } from "./EditorWrapper";
+import type { MagicalEditorWrapper } from "./MagicalEditorWrapper";
 
 export class VirtualMarkdownView extends MarkdownView {
-	constructor(leaf: WorkspaceLeaf, public wrapper: EditorWrapper) {
+	constructor(leaf: WorkspaceLeaf, public wrapper: MagicalEditorWrapper) {
 		super(leaf);
 	}
 

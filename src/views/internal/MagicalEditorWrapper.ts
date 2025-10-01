@@ -20,7 +20,7 @@ type Context = {
 };
 
 /** Manages inline MarkdownView without physical file. */
-export class EditorWrapper {
+export class MagicalEditorWrapper {
 	public virtualEditor!: VirtualMarkdownView;
 	containerEl!: HTMLDivElement;
 	public targetEl: HTMLElement | null = null;

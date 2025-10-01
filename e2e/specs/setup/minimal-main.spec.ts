@@ -24,7 +24,6 @@ const ACTIVE_SANDBOX_VIEW_SELECTOR = `.workspace-leaf.mod-active > .workspace-le
 const ACTIVE_LEAF_SELECTOR = ".workspace-leaf.mod-active";
 const ACTIVE_EDITOR_SELECTOR = `${ACTIVE_LEAF_SELECTOR} .cm-content`;
 // const ACTIVE_TITLE_SELECTOR = `${ACTIVE_LEAF_SELECTOR} > .workspace-leaf-content > .view-header .view-header-title`;
-const ACTIVE_TITLE_SELECTOR = `.workspace-tab-header.mod-active${DATA_TYPE_HOT_SANDBOX}`;
 const ACTIVE_MARKDOWN_VIEW_SELECTR = `${ACTIVE_LEAF_SELECTOR} > .workspace-leaf-content${DATA_TYPE_MARKDOWN}`;
 
 // const ACTIVE_SANDBOX_TITLE_SELECTOR = `${ACTIVE_SANDBOX_VIEW_SELECTOR} > .view-header`;
@@ -34,6 +33,9 @@ const ACTIVE_MARKDOWN_VIEW_SELECTR = `${ACTIVE_LEAF_SELECTOR} > .workspace-leaf-
 // ensuring only one element matches in a single leaf/pane context.
 const ACTIVE_TAB_HEADER_GENERIC_SELECTOR =
 	".workspace-tab-header.mod-active.is-active";
+
+// Use the more specific selector to avoid ambiguity on macOS.
+const ACTIVE_TITLE_SELECTOR = `${ACTIVE_TAB_HEADER_GENERIC_SELECTOR}${DATA_TYPE_HOT_SANDBOX}`;
 
 // --- Test Configuration ---
 // For this test suite, we use a sandbox Vault with the plugin enabled.
@@ -280,9 +282,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 		// 5. Verify the newly opened file name and content are correct
 		await expect(
-			page.locator(
-				ACTIVE_TITLE_SELECTOR.replace(DATA_TYPE_HOT_SANDBOX, "")
-			)
+			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
 		).toContainText(expectedFileName);
 
 		const expectedFile = `${expectedPath}/${expectedFileName}.md`;

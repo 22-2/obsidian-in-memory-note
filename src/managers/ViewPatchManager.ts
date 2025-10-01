@@ -38,7 +38,6 @@ export class ViewPatchManager implements IManager {
 	 * and execute HotSandboxNoteView's shouldClose logic (confirmation dialog).
 	 */
 	private applyLeafDetachPatch(): void {
-		let initialized = false;
 		const cleanup = around(WorkspaceLeaf.prototype, {
 			detach: (orig) =>
 				async function (this: WorkspaceLeaf) {
@@ -47,7 +46,7 @@ export class ViewPatchManager implements IManager {
 					}
 
 					const shouldInitialClose =
-						!initialized &&
+						!this.app.workspace.layoutReady &&
 						Platform.isDesktopApp &&
 						getSandboxVaultPath() ===
 							this.app.vault.adapter.basePath &&
@@ -55,7 +54,6 @@ export class ViewPatchManager implements IManager {
 
 					// Handling automatic closing of the Sandbox Vault
 					if (shouldInitialClose) {
-						initialized = true;
 						return orig.call(this);
 					}
 

@@ -21,19 +21,19 @@ export const copyPlugin = ({ opts }: CopyPluginOptions): esbuild.Plugin => ({
 				}
 
 				try {
-					// 1. まず、コピー先のディレクトリ（dest）が存在するか確認し、なければ再帰的に作成する
+					// 1. First, ensure the destination directory (dest) exists, creating it recursively if necessary.
 					await fs.mkdir(dest, { recursive: true });
 
 					for (const srcPath of src) {
-						// 2. 堅牢な方法でファイル名を取得する
+						// 2. Get the filename robustly.
 						const fileName = path.basename(srcPath);
 						const destPath = path.join(dest, fileName);
 
 						try {
-							// 3. ソースファイルが存在するか確認
+							// 3. Check if the source file exists
 							await fs.access(srcPath);
 
-							// 4. ファイルをコピーする
+							// 4. Copy the file
 							await fs.copyFile(srcPath, destPath);
 							console.log(
 								`[CopyPlugin] Copied: ${srcPath} -> ${destPath}`
@@ -56,7 +56,7 @@ export const copyPlugin = ({ opts }: CopyPluginOptions): esbuild.Plugin => ({
 						}
 					}
 				} catch (e) {
-					// 主にfs.mkdirが失敗した場合などの致命的なエラーをキャッチ
+					// Catch critical errors, mainly those resulting from fs.mkdir failures.
 					console.error(
 						`[CopyPlugin] Failed processing destination group for '${dest}':`,
 						e

@@ -72,10 +72,6 @@ function getSandboxPlugin(
 	);
 }
 
-function getActiveViewType(page: Page) {
-	return page.evaluate(() => app.workspace.activeLeaf?.view.getViewType());
-}
-
 /**
  * Retrieves the content of the currently active editor.
  * @param pluginHandleMap Playwright Page object
@@ -211,7 +207,9 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		await expect(
 			page.locator(".mod-root .workspace-tab-header-container-inner")
 		).toHaveCount(1);
-		expect(await getActiveViewType(page)).toBe("empty");
+		await expect(
+			page.locator(".workspace-tab-header-container-inner > .mod-active")
+		).toHaveAttribute("data-type", "empty");
 
 		/* ========================================================================== */
 		//
@@ -331,7 +329,9 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		//
 		/* ========================================================================== */
 
-		expect(await getActiveViewType(page)).toBe("empty");
+		await expect(
+			page.locator(".workspace-tab-header-container-inner > .mod-active")
+		).toHaveAttribute("data-type", "empty");
 		await expect(
 			page.locator(".mod-root .workspace-tab-header-container-inner")
 		).toHaveCount(1);
@@ -386,7 +386,9 @@ test.describe("HotSandboxNoteView Main Features", () => {
 		console.log("yes clicked");
 
 		// Check if the tab is closed
-		expect(await getActiveViewType(page)).toBe("empty");
+		await expect(
+			page.locator(".workspace-tab-header-container-inner > .mod-active")
+		).toHaveAttribute("data-type", "empty");
 
 		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
 

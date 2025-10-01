@@ -1,7 +1,5 @@
 import "../../log-setup";
 
-// src/e2e/specs/main-features.spec.ts
-
 import type { Page } from "@playwright/test";
 import { DIST_DIR, PLUGIN_ID } from "e2e/config";
 import type { VaultPageTextContext } from "e2e/obsidian-setup/setup";
@@ -18,443 +16,392 @@ import {
 } from "../../obsidian-commands/run-command";
 import { expect, test } from "../../test-fixtures";
 
-// --- Constants Definition ---
-const DATA_TYPE_HOT_SANDBOX = `[data-type="${VIEW_TYPE_HOT_SANDBOX}"]`;
-const DATA_TYPE_MARKDOWN = `[data-type="markdown"]`;
-const ACTIVE_SANDBOX_VIEW_SELECTOR = `.workspace-leaf.mod-active > .workspace-leaf-content${DATA_TYPE_HOT_SANDBOX}`;
-const ACTIVE_LEAF_SELECTOR = ".workspace-leaf.mod-active";
-const ACTIVE_EDITOR_SELECTOR = `${ACTIVE_LEAF_SELECTOR} .cm-content`;
-// const ACTIVE_TITLE_SELECTOR = `${ACTIVE_LEAF_SELECTOR} > .workspace-leaf-content > .view-header .view-header-title`;
-const ACTIVE_MARKDOWN_VIEW_SELECTR = `${ACTIVE_LEAF_SELECTOR} > .workspace-leaf-content${DATA_TYPE_MARKDOWN}`;
-
-// const ACTIVE_SANDBOX_TITLE_SELECTOR = `${ACTIVE_SANDBOX_VIEW_SELECTOR} > .view-header`;
-
-// --- FIX for macOS strict mode violation: Use the highly specific active tab header locator ---
-// The active tab header should reliably possess both mod-active and is-active classes,
-// ensuring only one element matches in a single leaf/pane context.
-const ACTIVE_TAB_HEADER_GENERIC_SELECTOR =
-	".workspace-tab-header.mod-active.is-active";
-
-// Use the more specific selector to avoid ambiguity on macOS.
-const ACTIVE_TITLE_SELECTOR = `${ACTIVE_TAB_HEADER_GENERIC_SELECTOR}${DATA_TYPE_HOT_SANDBOX}`;
-
 // --- Test Configuration ---
-// For this test suite, we use a sandbox Vault with the plugin enabled.
 test.use({
 	vaultOptions: {
 		useSandbox: true,
-		plugins: [
-			{
-				pluginId: PLUGIN_ID,
-				path: DIST_DIR,
-			},
-		], // Path to the built plugin
+		plugins: [{ pluginId: PLUGIN_ID, path: DIST_DIR }],
 		enablePlugins: true,
 	},
 });
-// --- Helper Functions ---
 
-/**
- * Executes the command to create a new Hot Sandbox Note and optionally inputs text.
- * @param page Playwright Page object
- * @param content The text to input (optional)
- */
-async function createNewSandboxNote(page: Page, content?: string) {
-	await runCommand(page, OPEN_HOT_SANDBOX);
-	await expect(
-		page.locator(ACTIVE_SANDBOX_VIEW_SELECTOR).last()
-	).toBeVisible();
-	if (content) {
-		await page.locator(ACTIVE_EDITOR_SELECTOR).focus();
-		await page.keyboard.type(content);
-		await expect(page.locator(ACTIVE_EDITOR_SELECTOR)).toHaveText(content);
+type ViewType = "markdown" | typeof VIEW_TYPE_HOT_SANDBOX;
+
+// --- Page Object ---
+class HotSandboxPage {
+	private readonly ACTIVE_LEAF = ".workspace-leaf.mod-active";
+	private readonly ACTIVE_TAB_HEADER =
+		".workspace-tab-header.mod-active.is-active";
+
+	constructor(
+		private page: Page,
+		private pluginHandleMap: VaultPageTextContext["pluginHandleMap"]
+	) {}
+
+	// Selector Helpers
+	private getDatatype(viewType: string) {
+		return `[data-type="${viewType}"]`;
+	}
+
+	private getActiveView(type: ViewType) {
+		return `${this.ACTIVE_LEAF} > .workspace-leaf-content${this.getDatatype(
+			type
+		)}`;
+	}
+
+	private getActiveTitle(type: ViewType) {
+		return `${this.ACTIVE_TAB_HEADER}${this.getDatatype(type)}`;
+	}
+
+	// Selectors
+	get activeSandboxView() {
+		return this.getActiveView(VIEW_TYPE_HOT_SANDBOX);
+	}
+
+	get activeMarkdownView() {
+		return this.getActiveView("markdown");
+	}
+
+	get activeEditor() {
+		return `${this.ACTIVE_LEAF} .cm-content`;
+	}
+
+	get activeSandboxTitle() {
+		return this.getActiveTitle(VIEW_TYPE_HOT_SANDBOX);
+	}
+
+	get activeMarkdownTitle() {
+		return this.getActiveTitle("markdown");
+	}
+
+	get allSandboxViews() {
+		return this.activeSandboxView.replace(".mod-active", "");
+	}
+
+	// Actions
+	async createNewSandboxNote(content?: string) {
+		await runCommand(this.page, OPEN_HOT_SANDBOX);
+		await expect(
+			this.page.locator(this.activeSandboxView).last()
+		).toBeVisible();
+
+		if (content) {
+			await this.typeInActiveEditor(content);
+		}
+	}
+
+	async typeInActiveEditor(content: string) {
+		const editor = this.page.locator(this.activeEditor);
+		await editor.focus();
+		await this.page.keyboard.type(content);
+		await expect(editor).toHaveText(content);
+	}
+
+	async getActiveEditorContent(): Promise<string> {
+		const pluginHandle = await this.getSandboxPlugin();
+		return pluginHandle.evaluate((plugin) => {
+			const activeView = plugin.orchestrator.getActiveView();
+			if (!activeView) throw new Error("No active editor found");
+			return activeView.getContent();
+		});
+	}
+
+	async setActiveEditorContent(content: string) {
+		await this.pluginHandleMap.evaluate(
+			(map, [content, id]) => {
+				const plugin = map.get(id) as SandboxNotePlugin;
+				plugin.orchestrator.getActiveView()?.setContent(content);
+			},
+			[content, PLUGIN_ID]
+		);
+	}
+
+	async splitVertically() {
+		await this.page.evaluate(() =>
+			app.workspace.duplicateLeaf(app.workspace.activeLeaf!, "vertical")
+		);
+	}
+
+	async convertToFile(fileName: string, folderPath: string) {
+		await runCommand(this.page, CONVERT_HOT_SANDBOX_TO_FILE);
+
+		await this.page
+			.getByPlaceholder("e.g., My Scratchpad", { exact: true })
+			.fill(fileName);
+
+		const folderInput = this.page.getByPlaceholder("e.g., Notes/Daily", {
+			exact: true,
+		});
+		await folderInput.fill(folderPath);
+		await folderInput.blur();
+
+		await this.page.getByText("Save", { exact: true }).click();
+	}
+
+	async closeTab() {
+		await runCommand(this.page, CMD_CLOSE_CURRENT_TAB);
+	}
+
+	async undoCloseTab() {
+		await runCommand(this.page, CMD_UNDO_CLOSE_TAB);
+	}
+
+	async goBackInHistory() {
+		await this.page.evaluate(async () => {
+			await app.workspace.activeLeaf?.history.back();
+		});
+	}
+
+	async fileExists(path: string): Promise<boolean> {
+		return this.page.evaluate((p) => app.vault.adapter.exists(p), path);
+	}
+
+	async getActiveFileContent(): Promise<string | undefined> {
+		return this.page.evaluate(() =>
+			app.workspace.activeEditor?.editor?.getValue()
+		);
+	}
+
+	async getTabInnerTitle(): Promise<string | null | undefined> {
+		return this.page.evaluate(
+			() => app.workspace.activeLeaf?.tabHeaderInnerTitleEl.textContent
+		);
+	}
+
+	// Assertions
+	async expectSandboxViewCount(count: number) {
+		await expect(this.page.locator(this.allSandboxViews)).toHaveCount(
+			count
+		);
+	}
+
+	async expectActiveTitle(title: string) {
+		await expect(this.page.locator(this.activeSandboxTitle)).toHaveText(
+			title
+		);
+	}
+
+	async expectActiveTitleToContain(text: string) {
+		await expect(this.page.locator(this.activeMarkdownTitle)).toContainText(
+			text
+		);
+	}
+
+	async expectActiveTabType(type: string) {
+		await expect(this.page.locator(this.ACTIVE_TAB_HEADER)).toHaveAttribute(
+			"data-type",
+			type
+		);
+	}
+
+	async expectTabCount(count: number) {
+		await expect(
+			this.page.locator(".mod-root .workspace-tab-header-container-inner")
+		).toHaveCount(count);
+	}
+
+	async expectSourceMode(isLivePreview: boolean) {
+		const sourceView = this.page.locator(
+			`${this.activeSandboxView} ${this.getDatatype(
+				"markdown"
+			)} > .view-content > .markdown-source-view`
+		);
+
+		if (isLivePreview) {
+			await expect(sourceView).toHaveClass(/is-live-preview/);
+		} else {
+			await expect(sourceView).not.toHaveClass(/is-live-preview/);
+		}
+	}
+
+	// Private helpers
+	private async getSandboxPlugin() {
+		return this.pluginHandleMap.evaluateHandle(
+			(pluginHandleMap, [PLUGIN_ID]) => {
+				return pluginHandleMap.get(PLUGIN_ID) as SandboxNotePlugin;
+			},
+			[PLUGIN_ID]
+		);
 	}
 }
 
-function getSandboxPlugin(
-	pluginHandleMap: VaultPageTextContext["pluginHandleMap"]
-) {
-	return pluginHandleMap.evaluateHandle(
-		(pluginHandleMap, [PLUGIN_ID]) => {
-			return pluginHandleMap.get(PLUGIN_ID) as SandboxNotePlugin;
-		},
-		[PLUGIN_ID]
-	);
-}
-
-/**
- * Retrieves the content of the currently active editor.
- * @param pluginHandleMap Playwright Page object
- * @returns The editor content string
- */
-async function getActiveEditorContent(
-	pluginHandleMap: VaultPageTextContext["pluginHandleMap"]
-): Promise<string> {
-	const pluginHandle = await getSandboxPlugin(pluginHandleMap);
-	return pluginHandle.evaluate((plugin) => {
-		const activeView = plugin.orchestrator.getActiveView();
-		if (activeView) return activeView.getContent();
-		throw new Error("failed to get active editor");
-	});
-}
-
 // --- Test Suite ---
-
 test.describe("HotSandboxNoteView Main Features", () => {
 	test("1. Note Creation and Input", async ({ vault }) => {
-		const { window: page } = vault;
+		const hotSandbox = new HotSandboxPage(
+			vault.window,
+			vault.pluginHandleMap
+		);
 		const testContent = "Hello, Sandbox!";
 
-		// 1. Create a new sandbox note
-		await createNewSandboxNote(page);
-
-		// 2. Input text into the editor
-		await page.locator(ACTIVE_EDITOR_SELECTOR).focus();
-		await page.keyboard.type(testContent);
-
-		// 3. Verify the input text exists in the editor
-		await expect(page.locator(ACTIVE_EDITOR_SELECTOR)).toHaveText(
-			testContent
-		);
-
-		// await page.pause();
-		// 4.Verify that "*" appears in the tab title *after* content is added.
-		await expect(page.locator(ACTIVE_TITLE_SELECTOR)).toHaveText(
-			"*Hot Sandbox-1"
-		);
+		await hotSandbox.createNewSandboxNote(testContent);
+		await hotSandbox.expectActiveTitle("*Hot Sandbox-1");
 	});
 
 	test("2. Content Synchronization Across Multiple Views", async ({
 		vault,
 	}) => {
-		const { window: page, pluginHandleMap } = vault;
+		const hotSandbox = new HotSandboxPage(
+			vault.window,
+			vault.pluginHandleMap
+		);
 		const initialContent = "Initial content.";
 		const updatedContent = "Updated and synced!";
 
-		// 1. Create the initial note
-		await createNewSandboxNote(page, initialContent);
+		await hotSandbox.createNewSandboxNote(initialContent);
+		await hotSandbox.splitVertically();
+		await hotSandbox.expectSandboxViewCount(2);
 
-		// 2. Split the screen vertically
-		await page.evaluate(() =>
-			app.workspace.duplicateLeaf(app.workspace.activeLeaf!, "vertical")
-		);
-
-		await expect(
-			page.locator(
-				ACTIVE_SANDBOX_VIEW_SELECTOR.replace(".mod-active", "")
-			)
-		).toHaveCount(2);
-
-		// 3. Verify the new (right) pane after splitting has the same content
-		const rightPaneEditor = page.locator(ACTIVE_EDITOR_SELECTOR);
+		const rightPaneEditor = vault.window.locator(hotSandbox.activeEditor);
 		await expect(rightPaneEditor).toHaveText(initialContent);
 
-		// 4. Update the content of the right pane
 		await rightPaneEditor.focus();
-		await pluginHandleMap.evaluate(
-			(map, [content, id]) => {
-				const plugin = map.get(id) as SandboxNotePlugin;
-				plugin.orchestrator.getActiveView()?.setContent(content);
-			},
-			[updatedContent, PLUGIN_ID]
-		);
+		await hotSandbox.setActiveEditorContent(updatedContent);
 
-		// await page.pause();
-		// 5. Verify the content of the left pane is also synchronized and updated
-		const leftPaneEditor = page.locator(
-			`.workspace-leaf.mod-active ${DATA_TYPE_HOT_SANDBOX}  ${DATA_TYPE_MARKDOWN} .cm-content`
+		const leftPaneEditor = vault.window.locator(
+			`.workspace-leaf.mod-active [data-type="${VIEW_TYPE_HOT_SANDBOX}"] [data-type="markdown"] .cm-content`
 		);
 		await expect(leftPaneEditor).toHaveText(updatedContent);
 	});
 
 	test("3. Multiple Independent Note Groups", async ({ vault }) => {
-		const { window: page } = vault;
+		const hotSandbox = new HotSandboxPage(
+			vault.window,
+			vault.pluginHandleMap
+		);
 		const note1Content = "This is the first note.";
 		const note2Content = "This is the second, separate note.";
 
-		// 1. Create the first note group
-		await createNewSandboxNote(page, note1Content);
-		await expect(page.locator(ACTIVE_TITLE_SELECTOR)).toHaveText(
-			"*Hot Sandbox-1"
-		);
+		await hotSandbox.createNewSandboxNote(note1Content);
+		await hotSandbox.expectActiveTitle("*Hot Sandbox-1");
 
-		// 2. Create a second, independent note group
-		await createNewSandboxNote(page, note2Content);
-		await expect(page.locator(ACTIVE_TITLE_SELECTOR)).toHaveText(
-			"*Hot Sandbox-2"
-		);
-		await expect(
-			page.locator(
-				ACTIVE_SANDBOX_VIEW_SELECTOR.replace(".mod-active", "")
-			)
-		).toHaveCount(2);
+		await hotSandbox.createNewSandboxNote(note2Content);
+		await hotSandbox.expectActiveTitle("*Hot Sandbox-2");
+		await hotSandbox.expectSandboxViewCount(2);
 
-		// 3. Verify the content of the second note is correct (currently active)
-		expect(await getActiveEditorContent(vault.pluginHandleMap)).toBe(
-			note2Content
-		);
+		expect(await hotSandbox.getActiveEditorContent()).toBe(note2Content);
 
-		// 4. Verify the content of the first note has not changed (inactive leaf)
-		const firstNoteContent = await page
-			.locator(
-				`${ACTIVE_SANDBOX_VIEW_SELECTOR.replace(
-					".mod-active",
-					""
-				)} .cm-content`
-			)
+		const firstNoteContent = await vault.window
+			.locator(`${hotSandbox.allSandboxViews} .cm-content`)
 			.first()
 			.textContent();
 		expect(firstNoteContent).toBe(note1Content);
 	});
 
 	test("4. Converting Note to File", async ({ vault }) => {
-		const { window: page } = vault;
+		const hotSandbox = new HotSandboxPage(
+			vault.window,
+			vault.pluginHandleMap
+		);
 		const noteContent = "This note will be converted to a file.";
-		const expectedFileName = "Untitled";
-		const expectedPath = "Adventurer";
+		const fileName = "Untitled";
+		const folderPath = "Adventurer";
+		const expectedFile = `${folderPath}/${fileName}.md`;
 
-		await runCommand(page, CMD_CLOSE_CURRENT_TAB); // 1 tabs
-		await expect(
-			page.locator(".mod-root .workspace-tab-header-container-inner")
-		).toHaveCount(1);
-		await expect(
-			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
-		).toHaveAttribute("data-type", "empty");
+		// Initial setup
+		await hotSandbox.closeTab();
+		await hotSandbox.expectTabCount(1);
+		await hotSandbox.expectActiveTabType("empty");
 
-		/* ========================================================================== */
-		//
-		//  HotSandbox view
-		//
-		/* ========================================================================== */
+		// Create sandbox note
+		await hotSandbox.createNewSandboxNote(noteContent);
+		await hotSandbox.expectTabCount(1);
+		await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
 
-		// 1. Create the note to be converted
-		await createNewSandboxNote(page, noteContent); // 1 tabs
-		await expect(
-			page.locator(".mod-root .workspace-tab-header-container-inner")
-		).toHaveCount(1);
-		await expect(
-			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
-		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
+		// Convert to file
+		await hotSandbox.convertToFile(fileName, folderPath);
+		await hotSandbox.expectActiveTabType("markdown");
+		await hotSandbox.expectTabCount(1);
 
-		/* ========================================================================== */
-		//
-		//  Sandbox convertion modal
-		//
-		/* ========================================================================== */
+		// Verify file
+		await hotSandbox.expectActiveTitleToContain(fileName);
+		expect(await hotSandbox.fileExists(expectedFile)).toBeTruthy();
+		expect(await hotSandbox.getActiveFileContent()).toBe(noteContent);
 
-		// 2. Execute the "Convert to file" command
-		await runCommand(page, CONVERT_HOT_SANDBOX_TO_FILE);
+		// Go back to sandbox view
+		await hotSandbox.goBackInHistory();
+		await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
+		expect(await hotSandbox.getActiveFileContent()).toBe("");
 
-		await page
-			.getByPlaceholder(`e.g., My Scratchpad`, {
-				exact: true,
-			})
-			.fill(expectedFileName);
+		// Close and create new
+		await hotSandbox.closeTab();
+		await hotSandbox.expectActiveTabType("empty");
+		await hotSandbox.expectTabCount(1);
 
-		const folderInputEl = await page.getByPlaceholder(`e.g., Notes/Daily`, {
-			exact: true,
-		});
-
-		await folderInputEl.fill(expectedPath);
-		await folderInputEl.blur();
-
-		await page.getByText("Save", { exact: true }).click();
-
-		await expect(
-			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
-		).toHaveAttribute("data-type", "markdown");
-		await expect(
-			page.locator(".mod-root .workspace-tab-header-container-inner")
-		).toHaveCount(1);
-
-		/* ========================================================================== */
-		//
-		//  Markdown view
-		//
-		/* ========================================================================== */
-
-		// 3. Verify the sandbox note view is closed
-		await expect(
-			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
-		).toHaveAttribute("data-type", "markdown");
-		await expect(
-			page.locator(".mod-root .workspace-tab-header-container-inner")
-		).toHaveCount(1);
-
-		// 5. Verify the newly opened file name and content are correct
-		await expect(
-			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
-		).toContainText(expectedFileName);
-
-		const expectedFile = `${expectedPath}/${expectedFileName}.md`;
-
-		// check converted file exists
-		expect(
-			await page.evaluate((expectedFile) => {
-				return app.vault.adapter.exists(expectedFile);
-			}, expectedFile)
-		);
-
-		// Assuming the active view is now a standard Markdown editor
-		const fileContent = await page.evaluate(() =>
-			app.workspace.activeEditor?.editor?.getValue()
-		);
-		expect(fileContent).toBe(noteContent);
-
-		await expect(
-			page.locator(".mod-root .workspace-tab-header-container-inner")
-		).toHaveCount(1);
-		await expect(
-			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
-		).toHaveAttribute("data-type", "markdown");
-
-		// back to sandbox view
-		await page.evaluate(async () => {
-			await app.workspace.activeLeaf?.history.back();
-		});
-
-		/* ========================================================================== */
-		//
-		//  HotSandbox view
-		//
-		/* ========================================================================== */
-
-		await expect(
-			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
-		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
-
-		const sandboxNoteContent = await page.evaluate(() =>
-			app.workspace.activeEditor?.editor?.getValue()
-		);
-
-		expect(sandboxNoteContent).toBe("");
-
-		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
-
-		/* ========================================================================== */
-		//
-		//  Hotsandbox view
-		//
-		/* ========================================================================== */
-
-		await expect(
-			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
-		).toHaveAttribute("data-type", "empty");
-		await expect(
-			page.locator(".mod-root .workspace-tab-header-container-inner")
-		).toHaveCount(1);
-
-		await createNewSandboxNote(page, noteContent);
-
-		expect(
-			await page.evaluate(
-				() =>
-					app.workspace.activeLeaf?.tabHeaderInnerTitleEl.textContent
-			)
-		).toBe("*Hot Sandbox-1");
+		await hotSandbox.createNewSandboxNote(noteContent);
+		expect(await hotSandbox.getTabInnerTitle()).toBe("*Hot Sandbox-1");
 	});
 
-	// 閉じるまえに確認ダイアログを出す機能
 	test("5. Confirmation before closing the last tab", async ({ vault }) => {
-		const { window: page } = vault;
-		// close initial markdown page using the platform-agnostic command
-		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
-
-		await createNewSandboxNote(page, "test");
-
-		expect(await getActiveEditorContent(vault.pluginHandleMap)).toBe(
-			"test"
+		const hotSandbox = new HotSandboxPage(
+			vault.window,
+			vault.pluginHandleMap
 		);
+		const { window: page } = vault;
 
-		await expect(
-			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
-		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
+		await hotSandbox.closeTab();
+		await hotSandbox.createNewSandboxNote("test");
 
-		// Simulate closing the last tab
-		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
-		// await page.keyboard.press("Control+W");
+		expect(await hotSandbox.getActiveEditorContent()).toBe("test");
+		await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
 
-		// Check if the confirmation dialog is shown
+		// Try to close and decline
+		await hotSandbox.closeTab();
 		await expect(
 			page.getByText("Delete Sandbox", { exact: true })
 		).toBeVisible();
-
-		// Simulate confirming the closure
 		await page.getByText("No", { exact: true }).click();
-		console.log("no clicked");
+		await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
 
-		await expect(
-			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
-		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
-
-		// Simulate closing the last tab again
-		await runCommand(page, CMD_CLOSE_CURRENT_TAB);
-
+		// Try to close and confirm
+		await hotSandbox.closeTab();
 		await page.getByText("Yes", { exact: true }).click();
-		console.log("yes clicked");
-
 		await delay(100);
-		// Check if the tab is closed
-		await expect(
-			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
-		).toHaveAttribute("data-type", "empty");
+		await hotSandbox.expectActiveTabType("empty");
 
-		await runCommand(page, CMD_UNDO_CLOSE_TAB);
-
-		expect(await getActiveEditorContent(vault.pluginHandleMap)).toBe("");
+		// Undo close
+		await hotSandbox.undoCloseTab();
+		expect(await hotSandbox.getActiveEditorContent()).toBe("");
 	});
 
-	// ソースモードのtoggleのテスト
 	test("6. Toggle Source Mode", async ({ vault }) => {
-		const { window: page } = vault;
+		const hotSandbox = new HotSandboxPage(
+			vault.window,
+			vault.pluginHandleMap
+		);
 		const CMD_TOGGLE_SOURCE = "editor:toggle-source";
-		const pluginHandle = await getSandboxPlugin(vault.pluginHandleMap);
+
+		// Setup debug command
+		const pluginHandle = await vault.pluginHandleMap.evaluateHandle(
+			(map, [id]) => map.get(id) as SandboxNotePlugin,
+			[PLUGIN_ID]
+		);
+
 		await pluginHandle.evaluate(
-			(plugin, [id]) =>
+			(plugin, [cmdId]) => {
 				plugin.addCommand({
-					id: id,
+					id: cmdId,
 					name: "Toggle Source Mode",
-					hotkeys: [
-						{
-							key: "F1",
-							modifiers: ["Alt"],
-						},
-					],
-					callback: () => {
-						console.log("use debug command");
-						app.commands.executeCommandById(id);
-					},
-				}),
+					hotkeys: [{ key: "F1", modifiers: ["Alt"] }],
+					callback: () => app.commands.executeCommandById(cmdId),
+				});
+			},
 			[CMD_TOGGLE_SOURCE]
 		);
 
-		await createNewSandboxNote(page, "## test");
-		await expect(
-			page.locator(ACTIVE_TAB_HEADER_GENERIC_SELECTOR)
-		).toHaveAttribute("data-type", VIEW_TYPE_HOT_SANDBOX);
+		await hotSandbox.createNewSandboxNote("## test");
+		await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
+		await vault.window.locator(hotSandbox.activeEditor).focus();
 
-		await page.locator(ACTIVE_EDITOR_SELECTOR).focus();
-
-		await expect(
-			page.locator(
-				`${ACTIVE_SANDBOX_VIEW_SELECTOR} ${DATA_TYPE_MARKDOWN} > .view-content > .markdown-source-view`
-			)
-		).toHaveClass(/is-live-preview/);
+		// Verify initial live preview mode
+		await hotSandbox.expectSourceMode(true);
 
 		// Toggle to source mode
-		await runCommandById(page, CMD_TOGGLE_SOURCE);
-		await expect(
-			page.locator(
-				`${ACTIVE_SANDBOX_VIEW_SELECTOR} ${DATA_TYPE_MARKDOWN} > .view-content > .markdown-source-view`
-			)
-		).not.toHaveClass(/is-live-preview/);
+		await runCommandById(vault.window, CMD_TOGGLE_SOURCE);
+		await hotSandbox.expectSourceMode(false);
 
-		// Toggle back to WYSIWYG mode
-		await runCommandById(page, CMD_TOGGLE_SOURCE);
-		await expect(
-			page.locator(
-				`${ACTIVE_SANDBOX_VIEW_SELECTOR} ${DATA_TYPE_MARKDOWN} > .view-content > .markdown-source-view`
-			)
-		).toHaveClass(/is-live-preview/);
+		// Toggle back to live preview
+		await runCommandById(vault.window, CMD_TOGGLE_SOURCE);
+		await hotSandbox.expectSourceMode(true);
 	});
 });

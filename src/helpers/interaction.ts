@@ -303,7 +303,6 @@ class FilePathPromptModal extends Modal {
 		}
 
 		this.resolved = true;
-		this.close();
 
 		// Combine folder path and file name to create the full path
 		// Remove trailing slash from folderPath to be safe
@@ -317,6 +316,7 @@ class FilePathPromptModal extends Modal {
 			baseFileName: this.baseFileName,
 			resolved: true,
 		});
+		this.contentEl.empty();
 	}
 
 	onKeydown(e: KeyboardEvent) {

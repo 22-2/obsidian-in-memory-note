@@ -35,10 +35,10 @@ export class EditorSyncManager implements IManager {
 		);
 		this.context.emitter.on("view-opened", this.handleViewOpened);
 		this.context.emitter.on("settings-changed", this.handleSettingsChanged);
-		this.context.emitter.on(
-			"obsidian-active-leaf-changed",
-			this.syncActiveEditorState
-		);
+		// this.context.emitter.on(
+		// 	"obsidian-active-leaf-changed",
+		// 	this.syncActiveEditorState
+		// );
 	}
 
 	public unload(): void {
@@ -115,25 +115,4 @@ export class EditorSyncManager implements IManager {
 			}
 		}
 	}
-
-	/**
-	 * Syncs Obsidian's internal active editor state with our virtual editor.
-	 * This ensures that commands and other editor features work correctly.
-	 */
-	private syncActiveEditorState = (): void => {
-		const activeView = this.context.getActiveView();
-		const workspace = this.context.workspace;
-
-		if (activeView instanceof AbstractNoteView && activeView.editor) {
-			// @ts-expect-error
-			workspace._activeEditor = activeView.wrapper.virtualEditor;
-		} else if (
-			// @ts-expect-error
-			workspace._activeEditor?.leaf?.__FAKE_LEAF__ &&
-			!(activeView instanceof AbstractNoteView)
-		) {
-			// @ts-expect-error
-			workspace._activeEditor = null;
-		}
-	};
 }

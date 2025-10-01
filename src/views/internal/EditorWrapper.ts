@@ -1,12 +1,23 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\src\views\helpers\EditorWrapper.ts
 import log from "loglevel";
 import { type ViewStateResult, WorkspaceLeaf } from "obsidian";
+import type { AppEvents } from "src/events/AppEvents";
 import { noop } from "src/utils";
+import type { EventEmitter } from "src/utils/EventEmitter";
 import type { AbstractNoteView } from "./AbstractNoteView";
 import { VirtualMarkdownView } from "./VirtualMarkdownView";
 import type { AbstractNoteViewState } from "./types";
 
 const logger = log.getLogger("EditorWrapper");
+
+type Context = {
+	getActiveView: () => AbstractNoteView | null;
+	workspace: {
+		_activeEditor: never;
+	};
+	parentView: AbstractNoteView;
+	emitter: EventEmitter<AppEvents>;
+};
 
 /** Manages inline MarkdownView without physical file. */
 export class EditorWrapper {
@@ -15,7 +26,12 @@ export class EditorWrapper {
 	public targetEl: HTMLElement | null = null;
 	private content = "";
 
-	constructor(public parentView: AbstractNoteView) {}
+	constructor(private context: Context) {
+		this.context.emitter.on(
+			"obsidian-active-leaf-changed",
+			this.syncActiveEditorState.bind(this)
+		);
+	}
 
 	/** Initialize the editor and load content. */
 	async initialize(
@@ -29,9 +45,10 @@ export class EditorWrapper {
 		this.load(editorContainer); // Attach to DOM and focus
 
 		const initialContent =
-			initialState?.content ?? (await this.parentView.getContent());
+			initialState?.content ??
+			(await this.context.parentView.getContent());
 		this.content = initialContent;
-		this.parentView.setContent(initialContent);
+		this.context.parentView.setContent(initialContent);
 
 		if (initialState) {
 			await this.virtualEditor.setState(initialState, {
@@ -53,7 +70,7 @@ export class EditorWrapper {
 		target.append(this.containerEl);
 		setTimeout(() => this.focus());
 		this.targetEl = target;
-		// this.parentView.plugin.registerDomEvent(
+		// this.context.parentView.plugin.registerDomEvent(
 		// 	this.targetEl,
 		// 	"focusin",
 		// 	this.handleFocusIn
@@ -68,12 +85,12 @@ export class EditorWrapper {
 
 	// private setActiveEditor = () => {
 	// 	// @ts-ignore
-	// 	this.parentView.plugin.app.workspace._activeEditor = this.virtualEditor;
+	// 	this.context.parentView.plugin.app.workspace._activeEditor = this.virtualEditor;
 	// 	log.debug("this.virtualEditor", this.virtualEditor);
 	// 	log.debug(
-	// 		"this.parentView.plugin.app.workspace._activeEditor",
+	// 		"this.context.parentView.plugin.app.workspace._activeEditor",
 	// 		// @ts-expect-error
-	// 		this.parentView.plugin.app.workspace._activeEditor
+	// 		this.context.parentView.plugin.app.workspace._activeEditor
 	// 	);
 	// };
 
@@ -94,7 +111,7 @@ export class EditorWrapper {
 			this.createFakeLeaf(),
 			this
 		);
-		// this.virtualEditor.file = createVirtualFile(this.parentView.app);
+		// this.virtualEditor.file = createVirtualFile(this.context.parentView.app);
 		this.virtualEditor.leaf.working = false;
 		this.disableSaveOperations();
 		// await this.ensureSourceMode();
@@ -124,16 +141,16 @@ export class EditorWrapper {
 		// leaf's main container. This avoids modifying the real leaf,
 		// preventing crashes and instability.
 		const fakeLeaf = {
-			...this.parentView.leaf,
+			...this.context.parentView.leaf,
 			containerEl: this.containerEl,
 			getState: () => {
-				const state = this.parentView.getState();
+				const state = this.context.parentView.getState();
 				logger.debug("getState", state);
 				return state;
 			},
 			setViewState: async (state: any, result: ViewStateResult) => {
 				if (state.type === "markdown") {
-					state.type = this.parentView.getViewType();
+					state.type = this.context.parentView.getViewType();
 				}
 				logger.debug(
 					"setViewState",
@@ -141,7 +158,7 @@ export class EditorWrapper {
 					"state.state.source",
 					state?.state?.source
 				);
-				this.parentView.leaf.setViewState(
+				this.context.parentView.leaf.setViewState(
 					state,
 					result || { history: false }
 				);
@@ -150,4 +167,24 @@ export class EditorWrapper {
 		} as unknown as WorkspaceLeaf;
 		return fakeLeaf;
 	}
+
+	/**
+	 * Syncs Obsidian's internal active editor state with our virtual editor.
+	 * This ensures that commands and other editor features work correctly.
+	 */
+	private syncActiveEditorState = (): void => {
+		const activeView = this.context.getActiveView();
+		const workspace = this.context.workspace;
+
+		if (activeView?.editor) {
+			// @ts-expect-error
+			workspace._activeEditor = activeView.wrapper.virtualEditor;
+		} else if (
+			// @ts-expect-error
+			workspace._activeEditor?.leaf?.__FAKE_LEAF__
+		) {
+			// @ts-expect-error
+			workspace._activeEditor = null;
+		}
+	};
 }

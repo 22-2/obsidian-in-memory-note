@@ -25,6 +25,13 @@ import { handleClick, handleContextMenu } from "src/helpers/clickHandler";
 
 const logger = log.getLogger("AbstractNoteView");
 
+export type Context = {
+	getSettings: SettingsManager["getSettings"];
+	getActiveView: ViewManager["getActiveView"];
+	isLastHotView: ViewManager["isLastHotView"];
+	emitter: EventEmitter<AppEvents>;
+};
+
 /** Abstract base class for note views with an inline editor. */
 export abstract class AbstractNoteView extends ItemView {
 	public isSourceMode = true;
@@ -45,7 +52,12 @@ export abstract class AbstractNoteView extends ItemView {
 		super(leaf);
 		// 確実にmasterIdを初期化
 		this.masterId = `${HOT_SANDBOX_ID_PREFIX}-${nanoid()}`;
-		this.wrapper = new EditorWrapper(this);
+		this.wrapper = new EditorWrapper({
+			emitter: this.context.emitter,
+			getActiveView: this.context.getActiveView,
+			parentView: this,
+			workspace: this.app.workspace as never,
+		});
 		this.scope = new Scope(this.app.scope);
 
 		this.stateManager = new ViewStateManager();
@@ -367,11 +379,5 @@ export class ViewEventHandler {
 		});
 	}
 }
-
-export type Context = {
-	getSettings: SettingsManager["getSettings"];
-	isLastHotView: ViewManager["isLastHotView"];
-	emitter: EventEmitter<AppEvents>;
-};
 
 export type { Context as AbstractNoteViewContext };

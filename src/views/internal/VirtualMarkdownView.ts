@@ -13,7 +13,7 @@ export class VirtualMarkdownView extends MarkdownView {
 
 	getState(): any {
 		const editorState = super.getState();
-		const content = this.wrapper.parentView.editor?.getValue();
+		const content = this.wrapper.getContent();
 		return { ...editorState, content: content };
 	}
 }

@@ -1,5 +1,6 @@
 import { existsSync } from "fs";
 import path from "path";
+import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
 import invariant from "tiny-invariant";
 import { fileURLToPath } from "url";
 import manifest from "../manifest.json" with { type: "json" };
@@ -56,3 +57,6 @@ export const CMD_ID_OPEN_HOT_SANDBOX = "sandbox-note:open-hot-sandbox-note-view"
 export const CMD_ID_TOGGLE_SOURCE = "editor:toggle-source";
 export const CMD_ID_UNDO_CLOSE_TAB = "workspace:undo-close-pane";
 
+export const DATAT_TYPE_MARKDOWN = "markdown";
+export const DATAT_TYPE_EMPTY = "empty";
+export const DATAT_TYPE_HOT_SANDBOX = VIEW_TYPE_HOT_SANDBOX

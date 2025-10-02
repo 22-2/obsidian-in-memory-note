@@ -4,6 +4,19 @@
 # This script prepares the Obsidian E2E testing environment by unpacking
 # asar files included in the repository.
 
+# Project Root Directory/
+# ├── (Your Plugin Source Code)/   <-- (A)
+# │   ├── manifest.json              <-- [REQUIRED] Specifies the plugin ID.
+# │   └── package.json               <-- [REQUIRED] Specifies the build command.
+# │
+# └── e2e/                           <-- Folder for placing this script
+#     ├── e2e-setup.sh               <-- The main script
+#     ├── paths.json                 <-- [REQUIRED] Configuration file
+#     └── assets/                    <-- (B) Obsidian resource/asset storage
+#         └── app.asar               <-- [REQUIRED] The main Obsidian application file
+#         └── obsidian.asar          <-- [REQUIRED] Obsidian core functionality
+#         └── app.asar.unpacked.zip  <-- [REQUIRED] Additional files
+
 set -e
 
 # =============================================================================

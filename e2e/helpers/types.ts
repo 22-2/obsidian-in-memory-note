@@ -2,8 +2,8 @@
 // 1. Core Types (types.mts)
 // ===================================================================
 
-import type { App } from "obsidian";
-import type { ElectronApplication, Page } from "playwright";
+import type { Plugin } from "obsidian";
+import type { ElectronApplication, JSHandle, Page } from "playwright";
 
 export interface VaultConfig {
 	name: string;
@@ -13,8 +13,11 @@ export interface VaultConfig {
 }
 
 export interface TestContext {
-	app: ElectronApplication;
-	page: Page;
-	vault: VaultConfig;
-	obsidianApp?: App;
+	electronApp: ElectronApplication;
+	window: Page;
+	vaultName?: string;
+}
+
+export interface VaultPageTextContext extends TestContext {
+	pluginHandleMap: JSHandle<Map<string, Plugin>>;
 }

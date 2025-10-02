@@ -2,7 +2,7 @@
 // ipc-bridge.mts - IPCの簡素化と統合
 // ===================================================================
 
-import type { PageManager } from "./page-manager";
+import type { PageManager } from "./managers/PageManager";
 
 export class IPCBridge {
 	constructor(private pageManager: PageManager) {}

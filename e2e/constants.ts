@@ -22,11 +22,6 @@ export const PLUGIN_ID = manifest.id;
 // --- Vault & App Paths ---
 export const TEST_VAULT_NAME = paths.vaultName;
 export const SANDBOX_VAULT_NAME = "Obsidian Sandbox";
-
-/**
- * @deprecated
- */
-export const TEST_VAULT_PATH = path.join(E2E_ROOT_DIR, TEST_VAULT_NAME);
 export const APP_MAIN_JS_PATH = path.join(
 	E2E_ROOT_DIR,
 	paths.obsidianUnpackedDir,
@@ -34,7 +29,6 @@ export const APP_MAIN_JS_PATH = path.join(
 );
 
 console.log("E2E_ROOT_DIR", E2E_ROOT_DIR);
-console.log("TEST_VAULT_PATH", TEST_VAULT_PATH);
 console.log("APP_MAIN_JS_PATH", APP_MAIN_JS_PATH);
 
 // --- Pre-flight checks ---
@@ -46,11 +40,6 @@ invariant(
 	existsSync(APP_MAIN_JS_PATH),
 	`Obsidian app not found at: ${APP_MAIN_JS_PATH}. Did you run 'pnpm build:e2e' and 'e2e-setup' script?`
 );
-invariant(
-	existsSync(TEST_VAULT_PATH),
-	`E2E vault not found at: ${TEST_VAULT_PATH}. Did you run 'e2e-setup' script?`
-);
-
 
 export const LAUNCH_OPTIONS = {
 	args: [APP_MAIN_JS_PATH, "--no-sandbox", "--disable-setuid-sandbox", "--unsafely-disable-devtools-self-xss-warnings"],
@@ -59,3 +48,7 @@ export const LAUNCH_OPTIONS = {
 		NODE_ENV: "development",
 	},
 };
+// Test constants for Hot Sandbox specs
+export const CMD_ID_TOGGLE_SOURCE = "editor:toggle-source";
+export const CMD_ID_NEW_HOT_SANDBOX = "sandbox-note:open-hot-sandbox-note-view";
+export const CMD_ID_CONVERT_TO_FILE = "sandbox-note:convert-to-file";

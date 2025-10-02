@@ -1,14 +1,12 @@
-import "../../log-setup";
+import "../setup/log-setup";
 
-import { DIST_DIR, PLUGIN_ID } from "e2e/config";
-import { getPluginHandleMap } from "e2e/obsidian-setup/helpers";
-import type { VaultOptions } from "e2e/obsidian-setup/vault-manager";
-import SandboxNotePlugin from "src/main";
-import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
-import { delay, runCommandById } from "../../obsidian-commands/run-command";
-import { expect, test } from "../../test-fixtures";
+import { CMD_ID_TOGGLE_SOURCE } from "e2e/constants";
+import SandboxNotePlugin from "../../src/main";
+import { VIEW_TYPE_HOT_SANDBOX } from "../../src/utils/constants";
+import { expect, test } from "../base";
+import { DIST_DIR, PLUGIN_ID } from "../constants";
+import type { VaultOptions } from "../helpers/managers/VaultManager";
 import { HotSandboxPage } from "./HotSandboxPage";
-import { CMD_ID_TOGGLE_SOURCE } from "./constants";
 
 const vaultOptions: VaultOptions = {
 	useSandbox: true,
@@ -33,7 +31,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			const testContent = "Hello, Sandbox!";
 
 			await hotSandbox.createNewSandboxNote(testContent);
-			await hotSandbox.expectActiveTitle("*Hot Sandbox-1");
+			await hotSandbox.expectActiveSandboxTitle("*Hot Sandbox-1");
 		});
 	});
 
@@ -52,9 +50,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			await hotSandbox.splitVertically();
 			await hotSandbox.expectSandboxViewCount(2);
 
-			const rightPaneEditor = vault.window.locator(
-				hotSandbox.activeEditor
-			);
+			const rightPaneEditor = hotSandbox.activeEditor;
 			await expect(rightPaneEditor).toHaveText(initialContent);
 
 			await rightPaneEditor.focus();
@@ -79,10 +75,10 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			const note2Content = "This is the second, separate note.";
 
 			await hotSandbox.createNewSandboxNote(note1Content);
-			await hotSandbox.expectActiveTitle("*Hot Sandbox-1");
+			await hotSandbox.expectActiveSandboxTitle("*Hot Sandbox-1");
 
 			await hotSandbox.createNewSandboxNote(note2Content);
-			await hotSandbox.expectActiveTitle("*Hot Sandbox-2");
+			await hotSandbox.expectActiveSandboxTitle("*Hot Sandbox-2");
 			await hotSandbox.expectSandboxViewCount(2);
 
 			expect(await hotSandbox.getActiveEditorContent()).toBe(
@@ -126,7 +122,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			await hotSandbox.expectTabCount(1);
 
 			// Verify file
-			await hotSandbox.expectActiveTitleToContain(fileName);
+			await expect(hotSandbox.activeTabHeader).toContainText(fileName);
 			expect(await hotSandbox.fileExists(expectedFile)).toBeTruthy();
 			expect(await hotSandbox.getActiveFileContent()).toBe(noteContent);
 
@@ -172,7 +168,6 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			// Try to close and confirm
 			await hotSandbox.closeTab();
 			await page.getByText("Yes", { exact: true }).click();
-			await delay(100);
 			await hotSandbox.expectActiveTabType("empty");
 
 			// Undo close
@@ -211,17 +206,17 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 			await hotSandbox.createNewSandboxNote("## test");
 			await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
-			await vault.window.locator(hotSandbox.activeEditor).focus();
+			await hotSandbox.activeEditor.focus();
 
 			// Verify initial live preview mode
 			await hotSandbox.expectSourceMode(true);
 
 			// Toggle to source mode
-			await runCommandById(vault.window, CMD_ID_TOGGLE_SOURCE);
+			await hotSandbox.runCommand(CMD_ID_TOGGLE_SOURCE);
 			await hotSandbox.expectSourceMode(false);
 
 			// Toggle back to live preview
-			await runCommandById(vault.window, CMD_ID_TOGGLE_SOURCE);
+			await hotSandbox.runCommand(CMD_ID_TOGGLE_SOURCE);
 			await hotSandbox.expectSourceMode(true);
 		});
 	});
@@ -245,8 +240,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 			// Create sandbox note with content
 			await hotSandbox.createNewSandboxNote(persistentContent);
-			await hotSandbox.expectActiveTitle("*Hot Sandbox-1");
-			await hotSandbox.expectActiveTitle("*Hot Sandbox-1");
+			await hotSandbox.expectActiveSandboxTitle("*Hot Sandbox-1");
 			expect(await hotSandbox.getActiveEditorContent()).toBe(
 				persistentContent
 			);
@@ -257,6 +251,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 			// Verify content persists
 			const reloadedWindow = vault.electronApp.windows().at(-1)!;
+			const { getPluginHandleMap } = await import("../helpers/utils");
 			const reloadedHotSandbox = new HotSandboxPage(
 				reloadedWindow,
 				await getPluginHandleMap(
@@ -264,13 +259,11 @@ test.describe("HotSandboxNoteView Main Features", () => {
 					vaultOptions.plugins || []
 				)
 			);
-			await expect(
-				vault.window.locator(reloadedHotSandbox.activeSandboxView)
-			).toBeVisible();
+			await expect(reloadedHotSandbox.activeSandboxView).toBeVisible();
 			expect(await reloadedHotSandbox.getActiveEditorContent()).toBe(
 				persistentContent
 			);
-			await reloadedHotSandbox.expectActiveTitle("*Hot Sandbox-1");
+			await reloadedHotSandbox.expectActiveSandboxTitle("*Hot Sandbox-1");
 		});
 	});
 });

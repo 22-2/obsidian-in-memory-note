@@ -7,14 +7,13 @@ import {
 	copyFileSync,
 	existsSync,
 	mkdirSync,
-	readFileSync,
 	readdirSync,
 	writeFileSync,
 } from "fs";
 import log from "loglevel";
 import path from "path";
 import type { ElectronApplication, Page } from "playwright";
-import type { TestPlugin } from "./vault-manager";
+import type { TestPlugin } from "./VaultManager";
 
 const logger = log.getLogger("PluginManager");
 

@@ -4,24 +4,18 @@
 
 import fs from "fs/promises";
 import log from "loglevel";
-import type { Plugin } from "obsidian";
 import os from "os";
 import path from "path";
-import type { ElectronApplication, JSHandle, Page } from "playwright";
+import type { ElectronApplication } from "playwright";
 import { _electron as electron } from "playwright/test";
-import { LAUNCH_OPTIONS } from "../config";
-import { getPluginHandleMap } from "./helpers";
-import { PageManager } from "./page-manager";
-import { VaultManager, type VaultOptions } from "./vault-manager";
-
-export interface TestContext {
-	electronApp: ElectronApplication;
-	window: Page;
-	vaultName?: string;
-}
-export interface VaultPageTextContext extends TestContext {
-	pluginHandleMap: JSHandle<Map<string, Plugin>>;
-}
+import { LAUNCH_OPTIONS } from "../constants";
+import { PageManager } from "../helpers/managers/PageManager";
+import {
+	VaultManager,
+	type VaultOptions,
+} from "../helpers/managers/VaultManager";
+import type { TestContext, VaultPageTextContext } from "../helpers/types";
+import { getPluginHandleMap } from "../helpers/utils";
 
 const logger = log.getLogger("ObsidianTestSetup");
 

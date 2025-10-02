@@ -1,13 +1,13 @@
 // E:\Desktop\coding\pub\obsidian-sandbox-note\e2e\specs\setup\example.spec.ts
 import { VIEW_TYPE_HOT_SANDBOX } from "src/utils/constants";
-import "../../log-setup";
+import "../setup/log-setup";
 // ===================================================================
 // Example Test (example.test.mts)
 // ===================================================================
 
-import { DIST_DIR, PLUGIN_ID, SANDBOX_VAULT_NAME } from "../../config";
-import { expect, test } from "../../test-fixtures";
-import { HotSandboxPage } from "./HotSandboxPage"; // Import HotSandboxPage
+import { expect, test } from "../base";
+import { DIST_DIR, PLUGIN_ID, SANDBOX_VAULT_NAME } from "../constants";
+import { HotSandboxPage } from "../specs/HotSandboxPage";
 
 test("sandbox test: plugin activation and view creation via command", async ({
 	vault,

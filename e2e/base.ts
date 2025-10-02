@@ -1,10 +1,8 @@
 import { test as base, type TestInfo } from "@playwright/test"; // TestInfo をインポート
 import log from "loglevel";
-import {
-	ObsidianTestSetup,
-	type VaultPageTextContext,
-} from "./obsidian-setup/setup";
-import type { VaultOptions } from "./obsidian-setup/vault-manager";
+import { ObsidianTestSetup } from "./setup/ObsidianTestSetup";
+import type { VaultOptions } from "./helpers/managers/VaultManager";
+import { type VaultPageTextContext } from "./helpers/types";
 
 // TestInfo をフィクスチャの型定義に追加
 type TestFixtures = {
@@ -25,7 +23,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 	},
 
 	// testInfo をフィクスチャの引数として受け取る
-	obsidianSetup: async ({}, use, testInfo) => {
+	obsidianSetup: async ({ }, use, testInfo) => {
 		const setup = new ObsidianTestSetup();
 
 		try {

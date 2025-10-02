@@ -1,8 +1,8 @@
 import {
 	CMD_ID_CONVERT_TO_FILE,
 	CMD_ID_NEW_HOT_SANDBOX,
-	DATAT_TYPE_HOT_SANDBOX,
 	DATAT_TYPE_MARKDOWN,
+	DATA_TYPE_HOT_SANDBOX,
 	PLUGIN_ID,
 } from "e2e/constants";
 import type { Page } from "playwright";
@@ -104,7 +104,7 @@ export class HotSandboxPage extends CustomViewPageObject {
 
 	async expectSourceMode(isLivePreview: boolean): Promise<void> {
 		const editor = this.page.locator(
-			`${this.getDatatype(DATAT_TYPE_HOT_SANDBOX)} ${this.getDatatype(
+			`${this.getDatatype(DATA_TYPE_HOT_SANDBOX)} ${this.getDatatype(
 				DATAT_TYPE_MARKDOWN
 			)} .markdown-source-view`
 		);

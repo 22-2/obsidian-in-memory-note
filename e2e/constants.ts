@@ -58,5 +58,5 @@ export const CMD_ID_TOGGLE_SOURCE = "editor:toggle-source";
 export const CMD_ID_UNDO_CLOSE_TAB = "workspace:undo-close-pane";
 
 export const DATAT_TYPE_MARKDOWN = "markdown";
-export const DATAT_TYPE_EMPTY = "empty";
-export const DATAT_TYPE_HOT_SANDBOX = VIEW_TYPE_HOT_SANDBOX
+export const DATA_TYPE_EMPTY = "empty";
+export const DATA_TYPE_HOT_SANDBOX = VIEW_TYPE_HOT_SANDBOX

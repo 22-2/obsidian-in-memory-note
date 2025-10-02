@@ -12,4 +12,4 @@ export const HOT_SANDBOX_NOTE_ICON = "package";
 
 export const HOT_SANDBOX_ID_PREFIX = "hsbox-";
 
-export const DEBOUNCE_MS = 1000;
+export const DEBOUNCE_MS = 300;

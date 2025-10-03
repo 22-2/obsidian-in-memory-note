@@ -71,6 +71,11 @@
   - _Requirements: 2.1, 2.2, 2.4_
 
 - [ ] 7. Create E2E test file for data persistence scenarios
+
+
+
+
+
   - Create new E2E test file for testing auto-save and restore functionality
   - Add test case for normal save and restore flow
   - Add test case for immediate save on view close

@@ -1,8 +1,8 @@
 import { test as base, type TestInfo } from "@playwright/test"; // TestInfo をインポート
 import log from "loglevel";
-import { ObsidianTestSetup } from "./setup/ObsidianTestSetup";
 import type { VaultOptions } from "./helpers/managers/VaultManager";
 import { type VaultPageTextContext } from "./helpers/types";
+import { ObsidianTestSetup } from "./setup/ObsidianTestSetup";
 
 // TestInfo をフィクスチャの型定義に追加
 type TestFixtures = {
@@ -23,7 +23,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 	},
 
 	// testInfo をフィクスチャの引数として受け取る
-	obsidianSetup: async ({ }, use, testInfo) => {
+	obsidianSetup: async ({}, use, testInfo) => {
 		const setup = new ObsidianTestSetup();
 
 		try {
@@ -88,11 +88,19 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 	},
 
 	vault: async ({ obsidianSetup, vaultOptions }, use) => {
-		// ... (vault フィクスチャは変更なし)
 		logger.debug("vaultOptions", vaultOptions);
 		const context = vaultOptions.useSandbox
 			? await obsidianSetup.openSandbox(vaultOptions)
 			: await obsidianSetup.openVault(vaultOptions);
+		if (vaultOptions.showLoggerOnNode) {
+			context.window.on("console", (msg) => {
+				console.log(
+					`[Browser Console ${msg
+						.type()
+						.toUpperCase()}] ${msg.text()}`
+				);
+			});
+		}
 		const notices = await context.window
 			.locator(".notice-container .notice")
 			.all();
@@ -104,6 +112,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 			})
 		);
 		logger.debug("enter test");
+
 		await use(context);
 		logger.debug("done");
 	},

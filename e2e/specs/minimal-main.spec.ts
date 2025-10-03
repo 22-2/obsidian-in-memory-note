@@ -149,23 +149,6 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			);
 			const { window: page } = vault;
 
-			// 'console' イベントのリスナーを設定
-			page.on("console", (msg) => {
-				// ログの種類（'log', 'error', 'warn'など）とテキストを取得してNodeコンソールに出力
-				console.log(
-					`[Browser Console ${msg
-						.type()
-						.toUpperCase()}] ${msg.text()}`
-				);
-
-				// 詳細情報が必要な場合は msg.args() で引数のリストを取得できるっす
-				// const values = [];
-				// for (const arg of msg.args()) {
-				//   values.push(await arg.jsonValue());
-				// }
-				// console.log(values);
-			});
-
 			await hotSandbox.closeTab();
 			hotSandbox.expectTabCount(1);
 			await expect(hotSandbox.activeTabHeader).toContainText("New tab");
@@ -257,7 +240,11 @@ test.describe("HotSandboxNoteView Main Features", () => {
 	// Dedicated describe block for Test 7 to isolate the configuration override
 	test.describe("7. Data Persistence After Reload", () => {
 		test.use({
-			vaultOptions: { ...vaultOptions, useSandbox: false },
+			vaultOptions: {
+				...vaultOptions,
+				useSandbox: false,
+				showLoggerOnNode: true,
+			},
 		});
 
 		test("should persist sandbox content after Obsidian reload when useSandbox is false", async ({

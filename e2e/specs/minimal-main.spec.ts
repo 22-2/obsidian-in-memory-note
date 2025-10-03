@@ -150,9 +150,11 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			const { window: page } = vault;
 
 			await hotSandbox.closeTab();
+			await hotSandbox.expectTabCount(1);
 			await hotSandbox.createNewSandboxNote("test");
+			await hotSandbox.expectTabCount(1);
 
-			expect(await hotSandbox.activeEditor).toHaveText("test");
+			expect(hotSandbox.activeEditor).toHaveText("test");
 			await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
 			await expect(hotSandbox.activeTabHeader).toBeVisible();
 			await expect(hotSandbox.activeTabHeader).toContainText(

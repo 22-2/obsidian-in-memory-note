@@ -44,9 +44,9 @@ const MANAGER_NAMES: readonly ManagerName[] = [
 	"editorSyncManager",
 	"cmExtensionManager",
 	"pluginEventManager",
-	"obsidianEventManager",
-	"uriManager",
 	"viewPatchManager",
+	"uriManager",
+	"obsidianEventManager",
 ] as const;
 
 /**

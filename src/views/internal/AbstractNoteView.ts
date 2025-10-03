@@ -97,10 +97,10 @@ export abstract class AbstractNoteView extends ItemView {
 	public override getState(): AbstractNoteViewState {
 		const baseState =
 			this.wrapper.magicalEditor.getState() as ObsidianViewState;
-		const content = this.editor?.getValue() ?? "";
+		// Don't save content to workspace.json - only save masterId
+		// Content will be restored from IndexedDB
 		return this.stateManager.buildState(
 			this.getViewType(),
-			content,
 			this.masterId,
 			baseState
 		);
@@ -111,6 +111,19 @@ export abstract class AbstractNoteView extends ItemView {
 		try {
 			await this.initializeEditor();
 			this.setupEventHandlers();
+
+			// Check if we need to restore content from IndexedDB after editor initialization
+			if (this.stateManager.getNeedsContentRestoration()) {
+				logger.debug(
+					`Requesting content restoration after editor init: ${this.masterId}`
+				);
+				this.context.emitter.emit("request-content-restoration", {
+					view: this,
+					masterId: this.masterId,
+				});
+				this.stateManager.clearNeedsContentRestoration();
+			}
+
 			this.emitOpenEvents();
 		} catch (error) {
 			this.handleInitializationError(error);
@@ -118,7 +131,14 @@ export abstract class AbstractNoteView extends ItemView {
 	}
 
 	public override async onClose() {
-		this.context.emitter.emit("view-closed", { view: this });
+		// Get content BEFORE emitting view-closed event and unloading wrapper
+		const content = this.getContent();
+		
+		this.context.emitter.emit("view-closed", { 
+			view: this,
+			content: content  // Pass content to event handler
+		});
+		
 		this.wrapper.unload();
 		this.contentEl.empty();
 	}
@@ -127,7 +147,29 @@ export abstract class AbstractNoteView extends ItemView {
 		state: AbstractNoteViewState,
 		result: ViewStateResult
 	): Promise<void> {
-		// Update only when restoring masterId from state.
+		// Classify why setState was called
+		type SetStateType = 
+			| "workspace-restore"  // Restoring from workspace.json
+			| "new-view"           // Opening a new view
+			| "state-update";      // Updating existing view state
+
+		const isRestoringMasterId = 
+			state?.state?.masterId && 
+			state.state.masterId !== this.masterId;
+
+		const setStateType: SetStateType = isRestoringMasterId
+			? "workspace-restore"
+			: this.editor
+			? "state-update"
+			: "new-view";
+
+		logger.debug("setState called", {
+			type: setStateType,
+			currentMasterId: this.masterId,
+			newMasterId: state?.state?.masterId,
+		});
+
+		// Restore masterId from workspace state
 		if (state?.state?.masterId) {
 			this.masterId = state.state.masterId;
 			logger.debug(`Restored masterId: ${this.masterId}`);
@@ -135,7 +177,7 @@ export abstract class AbstractNoteView extends ItemView {
 
 		const editMode = this.wrapper.magicalEditor?.editMode;
 
-		// update sourceModde
+		// Update source mode if needed
 		if (
 			typeof state.source === "boolean" &&
 			editMode.sourceMode !== state.source
@@ -144,22 +186,31 @@ export abstract class AbstractNoteView extends ItemView {
 			state.layout = true;
 		}
 
-		if (this.editor && state.state?.content != null) {
-			this.setContent(state.state.content);
-			await this.wrapper.magicalEditor.setState(state, result);
-			// @ts-ignore
-			result.close = false;
+		// Handle workspace restore: load content from IndexedDB
+		if (setStateType === "workspace-restore") {
+			logger.debug(
+				`Workspace restore - requesting content from IndexedDB: ${this.masterId}`
+			);
+			if (this.editor) {
+				// Editor already initialized - restore immediately
+				this.context.emitter.emit("request-content-restoration", {
+					view: this,
+					masterId: this.masterId,
+				});
+			} else {
+				// Editor not ready - restore after onOpen
+				this.stateManager.setNeedsContentRestoration(true);
+			}
 		}
 
-		// save initial state
+		// Save initial state
 		this.stateManager.setInitialState(state);
 
 		await super.setState(state, result);
 
 		logger.debug("setState completed", {
+			type: setStateType,
 			masterId: this.masterId,
-			state,
-			result,
 		});
 	}
 
@@ -248,6 +299,7 @@ export abstract class AbstractNoteView extends ItemView {
 
 export class ViewStateManager {
 	private initialState: AbstractNoteViewState | null = null;
+	private needsContentRestoration = false;
 
 	setInitialState(state: AbstractNoteViewState | null) {
 		this.initialState = state;
@@ -261,9 +313,20 @@ export class ViewStateManager {
 		this.initialState = null;
 	}
 
+	setNeedsContentRestoration(value: boolean) {
+		this.needsContentRestoration = value;
+	}
+
+	getNeedsContentRestoration(): boolean {
+		return this.needsContentRestoration;
+	}
+
+	clearNeedsContentRestoration() {
+		this.needsContentRestoration = false;
+	}
+
 	buildState(
 		viewType: string,
-		content: string,
 		masterId: string,
 		baseState: any
 	): AbstractNoteViewState {
@@ -272,7 +335,7 @@ export class ViewStateManager {
 			type: viewType,
 			state: {
 				masterId,
-				content,
+				// Don't include content - it will be restored from IndexedDB
 			},
 		};
 		logger.debug("ViewStateManager.buildState", state);

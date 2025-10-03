@@ -25,6 +25,8 @@ export class CacheManager implements IManager {
 			.getDbManager()
 			.getAllSandboxes();
 		
+		logger.debug(`📦 Loading sandboxes from IndexedDB, total: ${allSandboxes.length}`);
+		
 		let loadedCount = 0;
 		let skippedCount = 0;
 		
@@ -32,15 +34,16 @@ export class CacheManager implements IManager {
 			// Validate sandbox data before loading into cache
 			if (this.validateSandboxData(note)) {
 				this.sandboxes.set(note.id, note);
+				logger.debug(`  ✅ Loaded: ${note.id}, content length: ${note.content.length}`);
 				loadedCount++;
 			} else {
-				logger.warn(`Skipping corrupted sandbox data during restoration: ${note.id}`);
+				logger.warn(`  ❌ Skipping corrupted sandbox data: ${note.id}`);
 				skippedCount++;
 			}
 		});
 
 		logger.debug(
-			`Loaded ${loadedCount} hot sandbox notes into memory${skippedCount > 0 ? `, skipped ${skippedCount} corrupted` : ""}.`
+			`📦 Loaded ${loadedCount} hot sandbox notes into memory${skippedCount > 0 ? `, skipped ${skippedCount} corrupted` : ""}.`
 		);
 		// this.emitter.emit("notes-loaded", { count: allNotes.length });
 	}
@@ -64,8 +67,10 @@ export class CacheManager implements IManager {
 		return Array.from(this.sandboxes.values());
 	}
 
-	getSandboxContent(masterId: string): string {
-		return this.sandboxes.get(masterId)?.content ?? "";
+	getSandboxContent(masterId: string): string | undefined {
+		const sandbox = this.sandboxes.get(masterId);
+		logger.debug(`🔍 getSandboxContent(${masterId}): ${sandbox ? `found, length: ${sandbox.content.length}` : 'not found'}`);
+		return sandbox?.content;
 	}
 
 	get(masterId: string): HotSandboxNoteData | undefined {

@@ -1,12 +1,11 @@
 // src/utils/constants.ts
-import log from "loglevel";
 
 export const DEBUG_MODE =
 	(typeof process !== "undefined" &&
 		process.env.NODE_ENV === "development") ||
 	process.env.CI;
 
-log.debug("ENABLE_LOGGER", DEBUG_MODE);
+console.log("ENABLE_LOGGER", DEBUG_MODE);
 
 export const APP_NAME = "HotSandboxNote";
 export const VIEW_TYPE_HOT_SANDBOX = "hot-sandbox-note-view";

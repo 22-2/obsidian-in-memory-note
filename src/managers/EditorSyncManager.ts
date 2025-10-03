@@ -36,6 +36,7 @@ export class EditorSyncManager implements IManager {
 		);
 		this.context.emitter.on("view-opened", this.handleViewOpened);
 		this.context.emitter.on("settings-changed", this.handleSettingsChanged);
+		this.context.emitter.on("request-content-restoration", this.handleContentRestoration);
 		// this.context.emitter.on(
 		// 	"obsidian-active-leaf-changed",
 		// 	this.syncActiveEditorState
@@ -52,6 +53,7 @@ export class EditorSyncManager implements IManager {
 			"settings-changed",
 			this.handleSettingsChanged
 		);
+		this.context.emitter.off("request-content-restoration", this.handleContentRestoration);
 	}
 
 	private handleSettingsChanged = () => {
@@ -63,10 +65,26 @@ export class EditorSyncManager implements IManager {
 		if (view instanceof HotSandboxNoteView && view.masterId) {
 			this.context.registerNewSandbox(view.masterId);
 			this.viewMasterIdMap.set(view, view.masterId);
-			view.setContent(this.getSandboxContent(view.masterId));
+			const content = this.getSandboxContent(view.masterId);
+			if (content !== undefined) {
+				view.setContent(content);
+			}
 			log.debug(
 				`View ${view.leaf.id} associated with masterId ${view.masterId}`
 			);
+		}
+	};
+
+	private handleContentRestoration = (payload: AppEvents["request-content-restoration"]) => {
+		const { view, masterId } = payload;
+		if (view instanceof HotSandboxNoteView) {
+			const content = this.getSandboxContent(masterId);
+			if (content !== undefined) {
+				view.setContent(content);
+				logger.debug(`✅ Restored content from IndexedDB for masterId: ${masterId}, length: ${content.length}`);
+			} else {
+				logger.warn(`❌ No content found in IndexedDB for masterId: ${masterId}`);
+			}
 		}
 	};
 
@@ -93,7 +111,7 @@ export class EditorSyncManager implements IManager {
 		logger.debug("finish");
 	}
 
-	public getSandboxContent(masterId: string): string {
+	public getSandboxContent(masterId: string): string | undefined {
 		return this.context.getSandboxContent(masterId);
 	}
 

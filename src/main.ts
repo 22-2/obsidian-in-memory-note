@@ -1,3 +1,5 @@
+import { overwriteLogLevel } from "./utils/setup-logger";
+
 import log from "loglevel";
 import { Plugin } from "obsidian";
 import type { AppEvents } from "./events/AppEvents";
@@ -6,8 +8,6 @@ import { AppOrchestrator } from "./managers/AppOrchestrator";
 import { SandboxNoteSettingTab } from "./settings";
 import { EventEmitter } from "./utils/EventEmitter";
 import { DEBUG_MODE, HOT_SANDBOX_NOTE_ICON } from "./utils/constants";
-import "./utils/setup-logger";
-import { overwriteLogLevel } from "./utils/setup-logger";
 import { HotSandboxNoteView } from "./views/HotSandboxNoteView";
 import { extractToFileInteraction } from "./views/internal/utils";
 
@@ -21,10 +21,11 @@ export default class SandboxNotePlugin extends Plugin {
 
 	/** Initialize plugin on load. */
 	async onload() {
-		if (!DEBUG_MODE) {
-			overwriteLogLevel();
-		} else {
+		if (DEBUG_MODE) {
 			logger.debug("BUILT_AT", process.env.BUILT_AT);
+			this.togglLoggersBy("debug");
+		} else {
+			overwriteLogLevel();
 		}
 
 		this.initializeCoreComponents();
@@ -117,5 +118,6 @@ export default class SandboxNotePlugin extends Plugin {
 			.forEach((logger) => {
 				logger.setLevel(level);
 			});
+		console.log(`Logger level set to ${level}`);
 	}
 }

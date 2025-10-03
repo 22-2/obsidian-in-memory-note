@@ -21,6 +21,11 @@ export interface AppEvents {
 	};
 	"view-closed": {
 		view: AbstractNoteView;
+		content: string;  // Content captured before view is destroyed
+	};
+	"request-content-restoration": {
+		view: AbstractNoteView;
+		masterId: string;
 	};
 	"connect-editor-plugin": {
 		view: AbstractNoteView;

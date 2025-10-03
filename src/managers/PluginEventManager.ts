@@ -28,7 +28,7 @@ type Context = {
 };
 
 export class PluginEventManager implements IManager {
-	constructor(private context: Context) { }
+	constructor(private context: Context) {}
 
 	load(): void {
 		this.context.emitter.on(
@@ -46,9 +46,9 @@ export class PluginEventManager implements IManager {
 			this.handleLayoutReady
 		);
 		this.context.emitter.on("plugin-unload", this.handleUnload);
-		this.handleSettingsChanged({
-			newSettings: this.context.settings.getSettings(),
-		});
+		// this.handleSettingsChanged({
+		// 	newSettings: this.context.settings.getSettings(),
+		// });
 	}
 
 	unload(): void {
@@ -71,18 +71,25 @@ export class PluginEventManager implements IManager {
 	};
 
 	private handleViewClosed = async (payload: AppEvents["view-closed"]) => {
-		const { view } = payload;
+		const { view, content } = payload;
 		// 変更点：タブが閉じられたときのロジックを明確化
 		if (view instanceof HotSandboxNoteView && view.masterId) {
 			// このタブが、特定のノートグループを表示している最後のタブであるかを確認
 			if (this.context.isLastHotView(view.masterId)) {
 				// 最後のタブであれば、まず即座に保存してからDBとキャッシュから完全にデータを削除する
 				try {
-					logger.debug(`Immediate save before closing last view for: ${view.masterId}`);
-					await this.context.immediateSave(view.masterId, view.getContent());
-					logger.debug(`Immediate save completed for: ${view.masterId}`);
+					logger.debug(
+						`💾 Immediate save before closing last view for: ${view.masterId}, content length: ${content.length}`
+					);
+					await this.context.immediateSave(view.masterId, content);
+					logger.debug(
+						`✅ Immediate save completed for: ${view.masterId}`
+					);
 				} catch (error) {
-					logger.warn(`Failed to immediately save before closing view: ${view.masterId}`, error);
+					logger.warn(
+						`❌ Failed to immediately save before closing view: ${view.masterId}`,
+						error
+					);
 				}
 
 				this.context.deleteFromAll(view.masterId);
@@ -99,15 +106,27 @@ export class PluginEventManager implements IManager {
 
 		// Immediately save all views before unload
 		const savePromises = views
-			.filter(view => view instanceof HotSandboxNoteView && view.masterId)
+			.filter(
+				(view) => view instanceof HotSandboxNoteView && view.masterId
+			)
 			.map(async (view) => {
 				const hotView = view as HotSandboxNoteView;
 				try {
-					logger.debug(`Immediate save on unload for: ${hotView.masterId}`);
-					await this.context.immediateSave(hotView.masterId!, hotView.getContent());
-					logger.debug(`Immediate save completed on unload for: ${hotView.masterId}`);
+					logger.debug(
+						`Immediate save on unload for: ${hotView.masterId}`
+					);
+					await this.context.immediateSave(
+						hotView.masterId!,
+						hotView.getContent()
+					);
+					logger.debug(
+						`Immediate save completed on unload for: ${hotView.masterId}`
+					);
 				} catch (error) {
-					logger.warn(`Failed to immediately save on unload: ${hotView.masterId}`, error);
+					logger.warn(
+						`Failed to immediately save on unload: ${hotView.masterId}`,
+						error
+					);
 				}
 			});
 

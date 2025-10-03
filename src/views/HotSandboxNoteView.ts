@@ -108,16 +108,20 @@ export class HotSandboxNoteView extends AbstractNoteView {
 
 		const hasChanges = this.hasUnsavedChanges;
 		const isLast = this.context.isLastHotView(this.masterId);
-		
-		logger.debug(`shouldClose: hasUnsavedChanges=${hasChanges}, isLastHotView=${isLast}, masterId=${this.masterId}`);
+
+		logger.debug(
+			`shouldClose: hasUnsavedChanges=${hasChanges}, isLastHotView=${isLast}, masterId=${this.masterId}`
+		);
 
 		if (!hasChanges || !isLast) {
 			logger.debug("Allowing close without confirmation");
 			return true;
 		}
 
-		logger.debug("Showing confirmation dialog for last tab with unsaved changes");
-		
+		logger.debug(
+			"Showing confirmation dialog for last tab with unsaved changes"
+		);
+
 		const confirmed = await showConfirmModal(
 			this.app,
 			"Delete Sandbox",

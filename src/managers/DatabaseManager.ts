@@ -130,14 +130,29 @@ export class DatabaseManager implements IManager {
 		}
 	}
 
-	async clearAllDeadSandboxes() {
+	async clearOldDeadSandboxes() {
+		const RETENTION_DAYS = 3;
 		const savedSandboxes = await this.context.dbAPI.getAllSandboxes();
 		const allViews = this.context.getAllHotSandboxViews();
+		
+		let deletedCount = 0;
+		let skippedCount = 0;
+		
 		for (const sandbox of savedSandboxes) {
 			const view = allViews.find((view) => view.masterId === sandbox.id);
-			if (!view?.masterId) this.deleteFromAll(sandbox.id);
+			
+			// Only delete if there's no active view AND the sandbox is older than 3 days
+			if (!view?.masterId && this.context.dbAPI.isOlderThanDays(sandbox, RETENTION_DAYS)) {
+				await this.deleteFromAll(sandbox.id);
+				deletedCount++;
+				logger.debug(`Deleted old dead sandbox: ${sandbox.id} (age: ${Math.floor((Date.now() - sandbox.mtime) / (24 * 60 * 60 * 1000))} days)`);
+			} else if (!view?.masterId) {
+				skippedCount++;
+				logger.debug(`Skipped dead sandbox (within retention period): ${sandbox.id} (age: ${Math.floor((Date.now() - sandbox.mtime) / (24 * 60 * 60 * 1000))} days)`);
+			}
 		}
-		logger.debug("clear all dead sandboxes");
+		
+		logger.debug(`Cleanup complete: deleted ${deletedCount} old sandboxes, skipped ${skippedCount} recent dead sandboxes`);
 	}
 
 	getSandboxByMasterId(masterId: string) {

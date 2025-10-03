@@ -24,7 +24,12 @@
   - Add warn logging for final save failures
   - _Requirements: 1.1, 1.3, 1.4, 4.2_
 
-- [ ] 3. Replace clearAllDeadSandboxes with age-based cleanup
+- [x] 3. Replace clearAllDeadSandboxes with age-based cleanup
+
+
+
+
+
   - Rename `clearAllDeadSandboxes` to `clearOldDeadSandboxes` in DatabaseManager
   - Implement 3-day retention logic using mtime comparison
   - Update method to only delete sandboxes older than 3 days without active views

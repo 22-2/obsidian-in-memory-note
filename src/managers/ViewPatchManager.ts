@@ -31,9 +31,14 @@ export class ViewPatchManager implements IManager {
 
 	load(): void {
 		logger.debug("Applying WorkspaceLeaf patches...");
+		// Apply the patch immediately.
+		this.applyLeafDetachPatch();
+
+		// Apply the save patch after layout-ready (once the command is available).
 		this.context.emitter.on("obsidian-layout-ready", () => {
-			this.applyLeafDetachPatch();
+			logger.debug("obsidian-layout-ready received, applying save patch");
 			this.applyLeafSavePatch();
+			logger.debug("Save patch applied successfully");
 		});
 	}
 
@@ -48,9 +53,14 @@ export class ViewPatchManager implements IManager {
 	 * and execute HotSandboxNoteView's shouldClose logic (confirmation dialog).
 	 */
 	private applyLeafDetachPatch(): void {
+		logger.debug("Applying detach patch to WorkspaceLeaf.prototype");
 		const cleanup = around(WorkspaceLeaf.prototype, {
 			detach: (orig) =>
 				async function (this: WorkspaceLeaf) {
+					logger.debug(
+						"detach called, view type:",
+						this.view?.getViewType()
+					);
 					if (!(this.view instanceof HotSandboxNoteView)) {
 						logger.debug("default close");
 						return orig.call(this);

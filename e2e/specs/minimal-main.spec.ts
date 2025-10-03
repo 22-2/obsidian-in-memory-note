@@ -168,6 +168,9 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			
 			const activeTabText = await hotSandbox.activeTabHeader.textContent();
 			console.log(`Active tab text before close: ${activeTabText}`);
+			
+			// パッチが適用されているかを確認するため、少し長めに待機
+			await page.waitForTimeout(1000);
 
 			// コマンドではなく、UIの「×」ボタンを直接クリックする
 			await hotSandbox.clickCloseButtonOnActiveTab();

@@ -15,6 +15,7 @@ const logger = log.getLogger("PluginEventManager");
 
 type Context = {
 	saveSandbox: DatabaseManager["debouncedSaveSandboxes"];
+	immediateSave: DatabaseManager["immediateSave"];
 	cache: CacheManager;
 	emitter: EventEmitter<AppEvents>;
 	settings: SettingsManager;
@@ -27,7 +28,7 @@ type Context = {
 };
 
 export class PluginEventManager implements IManager {
-	constructor(private context: Context) {}
+	constructor(private context: Context) { }
 
 	load(): void {
 		this.context.emitter.on(
@@ -69,13 +70,21 @@ export class PluginEventManager implements IManager {
 		this.context.clearOldDeadSandboxes();
 	};
 
-	private handleViewClosed = (payload: AppEvents["view-closed"]) => {
+	private handleViewClosed = async (payload: AppEvents["view-closed"]) => {
 		const { view } = payload;
 		// 変更点：タブが閉じられたときのロジックを明確化
 		if (view instanceof HotSandboxNoteView && view.masterId) {
 			// このタブが、特定のノートグループを表示している最後のタブであるかを確認
 			if (this.context.isLastHotView(view.masterId)) {
-				// 最後のタブであれば、DBとキャッシュから完全にデータを削除する
+				// 最後のタブであれば、まず即座に保存してからDBとキャッシュから完全にデータを削除する
+				try {
+					logger.debug(`Immediate save before closing last view for: ${view.masterId}`);
+					await this.context.immediateSave(view.masterId, view.getContent());
+					logger.debug(`Immediate save completed for: ${view.masterId}`);
+				} catch (error) {
+					logger.warn(`Failed to immediately save before closing view: ${view.masterId}`, error);
+				}
+
 				this.context.deleteFromAll(view.masterId);
 				logger.debug(
 					`Last view for group ${view.masterId} closed. Deleting all related data.`
@@ -84,17 +93,26 @@ export class PluginEventManager implements IManager {
 		}
 	};
 
-	private handleUnload = () => {
-		for (const view of this.context.getAllViews()) {
-			view.save();
-			this.context.emitter.once("save-result", ({ success, view }) => {
-				if (success) {
-					view.close();
-				} else {
-					logger.error("Failed to save view on unload", view);
+	private handleUnload = async () => {
+		const views = this.context.getAllViews();
+		logger.debug(`Plugin unload: immediately saving ${views.length} views`);
+
+		// Immediately save all views before unload
+		const savePromises = views
+			.filter(view => view instanceof HotSandboxNoteView && view.masterId)
+			.map(async (view) => {
+				const hotView = view as HotSandboxNoteView;
+				try {
+					logger.debug(`Immediate save on unload for: ${hotView.masterId}`);
+					await this.context.immediateSave(hotView.masterId!, hotView.getContent());
+					logger.debug(`Immediate save completed on unload for: ${hotView.masterId}`);
+				} catch (error) {
+					logger.warn(`Failed to immediately save on unload: ${hotView.masterId}`, error);
 				}
 			});
-		}
+
+		await Promise.all(savePromises);
+		logger.debug("All immediate saves completed on unload");
 	};
 
 	private handleConnectEditorPlugin = (

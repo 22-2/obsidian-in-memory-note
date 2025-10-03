@@ -231,6 +231,8 @@ export class AppOrchestrator implements IManager {
 				connectEditorPluginToView: (leaf) =>
 					cmExtension.connectEditorPluginToView(leaf),
 				saveSandbox: (...args) => db.debouncedSaveSandboxes(...args),
+				immediateSave: (masterId: string, content: string) =>
+					db.immediateSave(masterId, content),
 				clearOldDeadSandboxes: () => db.clearOldDeadSandboxes(),
 				getAllViews: () => views.getAllViews(),
 				isLastHotView: (masterId: string) =>

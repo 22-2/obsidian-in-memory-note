@@ -47,7 +47,12 @@
   - Verify cleanup only runs at layout-ready event (startup)
   - _Requirements: 3.1, 3.4_
 
-- [ ] 5. Integrate immediate save with critical lifecycle events
+- [x] 5. Integrate immediate save with critical lifecycle events
+
+
+
+
+
   - Modify `handleViewClosed` in PluginEventManager to use `immediateSave` before deletion
   - Modify `handleUnload` in PluginEventManager to use `immediateSave` for all views
   - Ensure immediate saves complete before view closure or plugin unload

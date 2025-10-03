@@ -65,17 +65,21 @@ export class HotSandboxPage extends CustomViewPageObject {
 		await expect(modal).toBeVisible();
 
 		// ファイル名を入力
-		const fileNameInput = modal.locator('input[placeholder*="file name"]');
+		const fileNameInput = modal.locator(
+			'input[placeholder="e.g., My Scratchpad"]'
+		);
 		await fileNameInput.fill(fileName);
 
 		// フォルダパスが指定されている場合は入力
 		if (folderPath) {
-			const folderInput = modal.locator('input[placeholder*="folder"]');
+			const folderInput = modal.locator(
+				'input[placeholder*="e.g., Notes/Daily"]'
+			);
 			await folderInput.fill(folderPath);
 		}
 
 		// 確定ボタンをクリック
-		await modal.locator('button:has-text("Create")').click();
+		await modal.getByText("Save", { exact: true }).click();
 		await expect(modal).not.toBeVisible();
 	}
 

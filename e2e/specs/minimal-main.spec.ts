@@ -85,8 +85,8 @@ test.describe("HotSandboxNoteView Main Features", () => {
 				note2Content
 			);
 
-			const firstNoteContent = await vault.window
-				.locator(`${hotSandbox.allSandboxViews} .cm-content`)
+			const firstNoteContent = await hotSandbox.allSandboxViews
+				.locator(`.cm-content`)
 				.first()
 				.textContent();
 			expect(firstNoteContent).toBe(note1Content);

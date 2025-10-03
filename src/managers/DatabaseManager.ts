@@ -12,6 +12,8 @@ import type { ViewManager } from "./ViewManager";
 
 const logger = log.getLogger("DatabaseController");
 
+const MAX_RETRY_ATTEMPTS = 3;
+
 type Context = {
 	dbAPI: DatabaseAPI;
 	cache: {
@@ -72,25 +74,26 @@ export class DatabaseManager implements IManager {
 		masterId: string,
 		content: string
 	): Promise<void> {
-		try {
-			const note = this.context.cache.get(masterId);
-			if (note) {
-				this.context.cache.set(masterId, content);
-				const updatedNote = this.context.cache.get(masterId)!;
+		const note = this.context.cache.get(masterId);
+		if (!note) {
+			return;
+		}
 
+		this.context.cache.set(masterId, content);
+		const updatedNote = this.context.cache.get(masterId)!;
+
+		for (let attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
+			try {
 				await this.context.dbAPI.saveSandbox(updatedNote);
-				logger.debug(`Saved hot note to database: ${masterId}`);
-				// this.context.emitter.emit("sandbox-note-saved", {
-				// 	noteId: masterId,
-				// 	content,
-				// });
+				logger.debug(`Saved hot note to database: ${masterId} (attempt ${attempt})`);
+				return;
+			} catch (error) {
+				if (attempt === MAX_RETRY_ATTEMPTS) {
+					logger.warn(`Failed to save note to database after ${MAX_RETRY_ATTEMPTS} attempts: ${masterId}`, error);
+					throw error;
+				}
+				logger.debug(`Save attempt ${attempt} failed for ${masterId}, retrying...`);
 			}
-		} catch (error) {
-			logger.error(`Failed to save note to database: ${masterId}`, error);
-			// this.context.emitter.emit("sandbox-note-save-failed", {
-			// 	noteId: masterId,
-			// 	error,
-			// });
 		}
 	}
 
@@ -149,6 +152,17 @@ export class DatabaseManager implements IManager {
 		this.createDebouncedSave(masterId, debounceMs);
 		const debouncer = this.debouncedSaveFns.get(masterId)!;
 		debouncer(masterId, content);
+	}
+
+	/**
+	 * Immediately saves sandbox content without debouncing.
+	 * Used for critical events like view close or plugin unload.
+	 * @param masterId - The master ID of the sandbox
+	 * @param content - The content to save
+	 */
+	async immediateSave(masterId: string, content: string): Promise<void> {
+		logger.debug(`Immediate save requested for: ${masterId}`);
+		await this.saveToDatabase(masterId, content);
 	}
 
 	load(): void {

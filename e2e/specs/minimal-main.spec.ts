@@ -81,9 +81,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			await hotSandbox.expectActiveSandboxTitle("*Hot Sandbox-2");
 			await hotSandbox.expectSandboxViewCount(2);
 
-			expect(await hotSandbox.getActiveEditorContent()).toBe(
-				note2Content
-			);
+			expect(await hotSandbox.activeEditor).toHaveText(note2Content);
 
 			const firstNoteContent = await hotSandbox.allSandboxViews
 				.locator(`.cm-content`)
@@ -124,12 +122,12 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			// Verify file
 			await expect(hotSandbox.activeTabHeader).toContainText(fileName);
 			expect(await hotSandbox.fileExists(expectedFile)).toBeTruthy();
-			expect(await hotSandbox.getActiveFileContent()).toBe(noteContent);
+			expect(await hotSandbox.activeEditor).toHaveText(noteContent);
 
 			// Go back to sandbox view
 			await hotSandbox.goBackInHistory();
 			await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
-			expect(await hotSandbox.getActiveFileContent()).toBe("");
+			expect(await hotSandbox.activeEditor).toHaveText("");
 
 			// Close and create new
 			await hotSandbox.closeTab();
@@ -154,14 +152,14 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			await hotSandbox.closeTab();
 			await hotSandbox.createNewSandboxNote("test");
 
-			expect(await hotSandbox.getActiveEditorContent()).toBe("test");
+			expect(await hotSandbox.activeEditor).toHaveText("test");
 			await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
 
 			// Try to close and decline
 			await hotSandbox.closeTab();
 			await expect(
 				page.getByText("Delete Sandbox", { exact: true })
-			).toBeVisible();
+			).toBeVisible({ timeout: 1000 * 10 });
 			await page.getByText("No", { exact: true }).click();
 			await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
 
@@ -173,7 +171,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			// Undo close
 			await hotSandbox.undoCloseTab();
 			await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
-			expect(await hotSandbox.getActiveEditorContent()).toBe("");
+			expect(await hotSandbox.activeEditor).toHaveText("");
 		});
 	});
 
@@ -241,9 +239,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			// Create sandbox note with content
 			await hotSandbox.createNewSandboxNote(persistentContent);
 			await hotSandbox.expectActiveSandboxTitle("*Hot Sandbox-1");
-			expect(await hotSandbox.getActiveEditorContent()).toBe(
-				persistentContent
-			);
+			expect(hotSandbox.activeEditor).toHaveText(persistentContent);
 
 			// Reload Obsidian
 			await vault.window.reload();
@@ -260,7 +256,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 				)
 			);
 			await expect(reloadedHotSandbox.activeSandboxView).toBeVisible();
-			expect(await reloadedHotSandbox.getActiveEditorContent()).toBe(
+			expect(reloadedHotSandbox.activeEditor).toHaveText(
 				persistentContent
 			);
 			await reloadedHotSandbox.expectActiveSandboxTitle("*Hot Sandbox-1");

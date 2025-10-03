@@ -24,14 +24,40 @@ export class CacheManager implements IManager {
 		const allSandboxes = await this.context
 			.getDbManager()
 			.getAllSandboxes();
+		
+		let loadedCount = 0;
+		let skippedCount = 0;
+		
 		allSandboxes.forEach((note) => {
-			this.sandboxes.set(note.id, note);
+			// Validate sandbox data before loading into cache
+			if (this.validateSandboxData(note)) {
+				this.sandboxes.set(note.id, note);
+				loadedCount++;
+			} else {
+				logger.warn(`Skipping corrupted sandbox data during restoration: ${note.id}`);
+				skippedCount++;
+			}
 		});
 
 		logger.debug(
-			`Loaded ${allSandboxes.length} hot sandbox notes into memory.`
+			`Loaded ${loadedCount} hot sandbox notes into memory${skippedCount > 0 ? `, skipped ${skippedCount} corrupted` : ""}.`
 		);
 		// this.emitter.emit("notes-loaded", { count: allNotes.length });
+	}
+
+	/**
+	 * Validates the structure and integrity of sandbox data
+	 * @param note - The sandbox note data to validate
+	 * @returns true if the data is valid, false otherwise
+	 */
+	private validateSandboxData(note: HotSandboxNoteData): boolean {
+		return (
+			typeof note.id === "string" &&
+			note.id.length > 0 &&
+			typeof note.content === "string" &&
+			typeof note.mtime === "number" &&
+			note.mtime > 0
+		);
 	}
 
 	getAllSandboxes(): HotSandboxNoteData[] {

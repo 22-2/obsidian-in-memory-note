@@ -1,4 +1,4 @@
-import { CMD_ID_UNDO_CLOSE_TAB } from "e2e/constants";
+import { CMD_ID_CLOSE_TAB, CMD_ID_UNDO_CLOSE_TAB } from "e2e/constants";
 import type { JSHandle, Locator, Page } from "playwright";
 import { expect } from "playwright/test";
 import type { VaultOptions } from "./managers/VaultManager";
@@ -128,7 +128,7 @@ export class ObsidianPageObject {
 	}
 
 	async closeActiveTab(): Promise<void> {
-		await this.page.evaluate(() => app.workspace.activeLeaf?.detach());
+		await this.runCommand(CMD_ID_CLOSE_TAB);
 	}
 
 	async undoCloseTab(): Promise<void> {

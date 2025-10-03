@@ -2,7 +2,9 @@
 import log from "loglevel";
 
 export const DEBUG_MODE =
-	typeof process !== "undefined" && process.env.NODE_ENV === "development";
+	(typeof process !== "undefined" &&
+		process.env.NODE_ENV === "development") ||
+	process.env.CI;
 
 log.debug("ENABLE_LOGGER", DEBUG_MODE);
 

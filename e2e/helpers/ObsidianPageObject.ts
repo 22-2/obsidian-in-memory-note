@@ -101,12 +101,6 @@ export class ObsidianPageObject {
 		expect(success).toBe(true);
 	}
 
-	async typeInActiveEditor(content: string): Promise<void> {
-		await this.activeEditor.focus();
-		await this.page.keyboard.type(content);
-		await expect(this.activeEditor).toHaveText(content);
-	}
-
 	async clearActiveEditor(): Promise<void> {
 		await this.activeEditor.focus();
 		await this.page.keyboard.press("Control+A");
@@ -328,12 +322,17 @@ export class CustomViewPageObject extends ObsidianPageObject {
 		return this.getTitleByType(this.customViewType);
 	}
 
+	async setActiveEditorContent(content: string): Promise<void> {
+		await this.activeEditor.focus();
+		await this.activeEditor.fill(content);
+	}
+
 	async openCustomView(commandId: string, content?: string): Promise<void> {
 		await this.runCommand(commandId);
 		await expect(this.activeCustomView.last()).toBeVisible();
 
 		if (content) {
-			await this.typeInActiveEditor(content);
+			await this.setActiveEditorContent(content);
 		}
 	}
 

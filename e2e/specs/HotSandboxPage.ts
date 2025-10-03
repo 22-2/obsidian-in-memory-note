@@ -52,7 +52,7 @@ export class HotSandboxPage extends CustomViewPageObject {
 		await expect(this.activeSandboxView.last()).toBeVisible();
 
 		if (content) {
-			await this.typeInActiveEditor(content);
+			await this.setActiveEditorContent(content);
 		}
 	}
 
@@ -85,11 +85,6 @@ export class HotSandboxPage extends CustomViewPageObject {
 
 	async closeTab(): Promise<void> {
 		await this.closeActiveTab();
-	}
-
-	async setActiveEditorContent(content: string): Promise<void> {
-		await this.clearActiveEditor();
-		await this.typeInActiveEditor(content);
 	}
 
 	// ===== Hot Sandbox固有のアサーション =====

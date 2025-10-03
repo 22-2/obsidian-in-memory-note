@@ -159,11 +159,11 @@ test.describe("HotSandboxNoteView Main Features", () => {
 				"*Hot Sandbox-1"
 			);
 
-			// Try to close and decline
 			await hotSandbox.closeTab();
 			await expect(hotSandbox.activeTabHeader).toContainText(
 				"*Hot Sandbox-1"
 			);
+			// Try to close and decline
 			await expect(
 				page.getByText("Delete Sandbox", { exact: true })
 			).toBeVisible({ timeout: 1000 * 10 });

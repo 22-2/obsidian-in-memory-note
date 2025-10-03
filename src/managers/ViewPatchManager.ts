@@ -3,6 +3,8 @@ import log from "loglevel";
 import { around } from "monkey-around";
 import { Platform, WorkspaceLeaf, type Plugin } from "obsidian";
 import type { Commands } from "obsidian-typings";
+import type { AppEvents } from "src/events/AppEvents";
+import type { EventEmitter } from "src/utils/EventEmitter";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import { getSandboxVaultPath } from "src/views/internal/utils";
 import type { AppOrchestrator } from "./AppOrchestrator";
@@ -15,6 +17,7 @@ type Context = {
 	getActiveView: AppOrchestrator["getActiveView"];
 	findCommand: Commands["findCommand"];
 	getSettings: AppOrchestrator["getSettings"];
+	emitter: EventEmitter<AppEvents>;
 };
 
 /**
@@ -28,8 +31,10 @@ export class ViewPatchManager implements IManager {
 
 	load(): void {
 		logger.debug("Applying WorkspaceLeaf patches...");
-		this.applyLeafDetachPatch();
-		this.applyLeafSavePatch();
+		this.context.emitter.on("obsidian-layout-ready", () => {
+			this.applyLeafDetachPatch();
+			this.applyLeafSavePatch();
+		});
 	}
 
 	unload(): void {
@@ -51,7 +56,6 @@ export class ViewPatchManager implements IManager {
 					}
 
 					const shouldInitialClose =
-						!this.app.workspace.layoutReady &&
 						Platform.isDesktopApp &&
 						getSandboxVaultPath() ===
 							this.app.vault.adapter.basePath &&

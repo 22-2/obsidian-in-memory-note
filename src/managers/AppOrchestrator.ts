@@ -95,9 +95,9 @@ export class AppOrchestrator implements IManager {
 		this.registerEditorSyncManagerFactory();
 		this.registerCodeMirrorExtensionManagerFactory();
 		this.registerPluginEventManagerFactory();
-		this.registerObsidianEventManagerFactory();
 		this.registerURIManagerFactory();
 		this.registerViewPatchManagerFactory();
+		this.registerObsidianEventManagerFactory();
 	}
 
 	private registerSettingsManagerFactory(): void {

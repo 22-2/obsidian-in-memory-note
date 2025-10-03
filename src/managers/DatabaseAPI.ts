@@ -1,5 +1,8 @@
 import Dexie, { type Table } from "dexie";
+import log from "loglevel";
 import type { HotSandboxNoteData } from "src/types";
+
+const logger = log.getLogger("DatabaseAPI");
 
 export class DatabaseAPI extends Dexie {
 	// 'notes' is typed with schema of our note object.
@@ -13,7 +16,14 @@ export class DatabaseAPI extends Dexie {
 	}
 
 	async getSandbox(id: string): Promise<HotSandboxNoteData | undefined> {
-		return this.sandboxes.get(id);
+		const data = await this.sandboxes.get(id);
+		
+		if (data && !this.validateSandboxData(data)) {
+			logger.debug(`Invalid sandbox data detected for id: ${id}, skipping...`);
+			return undefined;
+		}
+		
+		return data;
 	}
 
 	async saveSandbox(note: HotSandboxNoteData): Promise<string> {
@@ -34,5 +44,32 @@ export class DatabaseAPI extends Dexie {
 	}
 	countSandboxes(): Promise<number> {
 		return this.sandboxes.count();
+	}
+
+	/**
+	 * Validates the structure and integrity of sandbox data
+	 * @param note - The sandbox note data to validate
+	 * @returns true if the data is valid, false otherwise
+	 */
+	validateSandboxData(note: HotSandboxNoteData): boolean {
+		return (
+			typeof note.id === "string" &&
+			note.id.length > 0 &&
+			typeof note.content === "string" &&
+			typeof note.mtime === "number" &&
+			note.mtime > 0
+		);
+	}
+
+	/**
+	 * Checks if a sandbox note is older than the specified number of days
+	 * @param note - The sandbox note data to check
+	 * @param days - The number of days to compare against
+	 * @returns true if the note is older than the specified days, false otherwise
+	 */
+	isOlderThanDays(note: HotSandboxNoteData, days: number): boolean {
+		const ageInMs = Date.now() - note.mtime;
+		const daysInMs = days * 24 * 60 * 60 * 1000;
+		return ageInMs > daysInMs;
 	}
 }

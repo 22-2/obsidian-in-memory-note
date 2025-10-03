@@ -2,6 +2,7 @@ import log from "loglevel";
 import type { AppEvents } from "src/events/AppEvents";
 import type { EventEmitter } from "src/utils/EventEmitter";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
+import type { AppOrchestrator } from "./AppOrchestrator";
 import type { CacheManager } from "./CacheManager";
 import type { IManager } from "./IManager";
 import type { ViewManager } from "./ViewManager";
@@ -15,6 +16,7 @@ type Context = {
 	registerNewSandbox: CacheManager["registerNewSandbox"];
 	getSandboxContent: CacheManager["getSandboxContent"];
 	getActiveView: ViewManager["getActiveView"];
+	getSettings: AppOrchestrator["getSettings"];
 	workspace: {
 		_activeEditor: never;
 	};

@@ -150,26 +150,29 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			const { window: page } = vault;
 
 			await hotSandbox.closeTab();
+			hotSandbox.expectTabCount(1);
+			await expect(hotSandbox.activeTabHeader).toContainText("New tab");
 			await hotSandbox.createNewSandboxNote("test");
 			await expect(hotSandbox.activeEditor).toHaveText("test");
-
-			// ▼▼▼ ここからが本番 ▼▼▼
+			hotSandbox.expectTabCount(1);
+			await expect(hotSandbox.activeTabHeader).toContainText(
+				"*Hot Sandbox-1"
+			);
 
 			// [重要] これから実行する操作が不安定なので、少しだけ待機時間をいれる
 			await page.waitForTimeout(500); // 500ms待つ
 
 			// コマンドではなく、UIの「×」ボタンを直接クリックする
 			await hotSandbox.clickCloseButtonOnActiveTab();
+			hotSandbox.expectTabCount(1);
+			await expect(hotSandbox.activeTabHeader).toContainText(
+				"*Hot Sandbox-1"
+			);
 
 			// ダイアログが表示されるのを待つ
 			await expect(
 				page.locator('.modal:has-text("Delete Sandbox")')
 			).toBeVisible({ timeout: 10000 });
-
-			// ダイアログが出たことを確認できたら、あとは同じ
-			await expect(hotSandbox.activeTabHeader).toContainText(
-				"*Hot Sandbox-1"
-			);
 
 			await page.getByText("No", { exact: true }).click();
 			await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);

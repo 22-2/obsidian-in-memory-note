@@ -36,7 +36,12 @@
   - Add debug logging for cleanup operations
   - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 4. Update all references to use new cleanup method
+- [x] 4. Update all references to use new cleanup method
+
+
+
+
+
   - Update PluginEventManager to call `clearOldDeadSandboxes` instead of `clearAllDeadSandboxes`
   - Update AppOrchestrator context to expose `clearOldDeadSandboxes`
   - Verify cleanup only runs at layout-ready event (startup)

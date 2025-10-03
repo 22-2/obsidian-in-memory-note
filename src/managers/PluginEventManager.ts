@@ -19,9 +19,8 @@ type Context = {
 	emitter: EventEmitter<AppEvents>;
 	settings: SettingsManager;
 	connectEditorPluginToView: CodeMirrorExtensionManager["connectEditorPluginToView"];
-	clearAllDeadSandboxes: DatabaseManager["clearAllDeadSandboxes"];
+	clearOldDeadSandboxes: DatabaseManager["clearOldDeadSandboxes"];
 	getAllViews: ViewManager["getAllViews"];
-	// 変更点：新しい依存関係を追加
 	isLastHotView: ViewManager["isLastHotView"];
 	deleteFromAll: DatabaseManager["deleteFromAll"];
 	togglLoggersBy: SandboxPlugin["togglLoggersBy"];
@@ -67,7 +66,7 @@ export class PluginEventManager implements IManager {
 	}
 
 	private handleLayoutReady = () => {
-		this.context.clearAllDeadSandboxes();
+		this.context.clearOldDeadSandboxes();
 	};
 
 	private handleViewClosed = (payload: AppEvents["view-closed"]) => {
@@ -83,8 +82,6 @@ export class PluginEventManager implements IManager {
 				);
 			}
 		}
-		// 念のため、アクティブなビューを持たないデッドデータをクリーンアップする
-		this.context.clearAllDeadSandboxes();
 	};
 
 	private handleUnload = () => {

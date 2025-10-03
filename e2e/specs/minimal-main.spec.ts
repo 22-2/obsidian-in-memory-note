@@ -160,6 +160,24 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			);
 
 			await hotSandbox.closeTab();
+
+			await page.waitForSelector(
+				'.modal:has-text("Delete Sandbox")' + // 確認ダイアログのセレクタ
+					"," + // または
+					'.workspace-tab-header.is-active[data-type="empty"]', // 空タブのセレクタ
+				{ timeout: 10000 }
+			);
+
+			// 待機後、実際にダイアログが表示されているかを確認する
+
+			const isDialogVisible = await page
+				.locator('.modal:has-text("Delete Sandbox")')
+				.isVisible();
+			expect(
+				isDialogVisible,
+				"Confirmation dialog should be visible after closing the last tab"
+			).toBe(true);
+
 			await expect(hotSandbox.activeTabHeader).toContainText(
 				"*Hot Sandbox-1"
 			);

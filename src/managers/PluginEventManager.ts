@@ -72,29 +72,28 @@ export class PluginEventManager implements IManager {
 
 	private handleViewClosed = async (payload: AppEvents["view-closed"]) => {
 		const { view, content } = payload;
-		// 変更点：タブが閉じられたときのロジックを明確化
 		if (view instanceof HotSandboxNoteView && view.masterId) {
-			// このタブが、特定のノートグループを表示している最後のタブであるかを確認
+			// Save content immediately when view is closed
 			if (this.context.isLastHotView(view.masterId)) {
-				// 最後のタブであれば、まず即座に保存してからDBとキャッシュから完全にデータを削除する
 				try {
 					logger.debug(
-						`💾 Immediate save before closing last view for: ${view.masterId}, content length: ${content.length}`
+						`💾 Immediate save on view close for: ${view.masterId}, content length: ${content.length}`
 					);
 					await this.context.immediateSave(view.masterId, content);
 					logger.debug(
-						`✅ Immediate save completed for: ${view.masterId}`
+						`✅ Saved to IndexedDB for: ${view.masterId}`
 					);
 				} catch (error) {
 					logger.warn(
-						`❌ Failed to immediately save before closing view: ${view.masterId}`,
+						`❌ Failed to save on view close: ${view.masterId}`,
 						error
 					);
 				}
 
-				this.context.deleteFromAll(view.masterId);
+				// Remove from in-memory cache only (keep in IndexedDB for 3-day retention)
+				this.context.cache.delete(view.masterId);
 				logger.debug(
-					`Last view for group ${view.masterId} closed. Deleting all related data.`
+					`🗑️ Removed from cache (kept in IndexedDB): ${view.masterId}`
 				);
 			}
 		}

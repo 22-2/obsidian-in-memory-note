@@ -26,6 +26,7 @@ export interface VaultOptions {
 	vaultPath?: string;
 	forceNewVault?: boolean;
 	useSandbox?: boolean;
+	showLoggerOnNode?: boolean;
 	plugins?: TestPlugin[];
 }
 

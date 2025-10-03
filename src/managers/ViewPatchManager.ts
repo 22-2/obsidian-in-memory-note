@@ -52,6 +52,7 @@ export class ViewPatchManager implements IManager {
 			detach: (orig) =>
 				async function (this: WorkspaceLeaf) {
 					if (!(this.view instanceof HotSandboxNoteView)) {
+						logger.debug("default close");
 						return orig.call(this);
 					}
 
@@ -61,6 +62,8 @@ export class ViewPatchManager implements IManager {
 							this.app.vault.adapter.basePath &&
 						this.app.vault.getName() === "Obsidian Sandbox";
 
+					logger.debug("shouldInitialClose", shouldInitialClose);
+
 					// Handling automatic closing of the Sandbox Vault
 					if (shouldInitialClose) {
 						return orig.call(this);
@@ -69,17 +72,22 @@ export class ViewPatchManager implements IManager {
 					// HotSandboxNoteViewの場合、閉じる前に確認を行う
 					let shouldClose = false;
 					try {
+						logger.debug("shouldClose check");
 						shouldClose = await (
 							this.view as HotSandboxNoteView
 						).shouldClose();
+						logger.debug("check done");
 					} catch (error) {
 						logger.error("Error during shouldClose check:", error);
 						shouldClose = true; // エラー時は閉じるのを許可（安全のため）
 					}
 
 					if (shouldClose) {
+						logger.debug("close called");
 						return orig.call(this);
 					}
+
+					logger.debug("close not called");
 					// 閉じない場合はorig.call()を実行しないことで処理を中断
 				},
 		});

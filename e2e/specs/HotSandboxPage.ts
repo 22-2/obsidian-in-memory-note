@@ -76,6 +76,8 @@ export class HotSandboxPage extends CustomViewPageObject {
 				'input[placeholder*="e.g., Notes/Daily"]'
 			);
 			await folderInput.fill(folderPath);
+			await folderInput.press("Enter");
+			await expect(this.page.locator(".suggestion")).not.toBeVisible();
 		}
 
 		// 確定ボタンをクリック

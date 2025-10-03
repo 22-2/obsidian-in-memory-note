@@ -154,6 +154,10 @@ test.describe("HotSandboxNoteView Main Features", () => {
 
 			expect(await hotSandbox.activeEditor).toHaveText("test");
 			await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
+			await expect(hotSandbox.activeTabHeader).toBeVisible();
+			await expect(hotSandbox.activeTabHeader).toContainText(
+				"*Hot Sandbox-1"
+			);
 
 			// Try to close and decline
 			await hotSandbox.closeTab();

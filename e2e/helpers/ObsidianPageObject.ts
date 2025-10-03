@@ -126,6 +126,15 @@ export class ObsidianPageObject {
 		await this.runCommand(CMD_ID_CLOSE_TAB);
 	}
 
+	async clickCloseButtonOnActiveTab(): Promise<void> {
+		// アクティブなタブヘッダーの中にある .workspace-tab-header-inner-close-button を探す
+		const closeButton = this.page.locator(
+			`${this.ACTIVE_TAB_HEADER} .workspace-tab-header-inner-close-button`
+		);
+		await expect(closeButton).toBeVisible();
+		await closeButton.click();
+	}
+
 	async undoCloseTab(): Promise<void> {
 		await this.runCommand(CMD_ID_UNDO_CLOSE_TAB);
 	}

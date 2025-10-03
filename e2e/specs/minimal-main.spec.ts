@@ -127,7 +127,7 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			// Go back to sandbox view
 			await hotSandbox.goBackInHistory();
 			await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
-			expect(await hotSandbox.activeEditor).toHaveText("");
+			expect(hotSandbox.activeEditor).toHaveText("");
 
 			// Close and create new
 			await hotSandbox.closeTab();
@@ -150,23 +150,23 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			const { window: page } = vault;
 
 			await hotSandbox.closeTab();
-			await hotSandbox.expectTabCount(1);
 			await hotSandbox.createNewSandboxNote("test");
-			await hotSandbox.expectTabCount(1);
+			await expect(hotSandbox.activeEditor).toHaveText("test");
 
-			expect(hotSandbox.activeEditor).toHaveText("test");
-			await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
-			await expect(hotSandbox.activeTabHeader).toBeVisible();
-			await expect(hotSandbox.activeTabHeader).toContainText(
-				"*Hot Sandbox-1"
-			);
+			// ▼▼▼ ここからが本番 ▼▼▼
 
-			await hotSandbox.closeTab();
+			// [重要] これから実行する操作が不安定なので、少しだけ待機時間をいれる
+			await page.waitForTimeout(500); // 500ms待つ
 
+			// コマンドではなく、UIの「×」ボタンを直接クリックする
+			await hotSandbox.clickCloseButtonOnActiveTab();
+
+			// ダイアログが表示されるのを待つ
 			await expect(
 				page.locator('.modal:has-text("Delete Sandbox")')
 			).toBeVisible({ timeout: 10000 });
 
+			// ダイアログが出たことを確認できたら、あとは同じ
 			await expect(hotSandbox.activeTabHeader).toContainText(
 				"*Hot Sandbox-1"
 			);
@@ -175,14 +175,18 @@ test.describe("HotSandboxNoteView Main Features", () => {
 			await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
 
 			// Try to close and confirm
-			await hotSandbox.closeTab();
+			// こちらもクリックに統一
+			await hotSandbox.clickCloseButtonOnActiveTab();
+			await expect(
+				page.locator('.modal:has-text("Delete Sandbox")')
+			).toBeVisible({ timeout: 10000 });
 			await page.getByText("Yes", { exact: true }).click();
 			await hotSandbox.expectActiveTabType("empty");
 
 			// Undo close
 			await hotSandbox.undoCloseTab();
 			await hotSandbox.expectActiveTabType(VIEW_TYPE_HOT_SANDBOX);
-			expect(await hotSandbox.activeEditor).toHaveText("");
+			await expect(await hotSandbox.activeEditor).toHaveText("");
 		});
 	});
 

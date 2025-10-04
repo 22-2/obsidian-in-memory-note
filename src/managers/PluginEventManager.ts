@@ -4,7 +4,7 @@ import type { CodeMirrorExtensionManager } from "src/managers/CodeMirrorExtensio
 import type { DatabaseManager } from "src/managers/DatabaseManager";
 import type { IManager } from "src/managers/IManager";
 import type { EventEmitter } from "src/utils/EventEmitter";
-import { DEBOUNCE_MS } from "src/utils/constants";
+import { SAVE_DEBOUNCE_MS } from "src/utils/constants";
 import { HotSandboxNoteView } from "src/views/HotSandboxNoteView";
 import SandboxPlugin from "../main";
 import type { CacheManager } from "./CacheManager";
@@ -80,9 +80,7 @@ export class PluginEventManager implements IManager {
 						`💾 Immediate save on view close for: ${view.masterId}, content length: ${content.length}`
 					);
 					await this.context.immediateSave(view.masterId, content);
-					logger.debug(
-						`✅ Saved to IndexedDB for: ${view.masterId}`
-					);
+					logger.debug(`✅ Saved to IndexedDB for: ${view.masterId}`);
 				} catch (error) {
 					logger.warn(
 						`❌ Failed to save on view close: ${view.masterId}`,
@@ -160,7 +158,11 @@ export class PluginEventManager implements IManager {
 				content
 			);
 
-			this.context.saveSandbox(sourceView.masterId, content, DEBOUNCE_MS);
+			this.context.saveSandbox(
+				sourceView.masterId,
+				content,
+				SAVE_DEBOUNCE_MS
+			);
 		}
 	};
 }

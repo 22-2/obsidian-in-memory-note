@@ -97,12 +97,18 @@ export abstract class AbstractNoteView extends ItemView {
 	public override getState(): AbstractNoteViewState {
 		const baseState =
 			this.wrapper.magicalEditor.getState() as ObsidianViewState;
-		// Don't save content to workspace.json - only save masterId
-		// Content will be restored from IndexedDB
+
+		// Extract only necessary properties to avoid saving content in the workspace.
+		const minimalState: Partial<ObsidianViewState> = {
+			mode: baseState.mode,
+			source: baseState.source,
+		};
+
+		// Prevent stateManager.buildState from receiving the bloated baseState.
 		return this.stateManager.buildState(
 			this.getViewType(),
 			this.masterId,
-			baseState
+			minimalState // Pass a minimal state without content.
 		);
 	}
 
@@ -133,85 +139,63 @@ export abstract class AbstractNoteView extends ItemView {
 	public override async onClose() {
 		// Get content BEFORE emitting view-closed event and unloading wrapper
 		const content = this.getContent();
-		
-		this.context.emitter.emit("view-closed", { 
+
+		this.context.emitter.emit("view-closed", {
 			view: this,
-			content: content  // Pass content to event handler
+			content: content, // Pass content to event handler
 		});
-		
+
 		this.wrapper.unload();
 		this.contentEl.empty();
 	}
 
 	public override async setState(
-		state: AbstractNoteViewState,
+		{
+			content,
+			...stateWithoutContent
+		}: AbstractNoteViewState = {} as never,
 		result: ViewStateResult
 	): Promise<void> {
-		// Classify why setState was called
-		type SetStateType = 
-			| "workspace-restore"  // Restoring from workspace.json
-			| "new-view"           // Opening a new view
-			| "state-update";      // Updating existing view state
-
-		const isRestoringMasterId = 
-			state?.state?.masterId && 
-			state.state.masterId !== this.masterId;
-
-		const setStateType: SetStateType = isRestoringMasterId
-			? "workspace-restore"
-			: this.editor
-			? "state-update"
-			: "new-view";
+		const newMasterId = stateWithoutContent?.state?.masterId;
+		const isWorkspaceRestore = newMasterId && newMasterId !== this.masterId;
 
 		logger.debug("setState called", {
-			type: setStateType,
+			type: isWorkspaceRestore
+				? "workspace-restore"
+				: this.editor
+				? "state-update"
+				: "new-view",
 			currentMasterId: this.masterId,
-			newMasterId: state?.state?.masterId,
+			newMasterId: newMasterId,
 		});
 
-		// Restore masterId from workspace state
-		if (state?.state?.masterId) {
-			this.masterId = state.state.masterId;
-			logger.debug(`Restored masterId: ${this.masterId}`);
+		// 1. Restore the masterId from the State.
+		if (newMasterId) {
+			this.masterId = newMasterId;
 		}
 
-		const editMode = this.wrapper.magicalEditor?.editMode;
+		// 3. Call the parent's setState method using the clean state.
+		// This ensures editor modes (source/preview, etc.) are set correctly,
+		// but prevents older content from being written.
+		await super.setState(stateWithoutContent, result);
 
-		// Update source mode if needed
-		if (
-			typeof state.source === "boolean" &&
-			editMode.sourceMode !== state.source
-		) {
-			editMode.toggleSource();
-			state.layout = true;
-		}
-
-		// Handle workspace restore: load content from IndexedDB
-		if (setStateType === "workspace-restore") {
+		// 4. If restoring from the workspace, actively retrieve and apply the latest content from IndexedDB.
+		if (isWorkspaceRestore || !this.editor) {
+			// Attempt restoration even in the case of a new view.
 			logger.debug(
-				`Workspace restore - requesting content from IndexedDB: ${this.masterId}`
+				`Requesting content restoration from IndexedDB for masterId: ${this.masterId}`
 			);
 			if (this.editor) {
-				// Editor already initialized - restore immediately
+				// If the editor is already ready, restore immediately.
 				this.context.emitter.emit("request-content-restoration", {
 					view: this,
 					masterId: this.masterId,
 				});
 			} else {
-				// Editor not ready - restore after onOpen
+				// If the editor is not yet present (before onOpen), set a flag to trigger restoration when onOpen is called.
 				this.stateManager.setNeedsContentRestoration(true);
 			}
 		}
-
-		// Save initial state
-		this.stateManager.setInitialState(state);
-
-		await super.setState(state, result);
-
-		logger.debug("setState completed", {
-			type: setStateType,
-			masterId: this.masterId,
-		});
 	}
 
 	public override onPaneMenu(
@@ -330,15 +314,19 @@ export class ViewStateManager {
 		masterId: string,
 		baseState: any
 	): AbstractNoteViewState {
+		// Ensure the content property is excluded from baseState.
+		const { content, ...restOfStateData } = baseState.state || {};
+
 		const state: AbstractNoteViewState = {
-			...baseState,
+			...baseState, // Basic properties like mode and source are maintained.
 			type: viewType,
 			state: {
-				masterId,
-				// Don't include content - it will be restored from IndexedDB
+				...restOfStateData, // State properties other than content
+				masterId: masterId,
+				// Content is intentionally omitted here.
 			},
 		};
-		logger.debug("ViewStateManager.buildState", state);
+		logger.debug("ViewStateManager.buildState (without content)", state);
 		return state;
 	}
 }

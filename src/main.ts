@@ -40,7 +40,6 @@ export default class SandboxNotePlugin extends Plugin {
 		this.setupSettingsTab();
 		this.setupCommandsAndRibbons();
 
-		// このログは、設定が反映された後の正しいレベルで出力される
 		logger.debug("Sandbox Note plugin loaded");
 	}
 

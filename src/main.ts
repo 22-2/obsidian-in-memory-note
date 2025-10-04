@@ -23,19 +23,24 @@ export default class SandboxNotePlugin extends Plugin {
 	async onload() {
 		if (DEBUG_MODE) {
 			logger.debug("BUILT_AT", process.env.BUILT_AT);
-			this.togglLoggersBy("debug");
 		} else {
 			overwriteLogLevel();
 		}
 
 		this.initializeCoreComponents();
 
-		// Load all managers and data via the orchestrator
 		await this.orchestrator.load();
+
+		// Determine the initial log level based on the loaded settings.
+		const settings = this.orchestrator.getSettings();
+		this.togglLoggersBy(
+			settings["advanced.enableLogger"] ? "debug" : "warn"
+		);
 
 		this.setupSettingsTab();
 		this.setupCommandsAndRibbons();
 
+		// このログは、設定が反映された後の正しいレベルで出力される
 		logger.debug("Sandbox Note plugin loaded");
 	}
 
